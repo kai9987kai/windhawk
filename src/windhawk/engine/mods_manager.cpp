@@ -205,6 +205,17 @@ void ModsManager::ReloadModsAndSettings() {
     if (status != MH_OK) {
         LOG(L"MH_ApplyQueuedEx failed with %d", status);
     }
+    
+    auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
+    if (settings->GetInt(L"HookIntegrityMonitoring").value_or(1)) {
+        for (const auto& modName : modsToLoad) {
+            auto i = m_mods.find(modName);
+            if (i != m_mods.end()) {
+                i->second.RegisterGuardPages(); // we will add this method to mod.cpp
+            }
+        }
+    }
+    
 #elif WH_HOOKING_ENGINE == WH_HOOKING_ENGINE_NONE
 // For testing without a hooking engine.
 #else

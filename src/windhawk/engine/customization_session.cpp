@@ -4,6 +4,8 @@
 #include "functions.h"
 #include "logger.h"
 #include "session_private_namespace.h"
+#include "storage_manager.h"
+#include "etw_stealth.h"
 
 extern HINSTANCE g_hDllInst;
 
@@ -496,10 +498,21 @@ void CustomizationSession::
                 LOG(L"Process prohibits dynamic code, cannot reload mods "
                     L"safely");
             } else {
+                auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
+                bool etwStealth = settings->GetInt(L"EtwStealthEnabled").value_or(0);
+                if (etwStealth) {
+                    EtwStealth::PatchEtwEventWrite();
+                    EtwStealth::SuppressForCurrentThread();
+                }
+
                 try {
                     this_->m_modsManager.ReloadModsAndSettings();
                 } catch (const std::exception& e) {
                     LOG(L"ReloadModsAndSettings failed: %S", e.what());
+                }
+
+                if (etwStealth) {
+                    EtwStealth::ResumeForCurrentThread();
                 }
             }
 
@@ -551,10 +564,21 @@ void CustomizationSession::RunMainLoop() noexcept {
         if (CurrentProcessHasMitigationPolicy()) {
             LOG(L"Process prohibits dynamic code, cannot reload mods safely");
         } else {
+            auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
+            bool etwStealth = settings->GetInt(L"EtwStealthEnabled").value_or(0);
+            if (etwStealth) {
+                EtwStealth::PatchEtwEventWrite();
+                EtwStealth::SuppressForCurrentThread();
+            }
+
             try {
                 m_modsManager.ReloadModsAndSettings();
             } catch (const std::exception& e) {
                 LOG(L"ReloadModsAndSettings failed: %S", e.what());
+            }
+
+            if (etwStealth) {
+                EtwStealth::ResumeForCurrentThread();
             }
         }
     }

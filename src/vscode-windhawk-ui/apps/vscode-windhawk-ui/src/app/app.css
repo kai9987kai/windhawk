@@ -26835,6 +26835,15 @@ div.ant-typography-edit-content.ant-typography-rtl {
 }
 :root {
   --app-max-width: 1200px;
+  --app-horizontal-padding: 20px;
+  --app-section-gap: 24px;
+  --app-card-padding: 22px;
+  --app-surface-radius: 18px;
+  --app-surface-background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  --app-surface-border: rgba(255, 255, 255, 0.08);
+  --app-surface-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
+  --app-nav-button-height: 40px;
+  --app-status-pill-height: 34px;
   --app-background-color: var(--vscode-editor-background, #1e1e1e);
   --diff-background-color: #1e1e1e;
   --diff-text-color: #fafafa;
@@ -26852,6 +26861,16 @@ div.ant-typography-edit-content.ant-typography-rtl {
   --diff-decoration-gutter-color: #ababab;
   --diff-decoration-content-background-color: #222;
   --diff-decoration-content-color: #ababab;
+}
+html[data-windhawk-layout='wide'] {
+  --app-max-width: 1440px;
+}
+html[data-windhawk-density='compact'] {
+  --app-horizontal-padding: 16px;
+  --app-section-gap: 18px;
+  --app-card-padding: 18px;
+  --app-nav-button-height: 36px;
+  --app-status-pill-height: 30px;
 }
 body[data-content="sidebar"] {
   --app-background-color: var(--vscode-sideBar-background);
@@ -26889,4 +26908,12 @@ body.windhawk-no-pointer-events .windhawk-popup-content-no-select {
 .ant-dropdown-menu-item-selected:not(.ant-dropdown-menu-item-disabled) {
   color: #fff;
   background-color: #177ddc;
+}
+html[data-windhawk-reduce-motion='true'] *,
+html[data-windhawk-reduce-motion='true'] *::before,
+html[data-windhawk-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
 }

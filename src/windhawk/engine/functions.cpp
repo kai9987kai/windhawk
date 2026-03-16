@@ -2,6 +2,8 @@
 
 #include "functions.h"
 #include "var_init_once.h"
+#include "stack_spoof.h"
+#include "logger.h"
 
 namespace Functions {
 
@@ -340,6 +342,10 @@ HANDLE MyCreateRemoteThread(HANDLE hProcess,
     if (!pNtCreateThreadEx) {
         SetLastError(ERROR_PROC_NOT_FOUND);
         return nullptr;
+    }
+
+    if (StackSpoof::Initialize()) {
+        VERBOSE(L"StackSpoof enabled for NtCreateThreadEx");
     }
 
     HANDLE hThread;

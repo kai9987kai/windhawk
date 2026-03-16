@@ -8,6 +8,9 @@
 #include "session_private_namespace.h"
 #include "storage_manager.h"
 
+#include <thread>
+#include <chrono>
+
 // This static pointer is used in the hook procedure.
 // As a result, only one instance of the class can be used at any given time.
 
@@ -226,6 +229,57 @@ void NewProcessInjector::HandleCreatedProcess(
             THROW_LAST_ERROR_IF(WaitForSingleObject(mutex.get(), INFINITE) ==
                                 WAIT_FAILED);
             ReleaseMutex(mutex.get());
+            if (mutex) { /* silence unused var warning if exceptions disabled */ }
+            return;
+        }
+
+        bool isDeferred = Functions::DoesPathMatchPattern(processImageName, ProcessLists::kDeferredProcesses) || 
+                          Functions::DoesPathMatchPattern(processImageName, ProcessLists::kGames);
+
+        if (isDeferred) {
+            VERBOSE(L"Deferring injection for new process %u", lpProcessInformation->dwProcessId);
+            
+            // Duplicate handles to safely pass them to the detached thread
+            HANDLE hProcessDup = nullptr;
+            HANDLE hThreadDup = nullptr;
+            DuplicateHandle(GetCurrentProcess(), lpProcessInformation->hProcess,
+                            GetCurrentProcess(), &hProcessDup,
+                            0, FALSE, DUPLICATE_SAME_ACCESS);
+            DuplicateHandle(GetCurrentProcess(), lpProcessInformation->hThread,
+                            GetCurrentProcess(), &hThreadDup,
+                            0, FALSE, DUPLICATE_SAME_ACCESS);
+                            
+            HANDLE hSessionMgrDup = nullptr;
+            DuplicateHandle(GetCurrentProcess(), m_sessionManagerProcess,
+                            GetCurrentProcess(), &hSessionMgrDup,
+                            0, FALSE, DUPLICATE_SAME_ACCESS);
+
+            HANDLE hMutexDup = nullptr;
+            DuplicateHandle(GetCurrentProcess(), mutex.get(),
+                            GetCurrentProcess(), &hMutexDup,
+                            0, FALSE, DUPLICATE_SAME_ACCESS);
+
+            DWORD dwProcessId = lpProcessInformation->dwProcessId;
+
+            // Simple detached thread to handle deferred injection
+            std::thread([hProcessDup, hThreadDup, hSessionMgrDup, hMutexDup, dwProcessId, threadAttachExempt]() {
+                wil::unique_handle processHook(hProcessDup);
+                wil::unique_handle threadHook(hThreadDup);
+                wil::unique_handle sessionMgrHook(hSessionMgrDup);
+                wil::unique_handle mutexHook(hMutexDup);
+
+                std::this_thread::sleep_for(std::chrono::seconds(5)); // Delay 5 seconds
+
+                try {
+                    DllInject::DllInject(
+                        processHook.get(), threadHook.get(),
+                        sessionMgrHook.get(), mutexHook.get(), threadAttachExempt);
+                    VERBOSE(L"DllInject succeeded for deferred process %u", dwProcessId);
+                } catch (const std::exception& e) {
+                    LOG(L"Error for deferred process %u: %S", dwProcessId, e.what());
+                }
+            }).detach();
+            
             return;
         }
 

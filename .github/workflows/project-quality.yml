@@ -1,0 +1,66 @@
+name: Project Quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  vscode-extension:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: src/vscode-windhawk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-package-lock
+
+      - name: Typecheck
+        run: npx tsc -p . --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+  webview-ui:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: src/vscode-windhawk-ui
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-package-lock
+
+      - name: Lint app
+        run: npx nx lint vscode-windhawk-ui
+
+      - name: Lint e2e
+        run: npx nx lint vscode-windhawk-ui-e2e
+
+      - name: Test
+        run: npx nx test vscode-windhawk-ui --runInBand
+
+      - name: Typecheck
+        run: npx tsc -p apps/vscode-windhawk-ui/tsconfig.app.json --noEmit
+
+      - name: Build
+        run: npx nx build vscode-windhawk-ui

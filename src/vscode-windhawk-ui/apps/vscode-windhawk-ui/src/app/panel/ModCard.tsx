@@ -1,6 +1,6 @@
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, Card, Divider, Rate, Switch, Tooltip } from 'antd';
+import { Badge, Button, Card, Divider, Rate, Switch, Tag, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import styled, { css } from 'styled-components';
 import EllipsisText from '../components/EllipsisText';
@@ -137,6 +137,21 @@ const BreakdownCount = styled.span`
   white-space: nowrap;
 `;
 
+const InsightsRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+`;
+
+const InsightTag = styled(Tag)`
+  margin-inline-end: 0;
+  border-radius: 999px;
+  background: rgba(56, 142, 211, 0.1);
+  border-color: rgba(56, 142, 211, 0.35);
+  color: rgba(255, 255, 255, 0.88);
+`;
+
 interface Props {
   ribbonText?: string;
   title: string;
@@ -144,6 +159,7 @@ interface Props {
   description?: string;
   modMetadata?: ModMetadata;
   repositoryDetails?: RepositoryDetails;
+  insights?: string[];
   buttons: {
     text: React.ReactNode;
     confirmText?: string;
@@ -248,6 +264,13 @@ function ModCard(props: Props) {
             }
             description={props.description || <i>{t('mod.noDescription')}</i>}
           />
+          {props.insights && props.insights.length > 0 && (
+            <InsightsRow>
+              {props.insights.map((insight) => (
+                <InsightTag key={insight}>{insight}</InsightTag>
+              ))}
+            </InsightsRow>
+          )}
           <ModCardActionsContainer>
             {props.buttons.map((button, i) => {
               const buttonElement = button.confirmText ? (

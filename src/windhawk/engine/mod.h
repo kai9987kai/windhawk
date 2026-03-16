@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mods_api.h"
+#include "mod_sandbox.h"
 
 class LoadedMod {
    public:
@@ -83,6 +84,14 @@ class LoadedMod {
         const WH_GET_URL_CONTENT_OPTIONS* options);
     void FreeUrlContent(const WH_URL_CONTENT* content);
 
+    BOOL GetProcessInfo(WH_PROCESS_INFO* processInfo);
+    HANDLE RegisterCallback(WH_CALLBACK_TYPE type,
+                            WH_CALLBACK_FUNC callback,
+                            void* context,
+                            DWORD intervalMs);
+    BOOL UnregisterCallback(HANDLE callbackHandle);
+    BOOL GetSystemInfo(WH_SYSTEM_INFO* systemInfo);
+
    private:
     std::optional<std::wstring> HookSymbolsGetOnlineCache(
         PCWSTR onlineCacheBaseUrl,
@@ -107,6 +116,10 @@ class LoadedMod {
     wil::unique_hmodule m_modShimLibrary;
 
     wil::unique_hmodule m_modModule;
+    std::unique_ptr<ModSandbox::SandboxObject> m_sandbox;
+
+    // Callbacks registered by the mod
+    std::vector<HANDLE> m_callbacks;
 };
 
 class Mod {

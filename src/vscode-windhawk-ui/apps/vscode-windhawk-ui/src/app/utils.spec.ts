@@ -1,6 +1,18 @@
 import { sanitizeUrl } from './utils';
 
 describe('sanitizeUrl', () => {
+  let consoleWarnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {
+      // Invalid URLs are intentionally exercised in this suite.
+    });
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
   it('should allow http URLs', () => {
     expect(sanitizeUrl('http://example.com')).toBe('http://example.com');
     expect(sanitizeUrl('http://example.com/path')).toBe('http://example.com/path');

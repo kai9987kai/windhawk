@@ -246,8 +246,8 @@ AllProcessesInjector::AllProcessesInjector() {
     }
 }
 
-int AllProcessesInjector::InjectIntoNewProcesses() noexcept {
-    int count = 0;
+std::vector<DWORD> AllProcessesInjector::InjectIntoNewProcesses() noexcept {
+    std::vector<DWORD> deferredProcesses;
 
     while (true) {
         // Note: If we don't have the required permissions, the process is
@@ -306,9 +306,14 @@ int AllProcessesInjector::InjectIntoNewProcesses() noexcept {
         }
 
         try {
-            InjectIntoNewProcess(hNewProcess, dwNewProcessId,
-                                 ShouldAttachExemptThread(processImageName));
-            count++;
+            ProcessLists::InjectionPriority priority = GetProcessPriority(processImageName);
+            if (priority == ProcessLists::InjectionPriority::kDeferred) {
+                VERBOSE(L"Deferring injection for process %u", dwNewProcessId);
+                deferredProcesses.push_back(dwNewProcessId);
+            } else {
+                InjectIntoNewProcess(hNewProcess, dwNewProcessId,
+                                     ShouldAttachExemptThread(processImageName));
+            }
         } catch (const wil::ResultException& e) {
             switch (e.GetErrorCode()) {
                 // STATUS_PROCESS_IS_TERMINATING
@@ -334,7 +339,51 @@ int AllProcessesInjector::InjectIntoNewProcesses() noexcept {
         }
     }
 
-    return count;
+    return deferredProcesses;
+}
+
+ProcessLists::InjectionPriority AllProcessesInjector::GetProcessPriority(
+    std::wstring_view processImageName) const {
+    if (Functions::DoesPathMatchPattern(processImageName, ProcessLists::kCriticalProcesses) ||
+        Functions::DoesPathMatchPattern(processImageName, ProcessLists::kCriticalProcessesForMods)) {
+        return ProcessLists::InjectionPriority::kCritical;
+    }
+    if (Functions::DoesPathMatchPattern(processImageName, ProcessLists::kHighPriorityProcesses)) {
+        return ProcessLists::InjectionPriority::kHigh;
+    }
+    if (Functions::DoesPathMatchPattern(processImageName, ProcessLists::kDeferredProcesses)) {
+        return ProcessLists::InjectionPriority::kDeferred;
+    }
+    if (Functions::DoesPathMatchPattern(processImageName, ProcessLists::kGames)) {
+        // Games are generally deferred unless explicitly included
+        return ProcessLists::InjectionPriority::kDeferred;
+    }
+    
+    return ProcessLists::InjectionPriority::kNormal;
+}
+
+void AllProcessesInjector::InjectDeferredProcesses(const std::vector<DWORD>& processIds) noexcept {
+    for (DWORD pid : processIds) {
+        wil::unique_process_handle hProcess(OpenProcess(
+            DllInject::kProcessAccess, FALSE, pid));
+            
+        if (!hProcess) {
+            VERBOSE(L"Deferred process %u could not be opened, might have terminated", pid);
+            continue;
+        }
+
+        std::wstring processImageName;
+        if (SUCCEEDED(wil::QueryFullProcessImageName<std::wstring>(
+                hProcess.get(), 0, processImageName))) {
+            try {
+                VERBOSE(L"Injecting into deferred process %u", pid);
+                InjectIntoNewProcess(hProcess.get(), pid,
+                                     ShouldAttachExemptThread(processImageName));
+            } catch (const std::exception& e) {
+                LOG(L"Error injecting deferred process %u: %S", pid, e.what());
+            }
+        }
+    }
 }
 
 bool AllProcessesInjector::ShouldSkipNewProcess(

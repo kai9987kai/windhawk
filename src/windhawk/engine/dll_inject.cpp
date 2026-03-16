@@ -5,6 +5,9 @@
 #include "logger.h"
 #include "storage_manager.h"
 #include "var_init_once.h"
+#include "indirect_syscall.h"
+#include "thread_pool_inject.h"
+#include "module_stomp.h"
 
 extern HINSTANCE g_hDllInst;
 
@@ -678,6 +681,17 @@ void DllInject(HANDLE hProcess,
                HANDLE hSessionManagerProcess,
                HANDLE hSessionMutex,
                bool threadAttachExempt) {
+    auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
+    bool usePhantomInjection = settings->GetInt(L"UsePhantomInjection").value_or(0) != 0;
+
+    wil::unique_handle hPhantomThread;
+    if (!hThreadForAPC && usePhantomInjection) {
+        hPhantomThread.reset(ThreadPoolInject::FindAlertableThread(hProcess));
+        if (hPhantomThread) {
+            hThreadForAPC = hPhantomThread.get();
+        }
+    }
+
     const BYTE* shellcode;
     size_t shellcodeSize;
     size_t shellcodeThreadOffset = 0;
@@ -754,15 +768,56 @@ void DllInject(HANDLE hProcess,
     size_t shellcodeSizeAligned =
         (shellcodeSize + (sizeof(LONG_PTR) - 1)) & ~(sizeof(LONG_PTR) - 1);
 
-    // Allocate enough memory in the remote process's address space
-    // to hold the shellcode and the data struct.
-    void* pRemoteCode = VirtualAllocEx(
-        hProcess, nullptr, shellcodeSizeAligned + shellcodeDataSize,
-        MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    THROW_LAST_ERROR_IF_NULL(pRemoteCode);
+    // Read the setting
+    auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
+    bool useIndirectSyscalls = settings->GetInt(L"UseIndirectSyscalls").value_or(1) && IndirectSyscall::IsAvailable();
+    if (useIndirectSyscalls) {
+        IndirectSyscall::Initialize();
+    }
 
-    auto remoteCodeCleanup = wil::scope_exit([hProcess, pRemoteCode] {
-        VirtualFreeEx(hProcess, pRemoteCode, 0, MEM_RELEASE);
+    void* pRemoteCode = nullptr;
+    SIZE_T remoteRegionSize = shellcodeSizeAligned + shellcodeDataSize;
+    
+    bool useModuleStomping = settings->GetInt(L"UseModuleStomping").value_or(0) != 0;
+    bool moduleStomped = false;
+
+    if (useModuleStomping) {
+        void* pStompBase = ModuleStomp::LoadStompTarget(hProcess, L"xpsprint.dll");
+        if (pStompBase) {
+            // Use an offset to avoid the PE header. 
+            // Most DLLs have a large .text section starting at 0x1000.
+            pRemoteCode = (BYTE*)pStompBase + 0x1000;
+            moduleStomped = true;
+            VERBOSE(L"ModuleStomp: Stomping payload into xpsprint.dll at %p", pRemoteCode);
+        }
+    }
+
+    if (!pRemoteCode) {
+        if (useIndirectSyscalls) {
+            NTSTATUS status = IndirectSyscall::IndirectNtAllocateVirtualMemory(
+                hProcess, &pRemoteCode, 0, &remoteRegionSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+            if (!NT_SUCCESS(status)) {
+                throw std::runtime_error("IndirectNtAllocateVirtualMemory failed: " + std::to_string(status));
+            }
+        } else {
+            // Allocate enough memory in the remote process's address space
+            // to hold the shellcode and the data struct.
+            pRemoteCode = VirtualAllocEx(
+                hProcess, nullptr, shellcodeSizeAligned + shellcodeDataSize,
+                MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+            THROW_LAST_ERROR_IF_NULL(pRemoteCode);
+        }
+    }
+
+    auto remoteCodeCleanup = wil::scope_exit([hProcess, pRemoteCode, useIndirectSyscalls, moduleStomped] {
+        if (moduleStomped) return; // Don't free stomped module memory
+        if (useIndirectSyscalls) {
+            PVOID base = pRemoteCode;
+            SIZE_T size = 0;
+            IndirectSyscall::IndirectNtFreeVirtualMemory(hProcess, &base, &size, MEM_RELEASE);
+        } else {
+            VirtualFreeEx(hProcess, pRemoteCode, 0, MEM_RELEASE);
+        }
     });
 
     LPTHREAD_START_ROUTINE pRemoteThreadAddress =
@@ -782,17 +837,49 @@ void DllInject(HANDLE hProcess,
     // Write a copy of our struct to the remote process.
     void* pRemoteData =
         reinterpret_cast<BYTE*>(pRemoteCode) + shellcodeSizeAligned;
-    THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
-        hProcess, pRemoteData, shellcodeData, shellcodeDataSize, nullptr));
+        
+    if (useIndirectSyscalls) {
+        NTSTATUS status;
+        status = IndirectSyscall::IndirectNtWriteVirtualMemory(
+            hProcess, pRemoteCode, (PVOID)shellcode, shellcodeSize, nullptr);
+        if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtWriteVirtualMemory failed");
 
-    // Mark shellcode as executable.
-    DWORD oldProtect;
-    THROW_IF_WIN32_BOOL_FALSE(VirtualProtectEx(
-        hProcess, pRemoteCode, shellcodeSize, PAGE_EXECUTE_READ, &oldProtect));
+        status = IndirectSyscall::IndirectNtWriteVirtualMemory(
+            hProcess, pRemoteData, shellcodeData, shellcodeDataSize, nullptr);
+        if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtWriteVirtualMemory failed");
+
+        ULONG oldProtect;
+        PVOID baseAddr = pRemoteCode;
+        SIZE_T protectSize = shellcodeSize;
+        status = IndirectSyscall::IndirectNtProtectVirtualMemory(
+            hProcess, &baseAddr, &protectSize, PAGE_EXECUTE_READ, &oldProtect);
+        if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtProtectVirtualMemory failed");
+    } else {
+        // Write our shellcode into the remote process.
+        THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
+            hProcess, pRemoteCode, shellcode, shellcodeSize, nullptr));
+
+        // Write a copy of our struct to the remote process.
+        THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
+            hProcess, pRemoteData, shellcodeData, shellcodeDataSize, nullptr));
+
+        // Mark shellcode as executable.
+        DWORD oldProtect;
+        THROW_IF_WIN32_BOOL_FALSE(VirtualProtectEx(
+            hProcess, pRemoteCode, shellcodeSize, PAGE_EXECUTE_READ, &oldProtect));
+    }
 
     if (hThreadForAPC) {
-        MyQueueUserAPC(pRemoteAPCAddress, hThreadForAPC, pRemoteData,
-                       targetProcessArch);
+        if (useIndirectSyscalls) {
+            NTSTATUS status = IndirectSyscall::IndirectNtQueueApcThread(
+                hThreadForAPC, pRemoteAPCAddress, pRemoteData, nullptr, nullptr);
+            if (!NT_SUCCESS(status)) {
+                throw std::runtime_error("IndirectNtQueueApcThread failed");
+            }
+        } else {
+            MyQueueUserAPC(pRemoteAPCAddress, hThreadForAPC, pRemoteData,
+                           targetProcessArch);
+        }
     } else {
         DWORD createThreadFlags = 0;
 
@@ -816,13 +903,27 @@ void DllInject(HANDLE hProcess,
         } else
 #endif  // _WIN64
         {
-            wil::unique_process_handle remoteThread(
-                Functions::MyCreateRemoteThread(hProcess, pRemoteThreadAddress,
-                                                pRemoteData,
-                                                createThreadFlags));
-            THROW_LAST_ERROR_IF_NULL(remoteThread);
-            Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
-                                                       L"WindhawkInjected");
+            if (useIndirectSyscalls) {
+                HANDLE hRemoteThread = nullptr;
+                NTSTATUS status = IndirectSyscall::IndirectNtCreateThreadEx(
+                    &hRemoteThread, THREAD_ALL_ACCESS, nullptr, hProcess,
+                    pRemoteThreadAddress, pRemoteData, createThreadFlags,
+                    0, 0, 0, nullptr);
+                if (!NT_SUCCESS(status) || !hRemoteThread) {
+                    throw std::runtime_error("IndirectNtCreateThreadEx failed");
+                }
+                wil::unique_process_handle remoteThread(hRemoteThread);
+                Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
+                                                           L"WindhawkInjected (Indirect)");
+            } else {
+                wil::unique_process_handle remoteThread(
+                    Functions::MyCreateRemoteThread(hProcess, pRemoteThreadAddress,
+                                                    pRemoteData,
+                                                    createThreadFlags));
+                THROW_LAST_ERROR_IF_NULL(remoteThread);
+                Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
+                                                           L"WindhawkInjected");
+            }
         }
     }
 

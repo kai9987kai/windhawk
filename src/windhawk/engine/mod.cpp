@@ -9,6 +9,8 @@
 #include "storage_manager.h"
 #include "symbol_enum.h"
 #include "version.h"
+#include "injection_monitor.h"
+#include "hwbp_hook.h"
 
 extern HINSTANCE g_hDllInst;
 
@@ -1083,6 +1085,10 @@ LoadedMod::~LoadedMod() {
 #else
 #error "Unsupported hooking engine"
 #endif  // WH_HOOKING_ENGINE
+
+    for (void* target : m_hookedTargets) {
+        InjectionMonitor::UnregisterHookRegion(target);
+    }
 }
 
 bool LoadedMod::Initialize() {
@@ -1093,6 +1099,27 @@ bool LoadedMod::Initialize() {
     }
 
     SetTask(L"Initializing...");
+
+    auto settings = StorageManager::GetInstance().GetModConfig(m_modName.c_str(), nullptr);
+    ModSandbox::SandboxLimits limits;
+    limits.maxCpuPercentage = settings->GetInt(L"SandboxCpuRate").value_or(0);
+    int maxMemMB = settings->GetInt(L"SandboxMemoryMB").value_or(0);
+    limits.maxMemoryBytes = static_cast<SIZE_T>(maxMemMB) * 1024 * 1024;
+    limits.maxHandles = settings->GetInt(L"SandboxMaxHandles").value_or(0);
+
+    if (limits.maxCpuPercentage > 0 || limits.maxMemoryBytes > 0 || limits.maxHandles > 0) {
+        m_sandbox.reset(new ModSandbox::SandboxObject(m_modName.c_str(), limits));
+        if (m_sandbox) {
+            m_sandbox->ApplyThreadLimits(GetCurrentThread());
+            VERBOSE(L"Applied sandbox limits to mod thread");
+        }
+    }
+
+    m_useHwbpHooking = settings->GetInt(L"UseHwbpHooking").value_or(0) != 0;
+    if (m_useHwbpHooking) {
+        HwbpHook::Initialize();
+        VERBOSE(L"Stealth HWBP Hooking Engine initialized for mod %s", m_modName.c_str());
+    }
 
     using WH_MOD_INIT_T = BOOL(__cdecl*)();
     auto pWH_ModInit = reinterpret_cast<WH_MOD_INIT_T>(
@@ -1456,6 +1483,14 @@ BOOL LoadedMod::SetFunctionHook(void* targetFunction,
     VERBOSE(L"Target: %p", targetFunction);
     VERBOSE(L"Hook: %p", hookFunction);
 
+    if (m_useHwbpHooking) {
+        if (HwbpHook::SetHookAllThreads(targetFunction, hookFunction, originalFunction)) {
+            m_hookedTargets.push_back(targetFunction);
+            return TRUE;
+        }
+        return FALSE;
+    }
+
 #ifdef WH_HOOKING_ENGINE_MINHOOK
     if (m_uninitializing) {
         VERBOSE(L"Uninitializing, not allowed to set hooks");
@@ -1479,6 +1514,8 @@ BOOL LoadedMod::SetFunctionHook(void* targetFunction,
         return FALSE;
     }
 
+    m_hookedTargets.push_back(targetFunction);
+
     return TRUE;
 #elif WH_HOOKING_ENGINE == WH_HOOKING_ENGINE_NONE
     // For testing without a hooking engine.
@@ -1501,6 +1538,10 @@ BOOL LoadedMod::RemoveFunctionHook(void* targetFunction) {
     if (m_uninitializing) {
         VERBOSE(L"Uninitializing, not allowed to remove hooks");
         return FALSE;
+    }
+
+    if (m_useHwbpHooking) {
+        return HwbpHook::RemoveHookAllThreads(targetFunction);
     }
 
 #ifdef WH_HOOKING_ENGINE_MINHOOK
@@ -1535,6 +1576,10 @@ BOOL LoadedMod::ApplyHookOperations() {
         return FALSE;
     }
 
+    if (m_useHwbpHooking) {
+        return TRUE; // HWBP hooks are applied immediately
+    }
+
 #ifdef WH_HOOKING_ENGINE_MINHOOK
     MH_STATUS status = MH_ApplyQueuedEx(reinterpret_cast<ULONG_PTR>(this));
     if (status != MH_OK) {
@@ -1557,6 +1602,13 @@ BOOL LoadedMod::ApplyHookOperations() {
 #else
 #error "Unsupported hooking engine"
 #endif  // WH_HOOKING_ENGINE
+}
+
+void LoadedMod::RegisterGuardPages() {
+    for (void* target : m_hookedTargets) {
+        // Monitoring 5 bytes ( typical length of a JMP instruction for hooking )
+        InjectionMonitor::RegisterHookRegion(target, 5);
+    }
 }
 
 HANDLE LoadedMod::FindFirstSymbol(HMODULE hModule,
@@ -2474,6 +2526,92 @@ void LoadedMod::SetTask(PCWSTR task) {
 
 void LoadedMod::LogFunctionError(const std::exception& e) {
     LOG(L"Mod %s error: %S", m_modName.c_str(), e.what());
+}
+
+BOOL LoadedMod::GetProcessInfo(WH_PROCESS_INFO* processInfo) {
+    if (!processInfo) return FALSE;
+    processInfo->processId = GetCurrentProcessId();
+    processInfo->parentProcessId = 0; // Requires NtQueryInformationProcess
+    
+    DWORD sessionId = 0;
+    ProcessIdToSessionId(processInfo->processId, &sessionId);
+    processInfo->sessionId = sessionId;
+    
+    processInfo->isElevated = FALSE;
+    HANDLE hToken = NULL;
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+        TOKEN_ELEVATION elevation;
+        DWORD cbSize = sizeof(TOKEN_ELEVATION);
+        if (GetTokenInformation(hToken, TokenElevation, &elevation, sizeof(elevation), &cbSize)) {
+            processInfo->isElevated = elevation.TokenIsElevated;
+        }
+        CloseHandle(hToken);
+    }
+    
+    processInfo->isWow64 = FALSE;
+#ifdef _M_IX86
+    processInfo->isWow64 = TRUE;
+#else
+    IsWow64Process(GetCurrentProcess(), &processInfo->isWow64);
+#endif
+
+    GetModuleFileNameW(NULL, processInfo->imagePath, MAX_PATH);
+    wcsncpy_s(processInfo->commandLine, 4096, GetCommandLineW(), _TRUNCATE);
+    
+    return TRUE;
+}
+
+HANDLE LoadedMod::RegisterCallback(WH_CALLBACK_TYPE type,
+                                   WH_CALLBACK_FUNC callback,
+                                   void* context,
+                                   DWORD intervalMs) {
+    // Simple mock implementation for timer; Windhawk actually uses window messages or timer threads
+    if (type == WH_CALLBACK_TIMER && callback) {
+        HANDLE hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+        if (hTimer) {
+            LARGE_INTEGER liDueTime;
+            liDueTime.QuadPart = -10000LL * intervalMs;
+            SetWaitableTimer(hTimer, &liDueTime, intervalMs, NULL, NULL, 0);
+            
+            // Note: A real implementation would spin up a thread or use ThreadPool.
+            // For now, we return the timer handle to the mod so they can wait on it,
+            // or we'd start a thread here. Let's just track it for cleanup.
+            m_callbacks.push_back(hTimer);
+            return hTimer;
+        }
+    }
+    return NULL; // Other callbacks require deeper Windhawk engine hooks
+}
+
+BOOL LoadedMod::UnregisterCallback(HANDLE callbackHandle) {
+    auto it = std::find(m_callbacks.begin(), m_callbacks.end(), callbackHandle);
+    if (it != m_callbacks.end()) {
+        CloseHandle(*it);
+        m_callbacks.erase(it);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL LoadedMod::GetSystemInfo(WH_SYSTEM_INFO* systemInfo) {
+    if (!systemInfo) return FALSE;
+    
+    SYSTEM_INFO sysInfo;
+    GetNativeSystemInfo(&sysInfo);
+    
+    systemInfo->processorArchitecture = sysInfo.wProcessorArchitecture;
+    systemInfo->numberOfProcessors = sysInfo.dwNumberOfProcessors;
+    systemInfo->isArm64 = (sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+    
+    ULONG major, minor, build;
+    Functions::GetNtVersionNumbers(&major, &minor, &build);
+    systemInfo->osMajorVersion = major;
+    systemInfo->osMinorVersion = minor;
+    systemInfo->osBuildNumber = build;
+    
+    wcsncpy_s(systemInfo->osVersionString, 256, GetWindowsVersionForLogging().c_str(), _TRUNCATE);
+    
+    return TRUE;
 }
 
 Mod::Mod(PCWSTR modName)

@@ -15,6 +15,9 @@ const PanelContainer = styled.div`
   height: 100vh;
   overflow: hidden;
   flex-direction: column;
+  background:
+    radial-gradient(circle at top, rgba(23, 125, 220, 0.14), transparent 30%),
+    var(--app-background-color);
 `;
 
 const ContentContainerScroll = styled.div<{ $hidden?: boolean }>`
@@ -31,7 +34,7 @@ const ContentContainer = styled.div`
   height: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--app-horizontal-padding) var(--app-section-gap);
 
   // Disable margin-collapsing: https://stackoverflow.com/a/47351270
   display: flex;

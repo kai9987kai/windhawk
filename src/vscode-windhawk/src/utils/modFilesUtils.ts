@@ -170,7 +170,7 @@ export default class ModFilesUtils {
 		const minWindhawkVersion = versionInfo?.minWindhawkVersion;
 
 		if (minWindhawkVersion) {
-			let currentVersion = this.currentWindhawkVersion;
+			const currentVersion = this.currentWindhawkVersion;
 			const requiredVersion = semver.coerce(minWindhawkVersion);
 			if (currentVersion && requiredVersion && semver.lt(currentVersion, requiredVersion)) {
 				throw new Error(

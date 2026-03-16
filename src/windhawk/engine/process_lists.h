@@ -2,6 +2,14 @@
 
 namespace ProcessLists {
 
+enum class InjectionPriority {
+    kCritical = 0,
+    kHigh = 1,
+    kNormal = 2,
+    kLow = 3,
+    kDeferred = 4
+};
+
 // Based on:
 // https://www.elastic.co/guide/en/security/current/unusual-parent-child-relationship.html
 // https://github.com/elastic/security-docs/blob/9e98d789cb7b8d8fe98a3c3dec5012c4e1f22e99/docs/detections/prebuilt-rules/rule-details/unusual-parent-child-relationship.asciidoc
@@ -57,6 +65,15 @@ inline constexpr WCHAR kCriticalProcessesForMods[] =
     LR"(%systemroot%\system32\werfault.exe|)"
     LR"(%systemroot%\syswow64\werfault.exe|)"
     LR"(%systemroot%\system32\winlogon.exe)";
+
+inline constexpr WCHAR kHighPriorityProcesses[] =
+    LR"(%systemroot%\explorer.exe)";
+
+inline constexpr WCHAR kDeferredProcesses[] =
+    LR"(%systemroot%\system32\startmenuexperiencehost.exe|)"
+    LR"(%systemroot%\system32\searchui.exe|)"
+    LR"(%systemroot%\system32\searchapp.exe|)"
+    LR"(%systemroot%\system32\lockapp.exe)";
 
 inline constexpr WCHAR kIncompatiblePrograms[] =
     LR"(%ProgramFiles%\Oracle\VirtualBox\*|)"

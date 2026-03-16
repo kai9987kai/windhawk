@@ -155,3 +155,19 @@ const WH_URL_CONTENT* InternalWh_GetUrlContent(
 void InternalWh_FreeUrlContent(void* mod, const WH_URL_CONTENT* content) {
     static_cast<LoadedMod*>(mod)->FreeUrlContent(content);
 }
+
+BOOL InternalWh_GetProcessInfo(void* mod, WH_PROCESS_INFO* processInfo) {
+    return static_cast<LoadedMod*>(mod)->GetProcessInfo(processInfo);
+}
+
+HANDLE InternalWh_RegisterCallback(void* mod, WH_CALLBACK_TYPE type, WH_CALLBACK_FUNC callback, void* context, DWORD intervalMs) {
+    return static_cast<LoadedMod*>(mod)->RegisterCallback(type, callback, context, intervalMs);
+}
+
+BOOL InternalWh_UnregisterCallback(void* mod, HANDLE callbackHandle) {
+    return static_cast<LoadedMod*>(mod)->UnregisterCallback(callbackHandle);
+}
+
+BOOL InternalWh_GetSystemInfo(void* mod, WH_SYSTEM_INFO* systemInfo) {
+    return static_cast<LoadedMod*>(mod)->GetSystemInfo(systemInfo);
+}

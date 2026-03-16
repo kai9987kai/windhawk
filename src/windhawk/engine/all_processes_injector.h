@@ -1,12 +1,18 @@
 #pragma once
 
+#include "process_lists.h"
+
+#include <vector>
+
 class AllProcessesInjector {
    public:
     AllProcessesInjector();
 
-    int InjectIntoNewProcesses() noexcept;
+    std::vector<DWORD> InjectIntoNewProcesses() noexcept;
+    void InjectDeferredProcesses(const std::vector<DWORD>& processIds) noexcept;
 
    private:
+    ProcessLists::InjectionPriority GetProcessPriority(std::wstring_view processImageName) const;
     bool ShouldSkipNewProcess(std::wstring_view processImageName) const;
     bool ShouldAttachExemptThread(std::wstring_view processImageName) const;
     void InjectIntoNewProcess(HANDLE hProcess,

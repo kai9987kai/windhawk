@@ -7,9 +7,15 @@ import './App.css';
 import {
   AppUISettingsContext,
   AppUISettingsContextType,
+  defaultLocalUISettings,
+  LocalUISettings,
+  mergeLocalUISettings,
+  readLocalUISettings,
+  writeLocalUISettings,
 } from './appUISettings';
 import { setLanguage } from './i18n';
 import { mockAppUISettings, useMockData } from './panel/mockData';
+import { AppUISettings } from './webviewIPCMessages';
 import Panel from './panel/Panel';
 import Sidebar from './sidebar/Sidebar';
 import { useGetInitialAppSettings, useSetNewAppSettings } from './webviewIPC';
@@ -31,8 +37,11 @@ function App() {
     []
   );
 
-  const [appUISettings, setAppUISettings] =
-    useState<AppUISettingsContextType | null>(null);
+  const [extensionAppUISettings, setExtensionAppUISettings] =
+    useState<Partial<AppUISettings> | null>(null);
+  const [localUISettings, setLocalUISettingsState] = useState<LocalUISettings>(
+    () => readLocalUISettings()
+  );
 
   const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr');
 
@@ -48,27 +57,77 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    applyNewLanguage(extensionAppUISettings?.language);
+  }, [applyNewLanguage, extensionAppUISettings?.language]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      'data-windhawk-density',
+      localUISettings.interfaceDensity
+    );
+    document.documentElement.setAttribute(
+      'data-windhawk-reduce-motion',
+      String(localUISettings.reduceMotion)
+    );
+    document.documentElement.setAttribute(
+      'data-windhawk-layout',
+      localUISettings.useWideLayout ? 'wide' : 'default'
+    );
+  }, [localUISettings]);
+
+  const setLocalUISettings = useCallback(
+    (updates: Partial<LocalUISettings>) => {
+      setLocalUISettingsState((current) => {
+        const next = mergeLocalUISettings(current, updates);
+        writeLocalUISettings(next);
+        return next;
+      });
+    },
+    []
+  );
+
+  const resetLocalUISettings = useCallback(() => {
+    setLocalUISettingsState(defaultLocalUISettings);
+    writeLocalUISettings(defaultLocalUISettings);
+  }, []);
+
   const { getInitialAppSettings } = useGetInitialAppSettings(
     useCallback((data) => {
-      applyNewLanguage(data.appUISettings?.language);
-      setAppUISettings(data.appUISettings || {});
-    }, [applyNewLanguage])
+      setExtensionAppUISettings(data.appUISettings || {});
+    }, [])
   );
 
   useEffect(() => {
     if (!useMockData) {
       getInitialAppSettings({});
     } else {
-      applyNewLanguage(mockAppUISettings?.language);
-      setAppUISettings(mockAppUISettings || {});
+      setExtensionAppUISettings(mockAppUISettings || {});
     }
-  }, [applyNewLanguage, getInitialAppSettings]);
+  }, [getInitialAppSettings]);
 
   useSetNewAppSettings(
     useCallback((data) => {
-      applyNewLanguage(data.appUISettings?.language);
-      setAppUISettings(data.appUISettings || {});
-    }, [applyNewLanguage])
+      setExtensionAppUISettings((current) => ({
+        ...(current ?? {}),
+        ...(data.appUISettings || {}),
+      }));
+    }, [])
+  );
+
+  const appUISettings = useMemo<AppUISettingsContextType | null>(
+    () => (extensionAppUISettings ? {
+      ...extensionAppUISettings,
+      localUISettings,
+      setLocalUISettings,
+      resetLocalUISettings,
+    } : null),
+    [
+      extensionAppUISettings,
+      localUISettings,
+      setLocalUISettings,
+      resetLocalUISettings,
+    ]
   );
 
   if (!content || !appUISettings) {

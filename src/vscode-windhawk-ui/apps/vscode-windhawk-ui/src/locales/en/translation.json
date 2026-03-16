@@ -18,7 +18,15 @@
     "home": "Home",
     "explore": "Explore",
     "settings": "Settings",
-    "about": "About"
+    "about": "About",
+    "tagline": "Control Center",
+    "status": {
+      "updateAvailable": "Update available",
+      "debugLogging": "Debug logging enabled",
+      "safeMode": "Safe mode enabled",
+      "compactDensity": "Compact layout",
+      "wideLayout": "Wide workspace"
+    }
   },
   "mod": {
     "updateAvailable": "Update available",
@@ -158,7 +166,12 @@
   },
   "modSearch": {
     "placeholder": "Search for mods...",
-    "noResults": "No mods match the current filters"
+    "noResults": "No mods match the current filters",
+    "didYouMean": "Did you mean",
+    "recoveryByCorrection": "No exact matches. A corrected query found relevant mods:",
+    "recoveryByBroadening": "No exact matches. A broader query found relevant mods:",
+    "tryRecoveredQuery": "Search for {{query}}",
+    "closestMatches": "Closest matches"
   },
   "home": {
     "browse": "Browse for Mods",
@@ -187,12 +200,22 @@
   },
   "explore": {
     "search": {
+      "smartRelevance": "Smart relevance",
       "popularAndTopRated": "Popular and top rated",
       "popular": "Popular",
       "topRated": "Top rated",
       "newest": "Newest",
       "lastUpdated": "Last updated",
       "alphabeticalOrder": "Alphabetical order"
+    },
+    "discovery": {
+      "smartResults_one": "{{count}} match ranked by smart relevance",
+      "smartResults_other": "{{count}} matches ranked by smart relevance",
+      "filteredResults_one": "{{count}} filtered match",
+      "filteredResults_other": "{{count}} filtered matches",
+      "filteredOnly_one": "{{count}} result after filters",
+      "filteredOnly_other": "{{count}} results after filters",
+      "refineWith": "Refine with"
     },
     "filter": {
       "installationStatus": "Installation status",
@@ -205,6 +228,42 @@
     }
   },
   "settings": {
+    "pageTitle": "Tune Windhawk to match how you work",
+    "pageDescription": "Core behavior, interface preferences, and advanced controls are grouped here so you can shape the UI without digging through nested dialogs.",
+    "overview": {
+      "allClear": "Using the default workspace profile",
+      "updatesEnabled": "Automatic update checks enabled",
+      "debugLogging": "Debug logging enabled",
+      "safeMode": "Safe mode enabled",
+      "devMode": "Developer mode visible",
+      "compactLayout": "Compact layout active",
+      "wideLayout": "Wide workspace active",
+      "reduceMotion": "Reduced motion active"
+    },
+    "core": {
+      "title": "Core preferences",
+      "description": "Daily-use behavior that affects discovery, language, and developer tools."
+    },
+    "interface": {
+      "title": "Interface",
+      "description": "Local UI preferences that change only this webview experience.",
+      "layoutDensity": {
+        "title": "Layout density",
+        "description": "Choose whether the panel prioritizes breathing room or information density.",
+        "comfortable": "Comfortable",
+        "compact": "Compact"
+      },
+      "wideLayout": {
+        "title": "Use wide workspace",
+        "description": "Expand the main content area to show more mods, settings, and code side by side."
+      },
+      "reduceMotion": {
+        "title": "Reduce motion",
+        "description": "Minimize interface animations and transitions for a calmer, less distracting UI."
+      },
+      "resetButton": "Reset interface preferences",
+      "resetDescription": "Restore the local layout, width, and motion preferences to their defaults."
+    },
     "language": {
       "title": "Language",
       "description": "Select your preferred display language for Windhawk.",
@@ -221,6 +280,7 @@
       "description": "Show actions for developers, such as creating and modifying mods."
     },
     "advancedSettings": "Advanced settings",
+    "advancedDescription": "System-level options, troubleshooting controls, and deeper behavior tuning.",
     "hideTrayIcon": {
       "title": "Hide tray icon",
       "description": "You will have to disable this option to exit Windhawk."
@@ -271,10 +331,54 @@
     }
   },
   "about": {
+    "eyebrow": "About Windhawk",
     "title": "Windhawk v{{version}}",
     "beta": "beta",
     "subtitle": "The customization marketplace for Windows and programs",
+    "pageDescription": "Review the current workspace profile, confirm update and safety state, and jump to the key project resources from one place.",
     "credit": "By <0>{{author}}</0>",
+    "actions": {
+      "changelog": "View changelog",
+      "copySupport": "Copy support snapshot",
+      "copySuccess": "Support snapshot copied",
+      "copyError": "Unable to copy support snapshot"
+    },
+    "status": {
+      "title": "Current status",
+      "description": "A quick view of updates, safety, logging, and development state.",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "safeModeOn": "Safe mode enabled",
+      "safeModeOff": "Normal operation",
+      "loggingOn": "Debug logging enabled",
+      "loggingOff": "Debug logging off",
+      "devModeOn": "Developer mode visible",
+      "devModeOff": "Developer options hidden"
+    },
+    "workspace": {
+      "title": "Workspace profile",
+      "description": "The active settings that shape how Windhawk and this webview behave.",
+      "language": "Language",
+      "updateChecks": "Update checks",
+      "developerMode": "Developer mode",
+      "compileLocally": "Compile mods locally",
+      "trayIcon": "Tray icon",
+      "toolkitDialog": "Toolkit dialog",
+      "interfaceDensity": "Interface density",
+      "layoutWidth": "Layout width",
+      "motion": "Motion"
+    },
+    "values": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "automatic": "Automatic",
+      "manual": "Manual",
+      "wide": "Wide",
+      "standard": "Standard",
+      "reduced": "Reduced"
+    },
     "update": {
       "title": "An update is available",
       "subtitle": "Consider updating Windhawk to get the latest features and bug fixes",
@@ -295,11 +399,15 @@
     },
     "links": {
       "title": "Links",
+      "description": "Project resources for releases, docs, source code, and translations.",
       "homepage": "Homepage",
-      "documentation": "Documentation"
+      "documentation": "Documentation",
+      "github": "GitHub repository",
+      "translations": "Translation guide"
     },
     "builtWith": {
       "title": "Built with",
+      "description": "Core tools and libraries that shape the Windhawk experience.",
       "vscodium": "A community-driven distribution of Microsoft's VSCode editor",
       "llvmMingw": "An LLVM/Clang/LLD based mingw-w64 toolchain",
       "minHook": "The minimalistic API hooking library for Windows",

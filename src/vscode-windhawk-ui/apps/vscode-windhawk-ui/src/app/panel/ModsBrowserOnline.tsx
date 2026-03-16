@@ -1,6 +1,6 @@
 import { faFilter, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, Empty, Modal, Result, Spin } from 'antd';
+import { Badge, Button, Empty, Modal, Result, Spin, Typography } from 'antd';
 import { produce } from 'immer';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,15 @@ import {
 import { mockModsBrowserOnlineRepositoryMods, useMockData } from './mockData';
 import ModCard from './ModCard';
 import ModDetails from './ModDetails';
+import {
+  getSearchCorrection,
+  getSearchRecovery,
+  getRefinementSuggestions,
+  normalizeProcessName,
+  RankedMod,
+  rankMods,
+  SortingOrder,
+} from './modDiscovery';
 
 const CenteredContainer = styled.div`
   display: flex;
@@ -46,6 +55,33 @@ const SearchFilterContainer = styled.div`
   display: flex;
   gap: 10px;
   margin: 20px 0;
+`;
+
+const SearchMetaRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+`;
+
+const SearchSuggestions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const SearchActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const SearchMetaText = styled(Typography.Text)`
+  color: rgba(255, 255, 255, 0.65);
 `;
 
 const SearchFilterInput = styled(InputWithContextMenu)`
@@ -68,6 +104,12 @@ const ModsContainer = styled.div<{ $extraBottomPadding?: boolean }>`
 
 const ResultsMessageWrapper = styled.div`
   margin-top: 85px;
+`;
+
+const RecoveryContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const ModsGrid = styled.div`
@@ -129,12 +171,6 @@ type ModDetailsType = {
     config: ModConfig | null;
     userRating?: number;
   };
-};
-
-const normalizeProcessName = (process: string): string => {
-  return process.includes('\\')
-    ? process.substring(process.lastIndexOf('\\') + 1)
-    : process;
 };
 
 const extractItemsWithCounts = (
@@ -238,6 +274,18 @@ const extractProcessesWithCounts = (
   );
 };
 
+const appendSearchRefinement = (currentQuery: string, refinement: string) => {
+  const trimmedQuery = currentQuery.trim();
+  const normalizedQuery = trimmedQuery.toLowerCase();
+  const normalizedRefinement = refinement.trim().toLowerCase();
+
+  if (!normalizedRefinement || normalizedQuery.includes(normalizedRefinement)) {
+    return trimmedQuery;
+  }
+
+  return trimmedQuery ? `${trimmedQuery} ${refinement}` : refinement;
+};
+
 const useFilterState = () => {
   const [filterText, setFilterText] = useState('');
   const [filterOptions, setFilterOptions] = useState<Set<string>>(new Set());
@@ -307,7 +355,8 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     ModDetailsType
   > | null>(mockModsBrowserOnlineRepositoryMods);
 
-  const [sortingOrder, setSortingOrder] = useState('popular-top-rated');
+  const [sortingOrder, setSortingOrder] =
+    useState<SortingOrder>('smart-relevance');
 
   // Filter state
   const {
@@ -335,28 +384,9 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     [repositoryMods]
   );
 
-  const installedModsFilteredAndSorted = useMemo(() => {
-    const filterWords = filterText.toLowerCase().split(/\s+/)
-      .map(word => word.trim())
-      .filter(word => word.length > 0);
+  const filteredMods = useMemo(() => {
     return Object.entries(repositoryMods || {})
-      .filter(([modId, mod]) => {
-        // Apply text filter
-        if (filterWords.length > 0) {
-          const textMatch = filterWords.every((filterWord) => {
-            return (
-              modId.toLowerCase().includes(filterWord) ||
-              mod.repository.metadata.name?.toLowerCase().includes(filterWord) ||
-              mod.repository.metadata.description
-                ?.toLowerCase()
-                .includes(filterWord)
-            );
-          });
-          if (!textMatch) {
-            return false;
-          }
-        }
-
+      .filter(([, mod]) => {
         // Apply category filters - if none selected, show all
         if (filterOptions.size === 0) {
           return true;
@@ -406,103 +436,37 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
         }
 
         return true;
-      })
-      .sort((a, b) => {
-        const [modIdA, modA] = a;
-        const [modIdB, modB] = b;
-
-        switch (sortingOrder) {
-          case 'popular-top-rated':
-            if (
-              modB.repository.details.defaultSorting <
-              modA.repository.details.defaultSorting
-            ) {
-              return -1;
-            } else if (
-              modB.repository.details.defaultSorting >
-              modA.repository.details.defaultSorting
-            ) {
-              return 1;
-            }
-            break;
-
-          case 'popular':
-            if (modB.repository.details.users < modA.repository.details.users) {
-              return -1;
-            } else if (
-              modB.repository.details.users > modA.repository.details.users
-            ) {
-              return 1;
-            }
-            break;
-
-          case 'top-rated':
-            if (
-              modB.repository.details.rating < modA.repository.details.rating
-            ) {
-              return -1;
-            } else if (
-              modB.repository.details.rating > modA.repository.details.rating
-            ) {
-              return 1;
-            }
-            break;
-
-          case 'newest':
-            if (
-              modB.repository.details.published <
-              modA.repository.details.published
-            ) {
-              return -1;
-            } else if (
-              modB.repository.details.published >
-              modA.repository.details.published
-            ) {
-              return 1;
-            }
-            break;
-
-          case 'last-updated':
-            if (
-              modB.repository.details.updated < modA.repository.details.updated
-            ) {
-              return -1;
-            } else if (
-              modB.repository.details.updated > modA.repository.details.updated
-            ) {
-              return 1;
-            }
-            break;
-
-          case 'alphabetical':
-            // Nothing to do.
-            break;
-        }
-
-        // Fallback sorting: Sort by name, then id.
-
-        const modATitle = (
-          modA.repository.metadata.name || modIdA
-        ).toLowerCase();
-        const modBTitle = (
-          modB.repository.metadata.name || modIdB
-        ).toLowerCase();
-
-        if (modATitle < modBTitle) {
-          return -1;
-        } else if (modATitle > modBTitle) {
-          return 1;
-        }
-
-        if (modIdA < modIdB) {
-          return -1;
-        } else if (modIdA > modIdB) {
-          return 1;
-        }
-
-        return 0;
       });
-  }, [repositoryMods, sortingOrder, filterText, filterOptions]);
+  }, [repositoryMods, filterOptions]);
+
+  const rankedMods = useMemo(
+    () => rankMods(filteredMods, filterText, sortingOrder),
+    [filteredMods, filterText, sortingOrder]
+  );
+
+  const searchCorrection = useMemo(
+    () => getSearchCorrection(filteredMods, filterText),
+    [filteredMods, filterText]
+  );
+
+  const correctedRankedMods = useMemo(
+    () => searchCorrection
+      ? rankMods(filteredMods, searchCorrection.correctedQuery, 'smart-relevance')
+      : [],
+    [filteredMods, searchCorrection]
+  );
+
+  const searchRecovery = useMemo(
+    () => rankedMods.length === 0
+      ? getSearchRecovery(filteredMods, filterText)
+      : null,
+    [filteredMods, filterText, rankedMods.length]
+  );
+
+  const refinementSuggestions = useMemo(
+    () => getRefinementSuggestions(rankedMods, filterText),
+    [rankedMods, filterText]
+  );
 
   const { devModeOptOut } = useContext(AppUISettingsContext);
 
@@ -684,6 +648,34 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     );
   }
 
+  const renderModCard = ({ modId, mod, insights }: RankedMod) => (
+    <ModCard
+      key={modId}
+      ribbonText={
+        mod.installed
+          ? mod.installed.metadata?.version !==
+            mod.repository.metadata.version
+            ? (t('mod.updateAvailable') as string)
+            : (t('mod.installed') as string)
+          : undefined
+      }
+      title={mod.repository.metadata.name || modId}
+      description={mod.repository.metadata.description}
+      modMetadata={mod.repository.metadata}
+      repositoryDetails={mod.repository.details}
+      insights={filterText.trim() ? insights : undefined}
+      buttons={[
+        {
+          text: t('mod.details'),
+          onClick: () => {
+            setDetailsButtonClicked(true);
+            navigate('/mods-browser/' + modId);
+          },
+        },
+      ]}
+    />
+  );
+
   return (
     <>
       <ContentWrapper
@@ -793,6 +785,10 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
               menu={{
                 items: [
                   {
+                    label: t('explore.search.smartRelevance'),
+                    key: 'smart-relevance',
+                  },
+                  {
                     label: t('explore.search.popularAndTopRated'),
                     key: 'popular-top-rated',
                   },
@@ -812,7 +808,7 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                 onClick: (e) => {
                   dropdownModalDismissed();
                   resetInfiniteScrollLoadedItems();
-                  setSortingOrder(e.key);
+                  setSortingOrder(e.key as SortingOrder);
                 },
               }}
             >
@@ -821,12 +817,104 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
               </IconButton>
             </DropdownModal>
           </SearchFilterContainer>
-          {installedModsFilteredAndSorted.length === 0 ? (
+          {(filterText.trim() || filterOptions.size > 0) && (
+            <SearchMetaRow>
+              <SearchMetaText>
+                {filterText.trim()
+                  ? sortingOrder === 'smart-relevance'
+                    ? t('explore.discovery.smartResults', {
+                      count: rankedMods.length,
+                    })
+                    : t('explore.discovery.filteredResults', {
+                      count: rankedMods.length,
+                    })
+                  : t('explore.discovery.filteredOnly', {
+                    count: rankedMods.length,
+                  })}
+              </SearchMetaText>
+              <SearchActions>
+                {filterText.trim() &&
+                  sortingOrder === 'smart-relevance' &&
+                  searchCorrection &&
+                  correctedRankedMods.length > rankedMods.length && (
+                    <SearchSuggestions>
+                      <SearchMetaText>
+                        {t('modSearch.didYouMean')}
+                      </SearchMetaText>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          resetInfiniteScrollLoadedItems();
+                          setFilterText(searchCorrection.correctedQuery);
+                        }}
+                      >
+                        {searchCorrection.correctedQuery}
+                      </Button>
+                    </SearchSuggestions>
+                  )}
+                {filterText.trim() &&
+                  sortingOrder === 'smart-relevance' &&
+                  refinementSuggestions.length > 0 && (
+                    <SearchSuggestions>
+                      <SearchMetaText>
+                        {t('explore.discovery.refineWith')}
+                      </SearchMetaText>
+                      {refinementSuggestions.map((suggestion) => (
+                        <Button
+                          key={suggestion.key}
+                          size="small"
+                          onClick={() => {
+                            resetInfiniteScrollLoadedItems();
+                            setFilterText((prevValue) =>
+                              appendSearchRefinement(prevValue, suggestion.queryText)
+                            );
+                          }}
+                        >
+                          {suggestion.label}
+                        </Button>
+                      ))}
+                    </SearchSuggestions>
+                  )}
+              </SearchActions>
+            </SearchMetaRow>
+          )}
+          {rankedMods.length === 0 ? (
             <ResultsMessageWrapper>
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={t('modSearch.noResults')}
-              />
+              <RecoveryContainer>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={t('modSearch.noResults')}
+                />
+                {searchRecovery && (
+                  <>
+                    <SearchSuggestions>
+                      <SearchMetaText>
+                        {searchRecovery.reason === 'correction'
+                          ? t('modSearch.recoveryByCorrection')
+                          : t('modSearch.recoveryByBroadening')}
+                      </SearchMetaText>
+                      <Button
+                        size="small"
+                        type="primary"
+                        onClick={() => {
+                          resetInfiniteScrollLoadedItems();
+                          setFilterText(searchRecovery.suggestedQuery);
+                        }}
+                      >
+                        {t('modSearch.tryRecoveredQuery', {
+                          query: searchRecovery.suggestedQuery,
+                        })}
+                      </Button>
+                    </SearchSuggestions>
+                    <SearchMetaText>
+                      {t('modSearch.closestMatches')}
+                    </SearchMetaText>
+                    <ModsGrid>
+                      {searchRecovery.results.map(renderModCard)}
+                    </ModsGrid>
+                  </>
+                )}
+              </RecoveryContainer>
             </ResultsMessageWrapper>
           ) : (
             <InfiniteScroll
@@ -835,46 +923,19 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                 setInfiniteScrollLoadedItems(
                   Math.min(
                     infiniteScrollLoadedItems + 30,
-                    installedModsFilteredAndSorted.length
+                    rankedMods.length
                   )
                 )
               }
-              hasMore={
-                infiniteScrollLoadedItems < installedModsFilteredAndSorted.length
-              }
+              hasMore={infiniteScrollLoadedItems < rankedMods.length}
               loader={null}
               scrollableTarget="ModsBrowserOnline-ContentWrapper"
               style={{ overflow: 'visible' }} // for the ribbon
             >
               <ModsGrid>
-                {installedModsFilteredAndSorted
+                {rankedMods
                   .slice(0, infiniteScrollLoadedItems)
-                  .map(([modId, mod]) => (
-                    <ModCard
-                      key={modId}
-                      ribbonText={
-                        mod.installed
-                          ? mod.installed.metadata?.version !==
-                            mod.repository.metadata.version
-                            ? (t('mod.updateAvailable') as string)
-                            : (t('mod.installed') as string)
-                          : undefined
-                      }
-                      title={mod.repository.metadata.name || modId}
-                      description={mod.repository.metadata.description}
-                      modMetadata={mod.repository.metadata}
-                      repositoryDetails={mod.repository.details}
-                      buttons={[
-                        {
-                          text: t('mod.details'),
-                          onClick: () => {
-                            setDetailsButtonClicked(true);
-                            navigate('/mods-browser/' + modId);
-                          },
-                        },
-                      ]}
-                    />
-                  ))}
+                  .map(renderModCard)}
               </ModsGrid>
             </InfiniteScroll>
           )}

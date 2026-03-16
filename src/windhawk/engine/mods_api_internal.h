@@ -19,6 +19,11 @@ typedef struct tagWH_DISASM_RESULT WH_DISASM_RESULT;
 typedef struct tagWH_GET_URL_CONTENT_OPTIONS WH_GET_URL_CONTENT_OPTIONS;
 typedef struct tagWH_URL_CONTENT WH_URL_CONTENT;
 
+typedef struct tagWH_PROCESS_INFO WH_PROCESS_INFO;
+typedef enum tagWH_CALLBACK_TYPE WH_CALLBACK_TYPE;
+typedef void (*WH_CALLBACK_FUNC)(WH_CALLBACK_TYPE type, void* data, void* context);
+typedef struct tagWH_SYSTEM_INFO WH_SYSTEM_INFO;
+
 // Internal functions, do not call directly.
 #ifdef __cplusplus
 extern "C" {
@@ -81,6 +86,11 @@ const WH_URL_CONTENT* InternalWh_GetUrlContent(
     PCWSTR url,
     const WH_GET_URL_CONTENT_OPTIONS* options);
 void InternalWh_FreeUrlContent(void* mod, const WH_URL_CONTENT* content);
+
+BOOL InternalWh_GetProcessInfo(void* mod, WH_PROCESS_INFO* processInfo);
+HANDLE InternalWh_RegisterCallback(void* mod, WH_CALLBACK_TYPE type, WH_CALLBACK_FUNC callback, void* context, DWORD intervalMs);
+BOOL InternalWh_UnregisterCallback(void* mod, HANDLE callbackHandle);
+BOOL InternalWh_GetSystemInfo(void* mod, WH_SYSTEM_INFO* systemInfo);
 
 #ifdef __cplusplus
 }

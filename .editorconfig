@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[src/windhawk/**/*.{c,cc,cpp,h,hpp,hxx,inl,rc}]
+indent_style = space
+indent_size = 4
+
+[src/vscode-windhawk-ui/**/*.{ts,tsx,js,jsx,json,css,less}]
+indent_style = space
+indent_size = 2
+
+[src/vscode-windhawk/**/*.{ts,tsx,js,jsx,json}]
+indent_style = tab
+tab_width = 4
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2

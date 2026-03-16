@@ -729,7 +729,7 @@
 		"webpack-dev": "npm run electron-rebuild && webpack --mode development --watch",
 		"webpack-prod": "npm run electron-rebuild -- -a ia32 && webpack --mode production",
 		"compile": "npm run electron-rebuild -- -a ia32 && tsc -p ./ --sourceMap false",
-		"lint": "eslint . --ext .ts,.tsx",
+		"lint": "node ./scripts/run-eslint-legacy.cjs . --ext .ts,.tsx",
 		"watch": "npm run electron-rebuild && tsc -w -p ./",
 		"clean": "rimraf ./out/ ./dist/ ./prebuilds/"
 	},
