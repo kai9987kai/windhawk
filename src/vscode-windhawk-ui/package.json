@@ -53,7 +53,7 @@
     "@nrwl/linter": "19.8.14",
     "@nrwl/react": "^19.4.4",
     "@nrwl/web": "19.8.14",
-    "@nrwl/webpack": "^19.5.0",
+    "@nrwl/webpack": "^19.8.4",
     "@nrwl/workspace": "19.8.14",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.2",
     "@svgr/webpack": "^8.1.0",
