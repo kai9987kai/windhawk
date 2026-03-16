@@ -65,6 +65,37 @@ typedef struct tagWH_URL_CONTENT {
     int statusCode;
 } WH_URL_CONTENT;
 
+typedef struct tagWH_PROCESS_INFO {
+    DWORD processId;
+    DWORD parentProcessId;
+    DWORD sessionId;
+    BOOL isElevated;
+    BOOL isWow64;
+    WCHAR imagePath[MAX_PATH];
+    WCHAR commandLine[4096];
+} WH_PROCESS_INFO;
+
+typedef enum tagWH_CALLBACK_TYPE {
+    WH_CALLBACK_MOD_LOADED,
+    WH_CALLBACK_SETTINGS_CHANGED,
+    WH_CALLBACK_PROCESS_CREATED,
+    WH_CALLBACK_TIMER,
+} WH_CALLBACK_TYPE;
+
+typedef void (*WH_CALLBACK_FUNC)(WH_CALLBACK_TYPE type,
+                                 void* data,
+                                 void* context);
+
+typedef struct tagWH_SYSTEM_INFO {
+    DWORD osMajorVersion;
+    DWORD osMinorVersion;
+    DWORD osBuildNumber;
+    USHORT processorArchitecture;
+    DWORD numberOfProcessors;
+    BOOL isArm64;
+    WCHAR osVersionString[256];
+} WH_SYSTEM_INFO;
+
 // Definitions for mods.
 #ifdef WH_MOD
 
@@ -386,36 +417,9 @@ inline void Wh_FreeUrlContent(const WH_URL_CONTENT* content) {
     WH_INTERNAL(InternalWh_FreeUrlContent(InternalWhModPtr, content));
 }
 
-/**
- * @brief Get information about the current target process
- * @since Custom extension
- */
-typedef struct tagWH_PROCESS_INFO {
-    DWORD processId;
-    DWORD parentProcessId;
-    DWORD sessionId;
-    BOOL isElevated;
-    BOOL isWow64;
-    WCHAR imagePath[MAX_PATH];
-    WCHAR commandLine[4096];
-} WH_PROCESS_INFO;
-
 inline BOOL Wh_GetProcessInfo(WH_PROCESS_INFO* processInfo) {
     return WH_INTERNAL_OR(InternalWh_GetProcessInfo(InternalWhModPtr, processInfo), FALSE);
 }
-
-/**
- * @brief Register an async callback for system events
- * @since Custom extension
- */
-typedef enum tagWH_CALLBACK_TYPE {
-    WH_CALLBACK_MOD_LOADED,
-    WH_CALLBACK_SETTINGS_CHANGED,
-    WH_CALLBACK_PROCESS_CREATED,
-    WH_CALLBACK_TIMER,
-} WH_CALLBACK_TYPE;
-
-typedef void (*WH_CALLBACK_FUNC)(WH_CALLBACK_TYPE type, void* data, void* context);
 
 inline HANDLE Wh_RegisterCallback(WH_CALLBACK_TYPE type,
                                    WH_CALLBACK_FUNC callback,
@@ -429,20 +433,6 @@ inline BOOL Wh_UnregisterCallback(HANDLE callbackHandle) {
     return WH_INTERNAL_OR(
         InternalWh_UnregisterCallback(InternalWhModPtr, callbackHandle), FALSE);
 }
-
-/**
- * @brief Get system info
- * @since Custom extension
- */
-typedef struct tagWH_SYSTEM_INFO {
-    DWORD osMajorVersion;
-    DWORD osMinorVersion;
-    DWORD osBuildNumber;
-    USHORT processorArchitecture;
-    DWORD numberOfProcessors;
-    BOOL isArm64;
-    WCHAR osVersionString[256];
-} WH_SYSTEM_INFO;
 
 inline BOOL Wh_GetSystemInfo(WH_SYSTEM_INFO* systemInfo) {
     return WH_INTERNAL_OR(InternalWh_GetSystemInfo(InternalWhModPtr, systemInfo), FALSE);

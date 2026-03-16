@@ -1,1 +1,4 @@
 .run/
+artifacts/*.exe
+artifacts/backups/
+artifacts/installer-build/*.log

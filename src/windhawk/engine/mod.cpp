@@ -2725,6 +2725,12 @@ HMODULE Mod::GetLoadedModModuleHandle() {
     return m_loadedMod ? m_loadedMod->GetModModuleHandle() : nullptr;
 }
 
+void Mod::RegisterGuardPages() {
+    if (m_loadedMod) {
+        m_loadedMod->RegisterGuardPages();
+    }
+}
+
 // static
 bool Mod::ShouldLoadInRunningProcess(PCWSTR modName) {
     auto settings =

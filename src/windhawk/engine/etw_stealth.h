@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <evntprov.h>
 
 // Anti-Detection ETW Stealth Module
 // Based on 2025 research: In-memory patching of ntdll!EtwEventWrite to return

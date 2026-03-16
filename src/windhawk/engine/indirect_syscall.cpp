@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "indirect_syscall.h"
 #include "logger.h"
-#include <winternl.h>
 
 #ifdef _WIN64
 
@@ -43,14 +42,8 @@ constexpr DWORD HashStringDjb2(const char* String) {
 bool Initialize() {
     if (g_bInitialized) return true;
 
-    // Get ntdll base address from PEB
-    PTEB pTeb = (PTEB)__readgsqword(0x30);
-    PPEB pPeb = pTeb->ProcessEnvironmentBlock;
-    PPEB_LDR_DATA pLdr = pPeb->Ldr;
-    PLDR_DATA_TABLE_ENTRY pDte = (PLDR_DATA_TABLE_ENTRY)pLdr->InLoadOrderModuleList.Flink;
-    pDte = (PLDR_DATA_TABLE_ENTRY)pDte->InLoadOrderLinks.Flink; // skip image, get ntdll
-    
-    PBYTE pNtdllBase = (PBYTE)pDte->DllBase;
+    HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
+    PBYTE pNtdllBase = reinterpret_cast<PBYTE>(hNtdll);
     if (!pNtdllBase) return false;
 
     PIMAGE_DOS_HEADER pDosHdr = (PIMAGE_DOS_HEADER)pNtdllBase;

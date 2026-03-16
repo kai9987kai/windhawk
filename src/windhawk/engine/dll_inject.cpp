@@ -13,6 +13,10 @@ extern HINSTANCE g_hDllInst;
 
 namespace {
 
+#ifndef NT_SUCCESS
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+#endif
+
 #define PRE_X32SHELLCODE_ARGS_1_TO_3 \
     "\x58"     /* pop eax  */        \
     "\x59"     /* pop ecx  */        \
@@ -768,8 +772,6 @@ void DllInject(HANDLE hProcess,
     size_t shellcodeSizeAligned =
         (shellcodeSize + (sizeof(LONG_PTR) - 1)) & ~(sizeof(LONG_PTR) - 1);
 
-    // Read the setting
-    auto settings = StorageManager::GetInstance().GetAppConfig(L"Settings");
     bool useIndirectSyscalls = settings->GetInt(L"UseIndirectSyscalls").value_or(1) && IndirectSyscall::IsAvailable();
     if (useIndirectSyscalls) {
         IndirectSyscall::Initialize();
@@ -830,11 +832,6 @@ void DllInject(HANDLE hProcess,
     shellcodeData->pThreadShellcodeAddress = pRemoteThreadAddress;
     shellcodeData->pAPCShellcodeAddress = pRemoteAPCAddress;
 
-    // Write our shellcode into the remote process.
-    THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
-        hProcess, pRemoteCode, shellcode, shellcodeSize, nullptr));
-
-    // Write a copy of our struct to the remote process.
     void* pRemoteData =
         reinterpret_cast<BYTE*>(pRemoteCode) + shellcodeSizeAligned;
         

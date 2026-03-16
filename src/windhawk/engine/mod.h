@@ -55,6 +55,7 @@ class LoadedMod {
                          void** originalFunction);
     BOOL RemoveFunctionHook(void* targetFunction);
     BOOL ApplyHookOperations();
+    void RegisterGuardPages();
 
     HANDLE FindFirstSymbol(HMODULE hModule,
                            PCWSTR symbolServer,
@@ -120,6 +121,8 @@ class LoadedMod {
 
     // Callbacks registered by the mod
     std::vector<HANDLE> m_callbacks;
+    bool m_useHwbpHooking = false;
+    std::vector<void*> m_hookedTargets;
 };
 
 class Mod {
@@ -134,6 +137,7 @@ class Mod {
     void Unload();
 
     HMODULE GetLoadedModModuleHandle();
+    void RegisterGuardPages();
 
     static bool ShouldLoadInRunningProcess(PCWSTR modName);
 

@@ -2,12 +2,6 @@
 #include "etw_stealth.h"
 #include "logger.h"
 
-// For hook implementation, we use MinHook if available. 
-// Windhawk clone already uses MinHook for the mods API so we can leverage it here.
-#ifdef WH_HOOKING_ENGINE_MINHOOK
-#include <MinHook.h>
-#endif
-
 namespace EtwStealth {
 
 static DWORD g_TlsIndex = TLS_OUT_OF_INDEXES;

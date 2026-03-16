@@ -32,6 +32,7 @@
     <RootNamespace>engine</RootNamespace>
     <ProjectName>engine</ProjectName>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -299,7 +300,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="dll_inject.cpp" />
+    <ClCompile Include="etw_stealth.cpp" />
     <ClCompile Include="functions.cpp" />
+    <ClCompile Include="hwbp_hook.cpp" />
+    <ClCompile Include="indirect_syscall.cpp" />
+    <ClCompile Include="injection_monitor.cpp" />
     <ClCompile Include="libraries\binaryninja-arm64-disassembler\decode.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -838,13 +843,16 @@
     </ClCompile>
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="mod.cpp" />
+    <ClCompile Include="mod_sandbox.cpp" />
     <ClCompile Include="mods_api.cpp" />
     <ClCompile Include="mods_manager.cpp" />
+    <ClCompile Include="module_stomp.cpp" />
     <ClCompile Include="new_process_injector.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="customization_session.cpp" />
     <ClCompile Include="no_destructor.cpp" />
     <ClCompile Include="session_private_namespace.cpp" />
+    <ClCompile Include="stack_spoof.cpp" />
     <ClCompile Include="storage_manager.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -855,6 +863,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="symbol_enum.cpp" />
+    <ClCompile Include="thread_pool_inject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\logger_base.h" />
@@ -870,20 +879,28 @@
     </ClInclude>
     <ClInclude Include="process_lists.h" />
     <ClInclude Include="dll_inject.h" />
+    <ClInclude Include="etw_stealth.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="hwbp_hook.h" />
+    <ClInclude Include="indirect_syscall.h" />
+    <ClInclude Include="injection_monitor.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="mod.h" />
+    <ClInclude Include="mod_sandbox.h" />
     <ClInclude Include="mods_api.h" />
     <ClInclude Include="mods_api_internal.h" />
     <ClInclude Include="mods_manager.h" />
+    <ClInclude Include="module_stomp.h" />
     <ClInclude Include="new_process_injector.h" />
     <ClInclude Include="customization_session.h" />
     <ClInclude Include="no_destructor.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="session_private_namespace.h" />
+    <ClInclude Include="stack_spoof.h" />
     <ClInclude Include="storage_manager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="symbol_enum.h" />
+    <ClInclude Include="thread_pool_inject.h" />
     <ClInclude Include="var_init_once.h" />
   </ItemGroup>
   <ItemGroup>
