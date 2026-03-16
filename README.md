@@ -1,12 +1,14 @@
 # Windhawk
 
 ![Screenshot](screenshot.png)
+<img width="1097" height="731" alt="image" src="https://github.com/user-attachments/assets/0dc1f11d-1149-4875-8047-827a04d69863" />
 
 Windhawk aims to make it easier to customize Windows programs. For more details, see [the official website](https://windhawk.net/) and [the announcement](https://ramensoftware.com/windhawk).
 
 This repository is used to [report issues](https://github.com/ramensoftware/windhawk/issues) and to [discuss Windhawk](https://github.com/ramensoftware/windhawk/discussions). For discussing Windhawk mods, refer to [the windhawk-mods repository](https://github.com/ramensoftware/windhawk-mods).
 
 You're also welcome to join [the Windhawk Discord channel](https://discord.com/servers/windhawk-923944342991818753) for a live discussion.
+![Uploading image.png…]()
 
 ## Technical details
 
