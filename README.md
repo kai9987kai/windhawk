@@ -9,13 +9,12 @@ Windhawk aims to make it easier to customize Windows programs. For more details,
 This repository is used to [report issues](https://github.com/ramensoftware/windhawk/issues) and to [discuss Windhawk](https://github.com/ramensoftware/windhawk/discussions). For discussing Windhawk mods, refer to [the windhawk-mods repository](https://github.com/ramensoftware/windhawk-mods).
 
 You're also welcome to join [the Windhawk Discord channel](https://discord.com/servers/windhawk-923944342991818753) for a live discussion.
-![Uploading image.png…]()
 
 ## Technical details
 
-High level architecture:
+High-level architecture:
 
-![High level architecture diagram](diagram.svg)
+<img width="1180" height="760" alt="image" src="https://github.com/user-attachments/assets/22aec2df-296a-4ca4-a957-9d2126bf1161" />
 
 For technical details about the global injection and hooking method that is used, refer to the following blog post: [Implementing Global Injection and Hooking in Windows](https://m417z.com/Implementing-Global-Injection-and-Hooking-in-Windows/).
 
@@ -99,4 +98,4 @@ This research fork of Windhawk implements state-of-the-art stealth and evasion t
 
 ## Additional resources
 
-Code which demonstrates the global injection and hooking method that is used can be found in this repository: [global-inject-demo](https://github.com/m417z/global-inject-demo).
+Code that demonstrates the global injection and hooking method that is used can be found in this repository: [global-inject-demo](https://github.com/m417z/global-inject-demo).
