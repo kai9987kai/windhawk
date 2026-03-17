@@ -38,6 +38,7 @@ import {
   InstallModData,
   InstallModReplyData,
   NoData,
+  RepairRuntimeConfigReplyData,
   SetEditedModDetailsData,
   SetEditedModIdData,
   SetModSettingsData,
@@ -430,6 +431,21 @@ export function useUpdateAppSettings<TContext extends Record<string, unknown>>(
     updateAppSettings: result.postMessage,
     updateAppSettingsPending: result.pending,
     updateAppSettingsContext: result.context,
+  };
+}
+
+export function useRepairRuntimeConfig<TContext extends Record<string, unknown>>(
+  handler: (data: RepairRuntimeConfigReplyData, context?: TContext) => void
+) {
+  const result = usePostMessageWithReplyWithHandler<
+    NoData,
+    RepairRuntimeConfigReplyData,
+    TContext
+  >('repairRuntimeConfig', handler);
+  return {
+    repairRuntimeConfig: result.postMessage,
+    repairRuntimeConfigPending: result.pending,
+    repairRuntimeConfigContext: result.context,
   };
 }
 

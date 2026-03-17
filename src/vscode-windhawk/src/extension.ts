@@ -13,6 +13,7 @@ import EditorWorkspaceUtils from './utils/editorWorkspaceUtils';
 import { ModConfigUtils, ModConfigUtilsNonPortable, ModConfigUtilsPortable } from './utils/modConfigUtils';
 import ModFilesUtils from './utils/modFilesUtils';
 import ModSourceUtils from './utils/modSourceUtils';
+import RuntimeDiagnosticsUtils from './utils/runtimeDiagnosticsUtils';
 import TrayProgramUtils from './utils/trayProgramUtils';
 import { UpdateUtils } from './utils/updateUtils';
 import UserProfileUtils, { UserProfile } from './utils/userProfileUtils';
@@ -43,6 +44,7 @@ import {
 	InstallModReplyData,
 	ModConfig,
 	ModMetadata,
+	RepairRuntimeConfigReplyData,
 	SetModSettingsData,
 	StartUpdateReplyData,
 	UpdateAppSettingsData,
@@ -60,6 +62,7 @@ type AppUtils = {
 	trayProgram: TrayProgramUtils,
 	userProfile: UserProfileUtils,
 	appSettings: AppSettingsUtils,
+	runtimeDiagnostics: RuntimeDiagnosticsUtils,
 	update: UpdateUtils
 };
 
@@ -103,6 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
 			appSettings: paths.portable
 				? new AppSettingsUtilsPortable(appDataPath)
 				: new AppSettingsUtilsNonPortable(paths.regKey, paths.regSubKey),
+			runtimeDiagnostics: new RuntimeDiagnosticsUtils(paths),
 			update: new UpdateUtils(paths.portable, appRootPath)
 		};
 
@@ -1080,15 +1084,59 @@ class WindhawkPanel {
 		},
 		getAppSettings: message => {
 			let appSettings: Partial<AppSettings> = {};
+			let runtimeDiagnostics;
 			try {
 				appSettings = this._utils.appSettings.getAppSettings();
+				runtimeDiagnostics = this._utils.runtimeDiagnostics.getDiagnostics();
 			} catch (e) {
 				reportException(e);
 			}
 
 			webviewIPC.getAppSettingsReply(this._panel.webview, message.messageId, {
-				appSettings
+				appSettings,
+				runtimeDiagnostics
 			});
+		},
+		repairRuntimeConfig: message => {
+			let result: RepairRuntimeConfigReplyData = {
+				succeeded: false,
+				error: 'Repair failed',
+			};
+
+			try {
+				const runtimeDiagnostics =
+					this._utils.runtimeDiagnostics.repairRuntimeConfig();
+
+				if (!runtimeDiagnostics.engineConfigMatchesAppConfig) {
+					throw new Error('Runtime configuration repair did not resolve the storage mismatch');
+				}
+
+				result = {
+					succeeded: true,
+					runtimeDiagnostics,
+				};
+			} catch (e) {
+				reportException(e);
+				result = {
+					succeeded: false,
+					error: e instanceof Error ? e.message : String(e),
+				};
+			}
+
+			webviewIPC.repairRuntimeConfigReply(
+				this._panel.webview,
+				message.messageId,
+				result
+			);
+
+			if (result.succeeded) {
+				vscode.window.showInformationMessage(
+					'Windhawk repaired the runtime configuration and will restart to apply it.'
+				);
+				setTimeout(() => {
+					this._utils.trayProgram.postAppRestartBg();
+				}, 250);
+			}
 		},
 		updateAppSettings: message => {
 			const data: UpdateAppSettingsData = message.data;

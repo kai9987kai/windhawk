@@ -1,6 +1,6 @@
 import { faCaretDown, faFilter, faGripVertical, faHdd, faList, faSearch, faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, Empty, Modal, Spin, Switch, Table, Tag, Tooltip } from 'antd';
+import { Alert, Badge, Button, Empty, Modal, Spin, Switch, Table, Tag, Tooltip } from 'antd';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
 import { produce } from 'immer';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -16,6 +16,7 @@ import {
   useCompileMod,
   useDeleteMod,
   useEnableMod,
+  useGetAppSettings,
   useGetFeaturedMods,
   useGetInstalledMods,
   useInstallMod,
@@ -24,6 +25,7 @@ import {
   useUpdateModRating,
 } from '../webviewIPC';
 import {
+  AppRuntimeDiagnostics,
   ModConfig,
   ModMetadata,
   RepositoryDetails,
@@ -32,6 +34,7 @@ import localModIcon from './assets/local-mod-icon.svg';
 import {
   mockModsBrowserLocalFeaturedMods,
   mockModsBrowserLocalInitialMods,
+  mockRuntimeDiagnostics,
 } from './mockData';
 import ModCard from './ModCard';
 import ModDetails from './ModDetails';
@@ -113,6 +116,40 @@ const ProgressSpin = styled(Spin)`
   font-size: 32px;
 `;
 
+const OverviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const OverviewCard = styled.div`
+  padding: 16px 18px;
+  border: 1px solid var(--app-surface-border);
+  border-radius: var(--app-surface-radius);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--app-surface-shadow);
+`;
+
+const OverviewValue = styled.div`
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+`;
+
+const OverviewLabel = styled.div`
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+`;
+
+const RuntimeAlert = styled(Alert)`
+  margin-bottom: 18px;
+`;
+
 type ModDetailsType = {
   metadata: ModMetadata | null;
   config: ModConfig | null;
@@ -149,6 +186,8 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
   const [featuredMods, setFeaturedMods] = useState<
     Record<string, FeaturedModDetailsType> | undefined | null
   >(mockModsBrowserLocalFeaturedMods || undefined);
+  const [runtimeDiagnostics, setRuntimeDiagnostics] =
+    useState<AppRuntimeDiagnostics | null>(mockRuntimeDiagnostics);
 
   const [filterText, setFilterText] = useState('');
   const [filterOptions, setFilterOptions] = useState<Set<string>>(new Set());
@@ -300,10 +339,17 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
     }, [])
   );
 
+  const { getAppSettings } = useGetAppSettings(
+    useCallback((data) => {
+      setRuntimeDiagnostics(data.runtimeDiagnostics || null);
+    }, [])
+  );
+
   useEffect(() => {
     getInstalledMods({});
     getFeaturedMods({});
-  }, [getInstalledMods, getFeaturedMods]);
+    getAppSettings({});
+  }, [getAppSettings, getFeaturedMods, getInstalledMods]);
 
   useUpdateInstalledModsDetails(
     useCallback(
@@ -488,6 +534,42 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
     return null;
   }
 
+  const runtimeIssueText = runtimeDiagnostics
+    ? runtimeDiagnostics.issueCode === 'engine-config-missing'
+      ? t('about.runtime.issue.engineConfigMissing')
+      : runtimeDiagnostics.issueCode === 'engine-storage-mismatch'
+        ? t('about.runtime.issue.engineStorageMismatch')
+        : null
+    : null;
+
+  const overviewItems = [
+    {
+      key: 'total',
+      label: t('home.overview.totalInstalled'),
+      value: Object.keys(installedMods).length,
+    },
+    {
+      key: 'enabled',
+      label: t('home.overview.enabled'),
+      value: Object.values(installedMods).filter(
+        (mod) => mod.config && !mod.config.disabled
+      ).length,
+    },
+    {
+      key: 'updates',
+      label: t('home.overview.updates'),
+      value: Object.values(installedMods).filter((mod) => mod.updateAvailable)
+        .length,
+    },
+    {
+      key: 'attention',
+      label: t('home.overview.needsAttention'),
+      value: Object.values(installedMods).filter(
+        (mod) => mod.updateAvailable || !mod.config
+      ).length,
+    },
+  ];
+
   const noInstalledMods = Object.keys(installedMods).length === 0;
   const noFilteredResults = installedModsFilteredAndSorted.length === 0 && !noInstalledMods;
 
@@ -495,6 +577,29 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
     <>
       <ContentWrapper $hidden={!!displayedModId}>
         <ModsContainer $extraBottomPadding={!devModeOptOut}>
+          {runtimeDiagnostics &&
+            !runtimeDiagnostics.engineConfigMatchesAppConfig &&
+            runtimeIssueText && (
+              <RuntimeAlert
+                message={<strong>{t('home.runtimeIssue.title')}</strong>}
+                description={runtimeIssueText}
+                type="warning"
+                showIcon
+                action={
+                  <Button size="small" onClick={() => navigate('/about')}>
+                    {t('home.runtimeIssue.viewDiagnostics')}
+                  </Button>
+                }
+              />
+            )}
+          <OverviewGrid>
+            {overviewItems.map(({ key, label, value }) => (
+              <OverviewCard key={key}>
+                <OverviewValue>{value}</OverviewValue>
+                <OverviewLabel>{label}</OverviewLabel>
+              </OverviewCard>
+            ))}
+          </OverviewGrid>
           <SectionHeader>
             <h2>
               <SectionIcon icon={faHdd} /> {t('home.installedMods.title')}

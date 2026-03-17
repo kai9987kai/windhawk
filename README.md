@@ -14,9 +14,19 @@ You're also welcome to join [the Windhawk Discord channel](https://discord.com/s
 
 High level architecture:
 
-![High level architecture diagram](diagram.png)
+![High level architecture diagram](diagram.svg)
 
 For technical details about the global injection and hooking method that is used, refer to the following blog post: [Implementing Global Injection and Hooking in Windows](https://m417z.com/Implementing-Global-Injection-and-Hooking-in-Windows/).
+
+### Runtime storage contract
+
+The most important runtime invariant for a working build is that the app, the embedded extension, and the engine all resolve to the same storage backend.
+
+* `windhawk.ini` selects the install mode and points the app and extension to the active app-data root, engine folder, compiler folder, and UI runtime.
+* `Engine\<version>\engine.ini` must resolve to the matching engine app-data root and, for installed mode, the matching registry subtree.
+* If those files disagree, the UI can still show mods as installed while the injected engine loads a different storage location and the mods never activate.
+
+The current fork now exposes runtime diagnostics in the About page, surfaces storage mismatches on the Home page, and includes a repair action that rewrites the engine config to match the active install.
 
 ## Source code
 
@@ -54,7 +64,17 @@ The webview UI now includes:
 
 * smarter mod discovery with typo recovery, query broadening, and refinement suggestions
 * a redesigned settings experience with persistent local interface preferences such as density, wide layout, and reduced motion
-* an expanded About page with current workspace status, support snapshot copy, and quicker access to key project resources
+* an expanded About page with current workspace status, runtime diagnostics, path inspection, repair actions, and quicker access to key project resources
+* a richer installed-mods home view with a fast overview strip and an early warning when the engine storage backend diverges from the UI backend
+
+## Research-informed reliability
+
+The new diagnostics and repair flow is based on a narrow, reliability-focused interpretation of configuration research rather than more invasive runtime behavior changes.
+
+* [PeerPressure: Using Peer Configuration to Troubleshoot Systems Automatically](https://www.usenix.org/legacy/events/osdi04/tech/full_papers/wang/wang_html/) motivated the idea of treating configuration mismatches as first-class failures instead of as vague runtime symptoms.
+* [Strider: A Black-box, State-based Approach to Change and Configuration Management and Support](https://www.microsoft.com/en-us/research/publication/strider-a-black-box-state-based-approach-to-change-and-configuration-management-and-support/) informed the emphasis on comparing observed state with expected state before attempting repair.
+* [Automatically Generating Predicates and Solutions for Configuration Troubleshooting](https://www.usenix.org/conference/atc10/automatically-generating-predicates-and-solutions-configuration-troubleshooting) reinforced the direction of pairing diagnostics with concrete, low-friction fixes instead of only presenting raw paths and flags.
+* [The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations](https://www.cs.umd.edu/users/ben/papers/Shneiderman1996eyes.pdf) informed the UI structure: overview first, then diagnostic details on demand.
 
 ## Advanced Research Features (2025-2026)
 

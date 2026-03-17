@@ -175,6 +175,16 @@
   },
   "home": {
     "browse": "Browse for Mods",
+    "overview": {
+      "totalInstalled": "Installed mods",
+      "enabled": "Enabled now",
+      "updates": "Updates waiting",
+      "needsAttention": "Needs attention"
+    },
+    "runtimeIssue": {
+      "title": "Runtime configuration needs repair",
+      "viewDiagnostics": "View diagnostics"
+    },
     "filter": {
       "enabled": "Enabled mods",
       "disabled": "Disabled mods",
@@ -353,7 +363,9 @@
       "loggingOn": "Debug logging enabled",
       "loggingOff": "Debug logging off",
       "devModeOn": "Developer mode visible",
-      "devModeOff": "Developer options hidden"
+      "devModeOff": "Developer options hidden",
+      "storageAligned": "Runtime storage aligned",
+      "storageMismatch": "Runtime storage mismatch"
     },
     "workspace": {
       "title": "Workspace profile",
@@ -404,6 +416,45 @@
       "documentation": "Documentation",
       "github": "GitHub repository",
       "translations": "Translation guide"
+    },
+    "runtime": {
+      "title": "Runtime diagnostics",
+      "description": "Validate that the app, extension, and engine all target the same storage backend and review the resolved runtime paths used by this build.",
+      "issue": {
+        "none": "The engine and UI agree on the current storage layout.",
+        "engineConfigMissing": "The engine configuration file is missing, so installed mods can be listed in the UI but fail to load at runtime.",
+        "engineStorageMismatch": "The engine is targeting a different storage location than the Windhawk UI, which can prevent installed mods from loading.",
+        "fixHint": "Use the repair action to rewrite the engine configuration so it matches the active Windhawk install."
+      },
+      "modes": {
+        "platform": "Platform architecture",
+        "appMode": "App storage mode",
+        "engineMode": "Engine storage mode",
+        "arm64": "ARM64 companion builds"
+      },
+      "paths": {
+        "appRoot": "App root",
+        "appData": "UI and extension data root",
+        "expectedEngineData": "Expected engine data root",
+        "actualEngineData": "Actual engine data root",
+        "engine": "Engine binaries",
+        "expectedEngineRegistry": "Expected engine registry key",
+        "actualEngineRegistry": "Actual engine registry key",
+        "compiler": "Compiler toolchain",
+        "ui": "Embedded UI runtime"
+      },
+      "actions": {
+        "repair": "Repair runtime configuration",
+        "repairSuccess": "Runtime configuration repaired. Windhawk will restart to apply it.",
+        "repairFailed": "Unable to repair the runtime configuration"
+      },
+      "values": {
+        "portable": "Portable",
+        "installed": "Installed",
+        "aligned": "Aligned",
+        "mismatched": "Mismatched",
+        "missing": "Missing"
+      }
     },
     "builtWith": {
       "title": "Built with",

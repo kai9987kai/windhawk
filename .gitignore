@@ -1,4 +1,6 @@
 .run/
 artifacts/*.exe
+!artifacts/windhawk-custom-portable-installer.exe
+artifacts/portable-build/
 artifacts/backups/
 artifacts/installer-build/*.log

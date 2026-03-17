@@ -37,6 +37,28 @@ export const mockSettings = !useMockData
     },
   };
 
+export const mockRuntimeDiagnostics = !useMockData
+  ? null
+  : {
+    platformArch: 'arm64',
+    arm64Enabled: true,
+    portable: true,
+    engineConfigExists: true,
+    enginePortable: false,
+    engineConfigMatchesAppConfig: false,
+    issueCode: 'engine-storage-mismatch' as const,
+    appRootPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable',
+    appDataPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\Data',
+    enginePath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\Engine\\1.7.3',
+    compilerPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\Compiler',
+    uiPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\UI',
+    expectedEngineAppDataPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\Data\\Engine',
+    engineAppDataPath: 'C:\\ProgramData\\Windhawk\\Engine',
+    expectedEngineRegistryKey: null,
+    engineRegistryKey: 'HKLM\\SOFTWARE\\Windhawk\\Engine',
+    repairAvailable: true,
+  };
+
 const mockModMetadata = {
   id: 'custom-message-box',
   name: 'Custom Message Box',

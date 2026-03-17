@@ -125,6 +125,31 @@ export type AppUISettings = {
   safeMode: boolean;
 };
 
+export type AppRuntimeDiagnosticsIssueCode =
+  | 'none'
+  | 'engine-config-missing'
+  | 'engine-storage-mismatch';
+
+export type AppRuntimeDiagnostics = {
+  platformArch: string;
+  arm64Enabled: boolean;
+  portable: boolean;
+  engineConfigExists: boolean;
+  enginePortable: boolean | null;
+  engineConfigMatchesAppConfig: boolean;
+  issueCode: AppRuntimeDiagnosticsIssueCode;
+  appRootPath: string;
+  appDataPath: string;
+  enginePath: string;
+  compilerPath: string;
+  uiPath: string;
+  expectedEngineAppDataPath: string;
+  engineAppDataPath: string | null;
+  expectedEngineRegistryKey: string | null;
+  engineRegistryKey: string | null;
+  repairAvailable: boolean;
+};
+
 export type InitialSettingsValue =
   | boolean
   | number
@@ -288,6 +313,7 @@ export type GetModVersionsReplyData = {
 
 export type GetAppSettingsReplyData = {
   appSettings: Partial<AppSettings>;
+  runtimeDiagnostics?: AppRuntimeDiagnostics;
 };
 
 export type UpdateAppSettingsData = {
@@ -297,6 +323,12 @@ export type UpdateAppSettingsData = {
 export type UpdateAppSettingsReplyData = {
   appSettings: Partial<AppSettings>;
   succeeded: boolean;
+};
+
+export type RepairRuntimeConfigReplyData = {
+  succeeded: boolean;
+  runtimeDiagnostics?: AppRuntimeDiagnostics;
+  error?: string;
 };
 
 export type GetModSettingsData = {

@@ -89,6 +89,9 @@ internal static class Program
         string tempZipPath = Path.Combine(
             Path.GetTempPath(),
             "windhawk-custom-portable-" + Guid.NewGuid().ToString("N") + ".zip");
+        string tempExtractDir = Path.Combine(
+            Path.GetTempPath(),
+            "windhawk-custom-portable-extract-" + Guid.NewGuid().ToString("N"));
 
         try
         {
@@ -106,38 +109,9 @@ internal static class Program
                 }
             }
 
-            using (ZipArchive archive = ZipFile.OpenRead(tempZipPath))
-            {
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    string destinationPath = Path.GetFullPath(
-                        Path.Combine(targetDir, entry.FullName));
-
-                    string normalizedTargetDir = Path.GetFullPath(targetDir)
-                        .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                        + Path.DirectorySeparatorChar;
-
-                    if (!destinationPath.StartsWith(normalizedTargetDir, StringComparison.OrdinalIgnoreCase) &&
-                        !string.Equals(destinationPath.TrimEnd(Path.DirectorySeparatorChar), normalizedTargetDir.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new InvalidOperationException("Archive entry has an invalid path: " + entry.FullName);
-                    }
-
-                    if (string.IsNullOrEmpty(entry.Name))
-                    {
-                        Directory.CreateDirectory(destinationPath);
-                        continue;
-                    }
-
-                    string destinationDirectory = Path.GetDirectoryName(destinationPath);
-                    if (!string.IsNullOrEmpty(destinationDirectory))
-                    {
-                        Directory.CreateDirectory(destinationDirectory);
-                    }
-
-                    entry.ExtractToFile(destinationPath, true);
-                }
-            }
+            Directory.CreateDirectory(tempExtractDir);
+            ZipFile.ExtractToDirectory(tempZipPath, tempExtractDir);
+            SynchronizeDirectory(tempExtractDir, targetDir);
         }
         finally
         {
@@ -145,7 +119,80 @@ internal static class Program
             {
                 File.Delete(tempZipPath);
             }
+
+            if (Directory.Exists(tempExtractDir))
+            {
+                Directory.Delete(tempExtractDir, true);
+            }
         }
+    }
+
+    private static void SynchronizeDirectory(string sourceDir, string targetDir)
+    {
+        Directory.CreateDirectory(targetDir);
+
+        foreach (string sourceSubdirectory in Directory.GetDirectories(sourceDir))
+        {
+            string directoryName = Path.GetFileName(sourceSubdirectory);
+            if (string.IsNullOrEmpty(directoryName))
+            {
+                continue;
+            }
+
+            string targetSubdirectory = Path.Combine(targetDir, directoryName);
+            SynchronizeDirectory(sourceSubdirectory, targetSubdirectory);
+        }
+
+        foreach (string sourceFile in Directory.GetFiles(sourceDir))
+        {
+            string fileName = Path.GetFileName(sourceFile);
+            if (string.IsNullOrEmpty(fileName))
+            {
+                continue;
+            }
+
+            string targetFile = Path.Combine(targetDir, fileName);
+            if (File.Exists(targetFile))
+            {
+                File.SetAttributes(targetFile, FileAttributes.Normal);
+            }
+
+            File.Copy(sourceFile, targetFile, true);
+        }
+
+        var sourceEntries = Directory.GetFileSystemEntries(sourceDir)
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string targetEntry in Directory.GetFileSystemEntries(targetDir))
+        {
+            string entryName = Path.GetFileName(targetEntry);
+            if (string.IsNullOrEmpty(entryName) || sourceEntries.Contains(entryName))
+            {
+                continue;
+            }
+
+            if (Directory.Exists(targetEntry))
+            {
+                DeleteDirectory(targetEntry);
+            }
+            else if (File.Exists(targetEntry))
+            {
+                File.SetAttributes(targetEntry, FileAttributes.Normal);
+                File.Delete(targetEntry);
+            }
+        }
+    }
+
+    private static void DeleteDirectory(string path)
+    {
+        foreach (string filePath in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+        {
+            File.SetAttributes(filePath, FileAttributes.Normal);
+        }
+
+        Directory.Delete(path, true);
     }
 
     private static void CreateShellShortcuts(string targetDir)

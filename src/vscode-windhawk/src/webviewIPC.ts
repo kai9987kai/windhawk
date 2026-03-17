@@ -19,6 +19,7 @@ import {
   GetRepositoryModSourceDataReplyData,
   GetRepositoryModsReplyData,
   InstallModReplyData,
+  RepairRuntimeConfigReplyData,
   SetEditedModDetailsData,
   SetEditedModIdData,
   SetModSettingsReplyData,
@@ -432,6 +433,21 @@ export function updateAppSettingsReply(
   const msg: Reply = {
     type: 'reply',
     command: 'updateAppSettings',
+    messageId,
+    data,
+  };
+  webview.postMessage(msg);
+}
+
+export function repairRuntimeConfigReply(
+  webview: vscode.Webview | undefined,
+  messageId: number,
+  data: RepairRuntimeConfigReplyData
+) {
+  if (!webview) return;
+  const msg: Reply = {
+    type: 'reply',
+    command: 'repairRuntimeConfig',
     messageId,
     data,
   };

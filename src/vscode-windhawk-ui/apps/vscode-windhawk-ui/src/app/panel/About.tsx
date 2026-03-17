@@ -3,10 +3,10 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { AppUISettingsContext } from '../appUISettings';
-import { useGetAppSettings } from '../webviewIPC';
-import { AppSettings } from '../webviewIPCMessages';
+import { useGetAppSettings, useRepairRuntimeConfig } from '../webviewIPC';
+import { AppRuntimeDiagnostics, AppSettings } from '../webviewIPCMessages';
 import { ChangelogModal } from './ChangelogModal';
-import { mockSettings } from './mockData';
+import { mockRuntimeDiagnostics, mockSettings } from './mockData';
 import { UpdateModal } from './UpdateModal';
 
 type StatusTone = 'default' | 'success' | 'warning' | 'error';
@@ -242,6 +242,41 @@ const BuiltWithLabel = styled.div`
   font-weight: 600;
 `;
 
+const DiagnosticsNotice = styled(Alert)`
+  margin-bottom: 16px;
+`;
+
+const DiagnosticsPathList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+`;
+
+const DiagnosticsPathItem = styled.div`
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+`;
+
+const DiagnosticsPathLabel = styled.div`
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+`;
+
+const DiagnosticsPathValue = styled.div`
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+`;
+
 function copyText(text: string) {
   const textArea = document.createElement('textarea');
   textArea.value = text;
@@ -273,6 +308,8 @@ function About() {
   const [appSettings, setAppSettings] = useState<Partial<AppSettings> | null>(
     mockSettings
   );
+  const [runtimeDiagnostics, setRuntimeDiagnostics] =
+    useState<AppRuntimeDiagnostics | null>(mockRuntimeDiagnostics);
 
   const {
     language,
@@ -286,8 +323,27 @@ function About() {
   const { getAppSettings } = useGetAppSettings(
     useCallback((data) => {
       setAppSettings(data.appSettings);
+      setRuntimeDiagnostics(data.runtimeDiagnostics || null);
     }, [])
   );
+
+  const { repairRuntimeConfig, repairRuntimeConfigPending } =
+    useRepairRuntimeConfig(
+      useCallback(
+        (data) => {
+          if (data.succeeded) {
+            setRuntimeDiagnostics(data.runtimeDiagnostics || null);
+            message.success(t('about.runtime.actions.repairSuccess'));
+            return;
+          }
+
+          message.error(
+            data.error || (t('about.runtime.actions.repairFailed') as string)
+          );
+        },
+        [t]
+      )
+    );
 
   useEffect(() => {
     getAppSettings({});
@@ -356,8 +412,36 @@ function About() {
     [appSettings, devModeOptOut, language, localUISettings, t]
   );
 
-  const statusItems = useMemo<StatusItem[]>(
-    () => [
+  const runtimeModeLabel = useCallback(
+    (portable: boolean | null | undefined) => {
+      if (portable === null || portable === undefined) {
+        return t('about.runtime.values.missing');
+      }
+
+      return portable
+        ? t('about.runtime.values.portable')
+        : t('about.runtime.values.installed');
+    },
+    [t]
+  );
+
+  const runtimeIssueText = useMemo(() => {
+    if (!runtimeDiagnostics) {
+      return null;
+    }
+
+    switch (runtimeDiagnostics.issueCode) {
+      case 'engine-config-missing':
+        return t('about.runtime.issue.engineConfigMissing');
+      case 'engine-storage-mismatch':
+        return t('about.runtime.issue.engineStorageMismatch');
+      default:
+        return t('about.runtime.issue.none');
+    }
+  }, [runtimeDiagnostics, t]);
+
+  const statusItems = useMemo<StatusItem[]>(() => {
+    const items: StatusItem[] = [
       {
         key: 'update',
         text: updateIsAvailable
@@ -386,8 +470,115 @@ function About() {
           : t('about.status.devModeOn'),
         tone: devModeOptOut ? 'default' : 'success',
       },
-    ],
-    [devModeOptOut, loggingEnabled, safeMode, t, updateIsAvailable]
+    ];
+
+    if (runtimeDiagnostics) {
+      items.push({
+        key: 'runtime-storage',
+        text: runtimeDiagnostics.engineConfigMatchesAppConfig
+          ? t('about.status.storageAligned')
+          : t('about.status.storageMismatch'),
+        tone: runtimeDiagnostics.engineConfigMatchesAppConfig
+          ? 'success'
+          : 'error',
+      });
+    }
+
+    return items;
+  }, [
+    devModeOptOut,
+    loggingEnabled,
+    runtimeDiagnostics,
+    safeMode,
+    t,
+    updateIsAvailable,
+  ]);
+
+  const runtimeSummaryItems = useMemo<SummaryItem[]>(
+    () =>
+      runtimeDiagnostics
+        ? [
+            {
+              label: t('about.runtime.modes.platform'),
+              value: runtimeDiagnostics.platformArch,
+            },
+            {
+              label: t('about.runtime.modes.appMode'),
+              value: runtimeModeLabel(runtimeDiagnostics.portable),
+            },
+            {
+              label: t('about.runtime.modes.engineMode'),
+              value: runtimeModeLabel(runtimeDiagnostics.enginePortable),
+            },
+            {
+              label: t('about.runtime.modes.arm64'),
+              value: runtimeDiagnostics.arm64Enabled
+                ? t('about.values.enabled')
+                : t('about.values.disabled'),
+            },
+          ]
+        : [],
+    [runtimeDiagnostics, runtimeModeLabel, t]
+  );
+
+  const runtimePathItems = useMemo(
+    () =>
+      runtimeDiagnostics
+        ? [
+            {
+              key: 'app-root',
+              label: t('about.runtime.paths.appRoot'),
+              value: runtimeDiagnostics.appRootPath,
+            },
+            {
+              key: 'app-data',
+              label: t('about.runtime.paths.appData'),
+              value: runtimeDiagnostics.appDataPath,
+            },
+            {
+              key: 'expected-engine-data',
+              label: t('about.runtime.paths.expectedEngineData'),
+              value: runtimeDiagnostics.expectedEngineAppDataPath,
+            },
+            {
+              key: 'actual-engine-data',
+              label: t('about.runtime.paths.actualEngineData'),
+              value:
+                runtimeDiagnostics.engineAppDataPath ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              key: 'engine',
+              label: t('about.runtime.paths.engine'),
+              value: runtimeDiagnostics.enginePath,
+            },
+            {
+              key: 'expected-engine-registry',
+              label: t('about.runtime.paths.expectedEngineRegistry'),
+              value:
+                runtimeDiagnostics.expectedEngineRegistryKey ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              key: 'actual-engine-registry',
+              label: t('about.runtime.paths.actualEngineRegistry'),
+              value:
+                runtimeDiagnostics.engineRegistryKey ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              key: 'compiler',
+              label: t('about.runtime.paths.compiler'),
+              value: runtimeDiagnostics.compilerPath,
+            },
+            {
+              key: 'ui',
+              label: t('about.runtime.paths.ui'),
+              value: runtimeDiagnostics.uiPath,
+            },
+          ]
+        : [],
+    [runtimeDiagnostics, t]
   );
 
   const supportSnapshot = useMemo(
@@ -431,7 +622,20 @@ function About() {
             ? t('about.values.reduced')
             : t('about.values.standard')
         }`,
-      ].join('\n'),
+        runtimeDiagnostics
+          ? `Runtime storage: ${
+              runtimeDiagnostics.engineConfigMatchesAppConfig
+                ? t('about.runtime.values.aligned')
+                : t('about.runtime.values.mismatched')
+            }`
+          : null,
+        runtimeDiagnostics
+          ? `Runtime platform: ${runtimeDiagnostics.platformArch}`
+          : null,
+        runtimeDiagnostics
+          ? `Runtime mode: ${runtimeModeLabel(runtimeDiagnostics.portable)}`
+          : null,
+      ].filter(Boolean).join('\n'),
     [
       appSettings?.disableUpdateCheck,
       appSettings?.language,
@@ -442,6 +646,8 @@ function About() {
       localUISettings.reduceMotion,
       localUISettings.useWideLayout,
       loggingEnabled,
+      runtimeDiagnostics,
+      runtimeModeLabel,
       safeMode,
       t,
       updateIsAvailable,
@@ -580,6 +786,57 @@ function About() {
               </SummaryRow>
             ))}
           </SummaryList>
+        </SectionCard>
+
+        <SectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('about.runtime.title')}</SectionTitle>
+            <SectionDescription>{t('about.runtime.description')}</SectionDescription>
+          </SectionHeading>
+          {runtimeDiagnostics && runtimeIssueText && (
+            <DiagnosticsNotice
+              message={<strong>{runtimeIssueText}</strong>}
+              description={
+                runtimeDiagnostics.engineConfigMatchesAppConfig
+                  ? undefined
+                  : t('about.runtime.issue.fixHint')
+              }
+              type={
+                runtimeDiagnostics.engineConfigMatchesAppConfig
+                  ? 'success'
+                  : 'warning'
+              }
+              showIcon
+            />
+          )}
+          <SummaryList>
+            {runtimeSummaryItems.map(({ label, value }) => (
+              <SummaryRow key={label}>
+                <SummaryLabel>{label}</SummaryLabel>
+                <SummaryValue>{value}</SummaryValue>
+              </SummaryRow>
+            ))}
+          </SummaryList>
+          {runtimeDiagnostics?.repairAvailable &&
+            !runtimeDiagnostics.engineConfigMatchesAppConfig && (
+              <HeroActionRow>
+                <Button
+                  type="primary"
+                  loading={repairRuntimeConfigPending}
+                  onClick={() => repairRuntimeConfig({})}
+                >
+                  {t('about.runtime.actions.repair')}
+                </Button>
+              </HeroActionRow>
+            )}
+          <DiagnosticsPathList>
+            {runtimePathItems.map(({ key, label, value }) => (
+              <DiagnosticsPathItem key={key}>
+                <DiagnosticsPathLabel>{label}</DiagnosticsPathLabel>
+                <DiagnosticsPathValue>{value}</DiagnosticsPathValue>
+              </DiagnosticsPathItem>
+            ))}
+          </DiagnosticsPathList>
         </SectionCard>
 
         <SectionCard bordered={false}>

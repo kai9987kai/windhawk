@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+  <title id="title">Windhawk runtime architecture</title>
+  <desc id="desc">Diagram showing how windhawk.ini, the embedded extension, engine.ini, and the active storage backend fit together.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c1324" />
+      <stop offset="100%" stop-color="#17253e" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#152847" />
+      <stop offset="100%" stop-color="#213b66" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2cb67d" />
+      <stop offset="100%" stop-color="#56cfe1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.28" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8dc7ff" />
+    </marker>
+    <style>
+      .panel { fill: url(#panel); stroke: rgba(255,255,255,0.16); stroke-width: 1.5; rx: 22; ry: 22; filter: url(#shadow); }
+      .panel-accent { fill: rgba(44,182,125,0.12); stroke: #5bd6b1; stroke-width: 1.5; rx: 22; ry: 22; }
+      .title { fill: #f8fbff; font: 700 28px 'Segoe UI', Arial, sans-serif; }
+      .section { fill: #f8fbff; font: 700 22px 'Segoe UI', Arial, sans-serif; }
+      .label { fill: #d9e7ff; font: 600 18px 'Segoe UI', Arial, sans-serif; }
+      .body { fill: #b9ccec; font: 400 16px 'Segoe UI', Arial, sans-serif; }
+      .body-small { fill: #9db3d9; font: 400 14px 'Segoe UI', Arial, sans-serif; }
+      .mono { fill: #dff6ff; font: 600 14px 'Cascadia Mono', Consolas, monospace; }
+      .arrow { fill: none; stroke: #8dc7ff; stroke-width: 3; marker-end: url(#arrow); }
+      .arrow-accent { fill: none; stroke: #62d2aa; stroke-width: 3; marker-end: url(#arrow); }
+      .pill { fill: rgba(255,255,255,0.08); stroke: rgba(255,255,255,0.12); stroke-width: 1; rx: 999; ry: 999; }
+    </style>
+  </defs>
+
+  <rect width="1180" height="760" fill="url(#bg)" rx="28" ry="28" />
+
+  <text x="56" y="72" class="title">Windhawk runtime architecture and storage alignment</text>
+  <text x="56" y="104" class="body">A working build depends on the UI path resolver and the injected engine resolving the same storage backend.</text>
+
+  <rect x="52" y="146" width="320" height="226" class="panel" />
+  <text x="76" y="186" class="section">Launcher and UI runtime</text>
+  <text x="76" y="220" class="label">windhawk.exe</text>
+  <text x="76" y="248" class="body">Bootstraps the embedded VSCodium runtime and the Windhawk extension.</text>
+  <rect x="76" y="274" width="272" height="42" class="pill" />
+  <text x="92" y="301" class="mono">windhawk.ini</text>
+  <text x="76" y="340" class="body-small">Controls:</text>
+  <text x="92" y="364" class="body-small">Portable / installed mode</text>
+  <text x="92" y="388" class="body-small">App data path, engine path, compiler path, UI path</text>
+
+  <rect x="428" y="146" width="320" height="226" class="panel" />
+  <text x="452" y="186" class="section">Embedded extension</text>
+  <text x="452" y="220" class="label">UI/resources/app/extensions/windhawk</text>
+  <text x="452" y="248" class="body">Reads app config, installs mods, lists mods, and now computes runtime diagnostics.</text>
+  <rect x="452" y="274" width="272" height="42" class="pill" />
+  <text x="468" y="301" class="mono">webview + extension.js</text>
+  <text x="452" y="340" class="body-small">New surfaces:</text>
+  <text x="468" y="364" class="body-small">Overview cards, mismatch alerts, diagnostics, repair action</text>
+
+  <rect x="804" y="146" width="324" height="226" class="panel" />
+  <text x="828" y="186" class="section">Injected engine</text>
+  <text x="828" y="220" class="label">Engine\&lt;version&gt;\engine.ini + windhawk.dll</text>
+  <text x="828" y="248" class="body">Loads inside target processes and reads mod state from its own resolved storage backend.</text>
+  <rect x="828" y="274" width="276" height="42" class="pill" />
+  <text x="844" y="301" class="mono">Portable? AppDataPath? RegistryKey?</text>
+  <text x="828" y="340" class="body-small">If this file diverges from the app config, mods can appear installed but never load.</text>
+
+  <path d="M372 258 C404 258, 404 258, 428 258" class="arrow" />
+  <path d="M748 258 C780 258, 780 258, 804 258" class="arrow" />
+
+  <rect x="92" y="448" width="392" height="222" class="panel" />
+  <text x="116" y="488" class="section">Portable backend</text>
+  <text x="116" y="522" class="label">App root relative paths</text>
+  <text x="116" y="552" class="mono">Data\settings.ini</text>
+  <text x="116" y="580" class="mono">Data\Engine\Mods, ModsWritable, Symbols</text>
+  <text x="116" y="616" class="body">Both configs must point here for a portable install to work.</text>
+
+  <rect x="556" y="448" width="540" height="222" class="panel" />
+  <text x="580" y="488" class="section">Installed backend</text>
+  <text x="580" y="522" class="label">Machine-wide storage</text>
+  <text x="580" y="552" class="mono">%ProgramData%\Windhawk</text>
+  <text x="580" y="580" class="mono">%ProgramData%\Windhawk\Engine</text>
+  <text x="580" y="608" class="mono">HKLM\SOFTWARE\Windhawk and HKLM\SOFTWARE\Windhawk\Engine</text>
+  <text x="580" y="644" class="body">Installed builds require both filesystem and registry alignment.</text>
+
+  <path d="M268 372 C268 418, 288 418, 288 448" class="arrow" />
+  <path d="M966 372 C966 418, 862 418, 862 448" class="arrow" />
+
+  <rect x="374" y="546" width="432" height="140" class="panel-accent" />
+  <text x="398" y="584" class="section">Runtime diagnostics and repair</text>
+  <text x="398" y="614" class="body">The extension now compares app config with engine config, exposes the mismatch in the UI,</text>
+  <text x="398" y="638" class="body">and can rewrite the active engine.ini so the runtime backend matches the current install.</text>
+  <path d="M588 372 C588 448, 590 448, 590 546" class="arrow-accent" />
+</svg>
