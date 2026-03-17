@@ -1,7 +1,8 @@
 # Windhawk
 
-![Screenshot](screenshot.png)
-<img width="1097" height="731" alt="image" src="https://github.com/user-attachments/assets/0dc1f11d-1149-4875-8047-827a04d69863" />
+<img width="1094" height="731" alt="image" src="https://github.com/user-attachments/assets/df55925e-7152-41a1-935e-2b7b0e3a0648" />
+<img width="1088" height="731" alt="image" src="https://github.com/user-attachments/assets/204bb35f-ed1e-411c-8d71-b8fce94f27e8" />
+<img width="1097" height="725" alt="image" src="https://github.com/user-attachments/assets/56a9ebca-43dc-47e9-9f7c-ce68781b2796" />
 
 Windhawk aims to make it easier to customize Windows programs. For more details, see [the official website](https://windhawk.net/) and [the announcement](https://ramensoftware.com/windhawk).
 
