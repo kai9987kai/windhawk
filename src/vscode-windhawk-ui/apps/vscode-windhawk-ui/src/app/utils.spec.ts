@@ -1,4 +1,4 @@
-import { sanitizeUrl } from './utils';
+import { copyTextToClipboard, sanitizeUrl } from './utils';
 
 describe('sanitizeUrl', () => {
   let consoleWarnSpy: jest.SpyInstance;
@@ -60,5 +60,52 @@ describe('sanitizeUrl', () => {
 
   it('should preserve URL fragments', () => {
     expect(sanitizeUrl('https://example.com#section')).toBe('https://example.com#section');
+  });
+});
+
+describe('copyTextToClipboard', () => {
+  let consoleWarnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {
+      // Clipboard fallback is intentionally exercised in this suite.
+    });
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+    jest.restoreAllMocks();
+  });
+
+  it('uses the Clipboard API when available', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText,
+      },
+    });
+
+    await copyTextToClipboard('hello');
+
+    expect(writeText).toHaveBeenCalledWith('hello');
+  });
+
+  it('falls back to execCommand when the Clipboard API fails', async () => {
+    const writeText = jest.fn().mockRejectedValue(new Error('no clipboard'));
+    Object.assign(navigator, {
+      clipboard: {
+        writeText,
+      },
+    });
+
+    const execCommandSpy = jest.fn().mockReturnValue(true);
+    Object.defineProperty(document, 'execCommand', {
+      configurable: true,
+      value: execCommandSpy,
+    });
+
+    await copyTextToClipboard('fallback');
+
+    expect(execCommandSpy).toHaveBeenCalledWith('copy');
   });
 });

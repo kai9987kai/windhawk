@@ -50,6 +50,25 @@ export type SearchRecovery = {
   results: RankedMod[];
 };
 
+export type DiscoveryMission = {
+  key: string;
+  title: string;
+  description: string;
+  researchCue: string;
+  query: string;
+  sortingOrder: SortingOrder;
+  followUpQueries: string[];
+  verificationChecks: string[];
+};
+
+export type DiscoveryMissionCandidate = {
+  modId: string;
+  displayName: string;
+  author: string;
+  insightSummary: string;
+  communitySummary: string;
+};
+
 type SearchConcept = {
   key: string;
   label: string;
@@ -153,6 +172,19 @@ const SEARCH_CONCEPTS: SearchConcept[] = [
     processes: ['explorer.exe'],
   },
   {
+    key: 'context-menu',
+    label: 'Context menu',
+    queryText: 'context menu',
+    terms: [
+      'context menu',
+      'context menus',
+      'right click',
+      'right-click',
+      'shell menu',
+    ],
+    processes: ['explorer.exe'],
+  },
+  {
     key: 'start-menu',
     label: 'Start menu',
     queryText: 'start menu',
@@ -164,6 +196,21 @@ const SEARCH_CONCEPTS: SearchConcept[] = [
       'search panel',
     ],
     processes: ['explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe'],
+  },
+  {
+    key: 'notifications',
+    label: 'Notifications',
+    queryText: 'notifications',
+    terms: [
+      'notifications',
+      'notification center',
+      'action center',
+      'toast',
+      'toasts',
+      'quick settings',
+      'focus assist',
+    ],
+    processes: ['explorer.exe', 'shellexperiencehost.exe'],
   },
   {
     key: 'desktop',
@@ -186,6 +233,19 @@ const SEARCH_CONCEPTS: SearchConcept[] = [
       'snap',
       'maximize',
       'minimize',
+    ],
+    processes: ['dwm.exe', 'explorer.exe'],
+  },
+  {
+    key: 'alt-tab',
+    label: 'Alt+Tab',
+    queryText: 'alt tab',
+    terms: [
+      'alt tab',
+      'task switcher',
+      'window switcher',
+      'switcher',
+      'switch between windows',
     ],
     processes: ['dwm.exe', 'explorer.exe'],
   },
@@ -226,6 +286,65 @@ const SEARCH_CONCEPTS: SearchConcept[] = [
     queryText: 'performance',
     terms: ['performance', 'latency', 'fast', 'faster', 'memory', 'cpu'],
     processes: [],
+  },
+];
+
+const DISCOVERY_MISSIONS: DiscoveryMission[] = [
+  {
+    key: 'taskbar-flow',
+    title: 'Sharpen taskbar flow',
+    description: 'Start from taskbar-focused mods, then branch into tray and clock refinements.',
+    researchCue: 'Compare a small set first, then refine instead of stacking unrelated tweaks.',
+    query: 'taskbar',
+    sortingOrder: 'smart-relevance',
+    followUpQueries: ['tray', 'clock', 'start menu'],
+    verificationChecks: [
+      'Check primary and secondary monitor behavior before keeping the change.',
+      'Verify pinned apps, overflow area, and taskbar labels after Explorer reloads.',
+      'Keep one rollback path in case explorer.exe behavior changes in your build.',
+    ],
+  },
+  {
+    key: 'notification-calm',
+    title: 'Calm notifications',
+    description: 'Use notification-centered mods to reduce interruption cost and noisy shell surfaces.',
+    researchCue: 'Prefer focused interventions with explicit review steps over one broad shell change.',
+    query: 'notifications',
+    sortingOrder: 'smart-relevance',
+    followUpQueries: ['quick settings', 'toast', 'focus assist'],
+    verificationChecks: [
+      'Trigger a real toast and confirm the experience is quieter without losing critical alerts.',
+      'Check quick settings and shell surfaces that share notification infrastructure.',
+      'Review changelog notes for Windows build-specific shell regressions before enabling long term.',
+    ],
+  },
+  {
+    key: 'explorer-focus',
+    title: 'Tighten Explorer workflow',
+    description: 'Begin with Explorer mods, then narrow toward context menu, desktop, or file-flow changes.',
+    researchCue: 'Keep the search wide enough to discover options, but validate one workflow at a time.',
+    query: 'explorer',
+    sortingOrder: 'smart-relevance',
+    followUpQueries: ['context menu', 'desktop', 'folders'],
+    verificationChecks: [
+      'Test the exact file and folder flow you want to improve, not just a screenshot path.',
+      'Verify right-click menus and drag-drop behavior after any shell tweak.',
+      'Check whether the mod targets only explorer.exe or reaches other shell processes too.',
+    ],
+  },
+  {
+    key: 'window-flow',
+    title: 'Refine window movement',
+    description: 'Compare window-management mods, then drill into Alt+Tab, snapping, or title-bar behavior.',
+    researchCue: 'Use the first pass to shortlist candidates, then validate the risky interactions manually.',
+    query: 'window management',
+    sortingOrder: 'smart-relevance',
+    followUpQueries: ['alt tab', 'snap', 'title bar'],
+    verificationChecks: [
+      'Exercise snap, maximize, minimize, and virtual desktop flows before keeping the mod.',
+      'Check for DWM or shell process scope when window chrome behavior changes.',
+      'Keep logging available for the first live run if the mod adjusts window lifecycle events.',
+    ],
   },
 ];
 
@@ -411,7 +530,21 @@ function inferConcepts(
       // explorer.exe is too broad to imply every shell sub-domain on its own.
       if (
         process === 'explorer.exe' &&
-        ['taskbar', 'start-menu', 'desktop', 'window-management'].includes(concept.key)
+        [
+          'taskbar',
+          'context-menu',
+          'start-menu',
+          'notifications',
+          'desktop',
+          'window-management',
+        ].includes(concept.key)
+      ) {
+        return termMatch;
+      }
+
+      if (
+        process === 'dwm.exe' &&
+        ['window-management', 'alt-tab'].includes(concept.key)
       ) {
         return termMatch;
       }
@@ -723,6 +856,54 @@ function buildInsightLabel(fieldKey: SearchField['key'], mod: ModProfile): strin
   }
 }
 
+function buildBrowseInsights(
+  mod: RepositoryModEntry,
+  modProfile: ModProfile
+): string[] {
+  const insightScores = new Map<string, number>();
+  const quality = qualityScore(mod.repository.details);
+  const updatedDays =
+    (Date.now() - mod.repository.details.updated) / (1000 * 60 * 60 * 24);
+  const includesWildcards = (mod.repository.metadata.include || []).some(
+    (entry) => entry.includes('*') || entry.includes('?')
+  );
+
+  if (quality >= 0.82) {
+    insightScores.set('Community favorite', 0.69);
+  } else if (quality >= 0.68) {
+    insightScores.set('Popular', 0.63);
+  }
+
+  if (mod.repository.details.rating >= 8.5) {
+    insightScores.set('Highly rated', 1.1);
+  }
+
+  if (updatedDays <= 45) {
+    insightScores.set('Fresh update', 1.05);
+  } else if (updatedDays <= 120) {
+    insightScores.set('Recently updated', 0.8);
+  }
+
+  if (modProfile.concepts.length > 0) {
+    insightScores.set(modProfile.concepts[0].label, 0.76);
+  }
+
+  if (includesWildcards) {
+    insightScores.set('Broad reach', 0.62);
+  } else if (modProfile.processes.length === 1) {
+    insightScores.set(`Targets ${modProfile.processes[0]}`, 0.58);
+  }
+
+  if (mod.installed) {
+    insightScores.set('Installed already', 0.54);
+  }
+
+  return Array.from(insightScores.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3)
+    .map(([label]) => label);
+}
+
 function scoreModAgainstQuery(
   modId: string,
   mod: RepositoryModEntry,
@@ -735,7 +916,7 @@ function scoreModAgainstQuery(
       modId,
       mod,
       discoveryScore: qualityScore(mod.repository.details),
-      insights: [],
+      insights: buildBrowseInsights(mod, modProfile),
       inferredConcepts: modProfile.concepts.map((concept) => concept.label),
     };
   }
@@ -948,6 +1129,76 @@ function diversifyTopResults(results: RankedMod[]): RankedMod[] {
   ];
 }
 
+export function getDiscoveryMissions(): DiscoveryMission[] {
+  return DISCOVERY_MISSIONS;
+}
+
+export function getDiscoveryMissionByQuery(
+  query: string,
+  sortingOrder: SortingOrder
+): DiscoveryMission | null {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) {
+    return null;
+  }
+
+  return DISCOVERY_MISSIONS.find(
+    (mission) =>
+      normalizeText(mission.query) === normalizedQuery &&
+      mission.sortingOrder === sortingOrder
+  ) || null;
+}
+
+export function buildDiscoveryMissionCandidates(
+  rankedMods: RankedMod[]
+): DiscoveryMissionCandidate[] {
+  return rankedMods.slice(0, 3).map((candidate) => {
+    const metadata = candidate.mod.repository.metadata;
+    const details = candidate.mod.repository.details;
+
+    return {
+      modId: candidate.modId,
+      displayName: metadata.name || candidate.modId,
+      author: metadata.author || 'Unknown author',
+      insightSummary: candidate.insights.length > 0
+        ? candidate.insights.join(' | ')
+        : 'No extra signals yet',
+      communitySummary: `${details.users.toLocaleString()} users | ${(details.rating / 2).toFixed(1)}/5`,
+    };
+  });
+}
+
+export function buildDiscoveryMissionBrief(
+  mission: DiscoveryMission,
+  rankedMods: RankedMod[]
+): string {
+  const topCandidates = rankedMods.slice(0, 4);
+  const topCandidateLines = topCandidates.length > 0
+    ? topCandidates.map((candidate, index) => {
+      const displayName = candidate.mod.repository.metadata.name || candidate.modId;
+      const insightSummary = candidate.insights.length > 0
+        ? candidate.insights.join(', ')
+        : 'No extra signals';
+
+      return `${index + 1}. ${displayName} (${candidate.modId}) - ${insightSummary}`;
+    })
+    : ['1. No ranked mods were available for this mission yet.'];
+
+  return `Help me compare Windhawk mods for a Windows customization mission.
+Mission: ${mission.title}
+Goal: ${mission.description}
+Starting query: ${mission.query}
+Suggested follow-up queries: ${mission.followUpQueries.join(', ')}
+Manual verification priorities:
+- ${mission.verificationChecks.join('\n- ')}
+Top candidate mods:
+${topCandidateLines.join('\n')}
+Output:
+1. The best 1-2 mods to try first and why
+2. Tradeoffs, process scope, and compatibility risks
+3. A short manual validation plan before keeping the change`;
+}
+
 export function rankMods(
   mods: [string, RepositoryModEntry][],
   query: string,
@@ -965,15 +1216,17 @@ export function rankMods(
           fallbackSortingOrder as Exclude<SortingOrder, 'smart-relevance'>
         )
       )
-      .map(([modId, mod]) => ({
-        modId,
-        mod,
-        discoveryScore: qualityScore(mod.repository.details),
-        insights: [],
-        inferredConcepts: buildModProfile(modId, mod).concepts.map(
-          (concept) => concept.label
-        ),
-      }));
+      .map(([modId, mod]) => {
+        const profile = buildModProfile(modId, mod);
+
+        return {
+          modId,
+          mod,
+          discoveryScore: qualityScore(mod.repository.details),
+          insights: buildBrowseInsights(mod, profile),
+          inferredConcepts: profile.concepts.map((concept) => concept.label),
+        };
+      });
   }
 
   const queryProfile = buildQueryProfile(query);

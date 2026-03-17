@@ -189,6 +189,9 @@
       "enabled": "Enabled mods",
       "disabled": "Disabled mods",
       "updateAvailable": "Mods with update available",
+      "localDrafts": "Local drafts",
+      "needsCompile": "Needs compile",
+      "loggingEnabled": "Logging enabled",
       "clearFilters": "Clear filters"
     },
     "installedMods": {
@@ -226,6 +229,70 @@
       "filteredOnly_one": "{{count}} result after filters",
       "filteredOnly_other": "{{count}} results after filters",
       "refineWith": "Refine with"
+    },
+    "presets": {
+      "title": "Discovery starting points",
+      "description": "Jump into a focused slice of the catalog without building the query from scratch.",
+      "modsCount_one": "{{count}} mod",
+      "modsCount_other": "{{count}} mods",
+      "items": {
+        "fresh": {
+          "title": "Fresh updates",
+          "description": "Recently updated mods, sorted by latest activity."
+        },
+        "favorites": {
+          "title": "Community favorites",
+          "description": "Popular and highly rated picks across the full catalog."
+        },
+        "taskbar": {
+          "title": "Taskbar",
+          "description": "Taskbar, tray, and clock customization mods."
+        },
+        "explorer": {
+          "title": "Explorer",
+          "description": "File Explorer and shell workflow improvements."
+        },
+        "startMenu": {
+          "title": "Start menu",
+          "description": "Search, launcher, and Start menu tweaks."
+        },
+        "audio": {
+          "title": "Audio",
+          "description": "Volume, speaker, and media control tweaks."
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Toast, quick settings, and notification center behavior tweaks."
+        },
+        "windowManagement": {
+          "title": "Window management",
+          "description": "Snap, Alt+Tab, title bar, and DWM behavior changes."
+        },
+        "input": {
+          "title": "Input",
+          "description": "Keyboard, mouse, hotkey, and scrolling improvements."
+        },
+        "appearance": {
+          "title": "Appearance",
+          "description": "Theme, transparency, accent, and visual styling adjustments."
+        }
+      }
+    },
+    "missions": {
+      "title": "Research-backed missions",
+      "description": "Start from a Windows goal, compare a focused set of mods, then refine or ask AI for a comparison brief.",
+      "modsCount_one": "{{count}} candidate mod",
+      "modsCount_other": "{{count}} candidate mods",
+      "followUp": "Refine with",
+      "verify": "Verify first",
+      "start": "Start mission",
+      "copyBrief": "Copy AI brief",
+      "workbenchTitle": "{{mission}} workbench",
+      "workbenchDescription": "Compare the strongest candidates, branch into follow-up queries, and open the top option without rebuilding the search from scratch.",
+      "openTopCandidate": "Open top candidate",
+      "compareTopCandidates": "Compare top candidates",
+      "copiedBrief": "Mission brief copied",
+      "copyFailed": "Unable to copy the mission brief"
     },
     "filter": {
       "installationStatus": "Installation status",
@@ -351,7 +418,12 @@
       "changelog": "View changelog",
       "copySupport": "Copy support snapshot",
       "copySuccess": "Support snapshot copied",
-      "copyError": "Unable to copy support snapshot"
+      "copyError": "Unable to copy support snapshot",
+      "openPath": "Open path",
+      "copyPath": "Copy value",
+      "copyPathSuccess": "Value copied",
+      "copyPathError": "Unable to copy the selected value",
+      "openError": "Unable to open the requested Windows target"
     },
     "status": {
       "title": "Current status",
@@ -456,6 +528,55 @@
         "missing": "Missing"
       }
     },
+    "windows": {
+      "title": "Windows environment",
+      "description": "Review the active Windows session and jump straight into the system surfaces that matter for Windhawk mods.",
+      "quickActionsTitle": "Windows quick actions",
+      "quickActionsDescription": "Open the Windows settings pages and runtime folders that are most useful when debugging or testing mods.",
+      "summary": {
+        "version": "Windows edition",
+        "release": "Release",
+        "build": "Build",
+        "installationType": "Installation type",
+        "session": "Session rights",
+        "host": "Computer name",
+        "user": "Current user"
+      },
+      "values": {
+        "elevated": "Administrator",
+        "standard": "Standard user"
+      },
+      "paths": {
+        "windowsDirectory": "Windows directory",
+        "tempDirectory": "Temporary files"
+      },
+      "actions": {
+        "windowsUpdate": {
+          "title": "Windows Update",
+          "description": "Jump to update controls before testing changes against a newer system build."
+        },
+        "taskbar": {
+          "title": "Taskbar settings",
+          "description": "Open taskbar personalization to compare native Windows behavior with taskbar mods."
+        },
+        "startupApps": {
+          "title": "Startup apps",
+          "description": "Inspect startup behavior when testing tray, shell, and session-start integrations."
+        },
+        "sound": {
+          "title": "Sound settings",
+          "description": "Open Windows audio controls for mods that touch volume, media, or device behavior."
+        },
+        "appData": {
+          "title": "Open app data",
+          "description": "Jump to Windhawk's active data root in Explorer."
+        },
+        "engine": {
+          "title": "Open engine folder",
+          "description": "Inspect the engine binaries and active runtime files in Explorer."
+        }
+      }
+    },
     "builtWith": {
       "title": "Built with",
       "description": "Core tools and libraries that shape the Windhawk experience.",
@@ -465,24 +586,91 @@
       "others": "Other tools and libraries, and a bit of code"
     }
   },
+  "changelogViewer": {
+    "searchPlaceholder": "Filter changelog entries...",
+    "noMatches": "No changelog entries match the current filter.",
+    "latestFallback": "Current release",
+    "controls": {
+      "jumpToRelease": "Jump to release...",
+      "latestOnly": "Latest only",
+      "copied": "Copied",
+      "copyFailed": "Copy failed",
+      "sectionFallback": "Section {{index}}"
+    },
+    "summary": {
+      "latest": "Latest release",
+      "sections": "Release sections",
+      "highlights": "Bullet highlights"
+    }
+  },
   "installModal": {
     "title": "Install {{mod}}",
     "warningTitle": "Proceed with care",
     "warningDescription": "Malicious mods can damage your computer or violate your privacy. Install mods only from authors whom you trust.",
+    "snapshotTitle": "Decision snapshot",
+    "snapshotDescription": "Review scope, freshness, and community context before you install the mod.",
+    "strategyTitle": "Install strategy",
+    "strategyDescription": "Choose a safer or faster install path based on what you know about the mod right now.",
+    "reviewTitle": "Review before installing",
+    "reviewDescription": "Open the details, source, or changelog tabs to inspect the mod without leaving this screen behind.",
+    "checklistTitle": "Before you commit",
+    "checklistDescription": "A short verification checklist based on the mod's scope and reviewability.",
     "modAuthor": "Mod author",
     "homepage": "Homepage",
     "github": "GitHub",
     "twitter": "X (Twitter)",
     "verified": "verified",
     "verifiedTooltip": "We verified that this profile belongs to the mod author, but note that <0>verified</0> is not the same as <0>trusted</0>. Make sure you trust the mod author, or carefully inspect the source code before installing.",
+    "viewDetailsButton": "View details",
+    "viewSourceButton": "View source code",
+    "viewChangelogButton": "View changelog",
+    "useStrategyButton": "Use this path",
+    "recommended": "Recommended",
+    "signals": {
+      "community": "Community",
+      "targeting": "Targeting",
+      "freshness": "Freshness",
+      "reviewability": "Reviewability"
+    },
+    "values": {
+      "communitySummary": "{{users}} users | {{rating}}/5 rating",
+      "noCommunityData": "No community data yet",
+      "allProcesses": "All processes",
+      "metadataLimited": "Metadata is limited",
+      "processPlusMore": "{{first}} + {{count}} more",
+      "updatedRelative": "Updated {{when}}",
+      "sourceCode": "Source code",
+      "changelog": "Changelog",
+      "settings": "Settings",
+      "readme": "Readme"
+    },
     "acceptButton": "Accept Risk and Install",
+    "installDisabledButton": "Install disabled first",
     "cancelButton": "Cancel"
   },
   "createNewModButton": {
     "title": "Create a New Mod"
   },
+  "newModStudio": {
+    "title": "New Mod Studio",
+    "recommended": "Recommended",
+    "copySuccess": "\"{{title}}\" copied to the clipboard",
+    "copyError": "Unable to copy the AI prompt",
+    "starters": {
+      "title": "Choose a starting point",
+      "description": "Start with the standard Windhawk template or an AI-ready starter that adds prompt scaffolding and verification notes.",
+      "useStandard": "Use standard starter",
+      "useAiReady": "Use AI-ready starter"
+    },
+    "prompts": {
+      "title": "AI prompt packs",
+      "description": "Copy these prompts into your AI assistant to ideate, scaffold, review, or document a mod while keeping the Windhawk workflow intact.",
+      "copyButton": "Copy prompt"
+    },
+    "footerNote": "AI can accelerate scaffolding and review, but you should still validate hook targets, safety, compatibility, and manual test results yourself before shipping a mod."
+  },
   "devModeAction": {
-    "message": "Creating and modifying mods requires some knowledge of C/C++ development for Windows. If you're not sure what that means, perhaps these options are not for you.",
+    "message": "Creating and modifying mods requires some knowledge of C/C++ development for Windows. AI can help with scaffolding and review, but you still need to understand and verify the generated code before using it.",
     "hideOptionsCheckbox": "Hide all development-related options",
     "hideOptionsButton": "Hide options",
     "beginCodingButton": "Begin coding",
@@ -500,15 +688,96 @@
     "notCompiled": "Mod needs to be compiled before it can be previewed"
   },
   "sidebar": {
+    "editorTitle": "Editor cockpit",
+    "editorDescription": "Compile, inspect, and iterate on the current mod without leaving the editor workflow.",
     "modId": "Mod identifier",
+    "copyModId": "Copy ID",
+    "copyModIdSuccess": "Mod id copied",
+    "copyError": "Unable to copy the requested text",
     "enableMod": "Enable mod",
     "enableLogging": "Enable logging",
+    "loggingTag": "Logging on",
     "notCompiled": "Mod needs to be compiled",
     "compile": "Compile Mod",
+    "runRecommendedCompile": "Run recommended compile",
     "compilationFailed": "Compilation failed",
     "stopCompilation": "Stop compilation",
     "preview": "Preview Mod",
     "showLogOutput": "Show Log Output",
+    "unknownValue": "Unknown",
+    "status": {
+      "modified": "Draft changes",
+      "synced": "Synced",
+      "compiling": "Compiling",
+      "compiled": "Compiled",
+      "needsAttention": "Needs attention",
+      "notCompiled": "Not compiled",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "cards": {
+      "state": "State",
+      "build": "Build",
+      "scope": "Scope",
+      "version": "Version"
+    },
+    "sections": {
+      "status": "Session status",
+      "statusDescription": "A quick read on the current draft, build state, and targeting scope.",
+      "evidence": "Evidence board",
+      "evidenceDescription": "Research-driven heuristics for safer runs, clearer scope, and stronger AI prompts.",
+      "controls": "Build controls",
+      "controlsDescription": "Current compile profile: {{mode}}.",
+      "recommendedCompileDescription": "Recommended next compile: {{mode}}.",
+      "verification": "Verification pack",
+      "verificationDescription": "Turn the current draft into a practical checklist and a release-ready evidence packet.",
+      "ai": "AI helpers",
+      "aiDescription": "Copy contextual prompts that use the current mod id and metadata as a starting point.",
+      "workflow": "Iteration plan",
+      "workflowDescription": "A short next-step plan that reacts to the current draft, build state, and process scope."
+    },
+    "descriptions": {
+      "enableMod": "Controls whether the compiled mod should load after a successful build.",
+      "enableLogging": "Keep logging enabled while iterating so new failures are easier to diagnose."
+    },
+    "compileMenu": {
+      "current": "Compile with current switches",
+      "disabled": "Compile disabled",
+      "logging": "Compile with logging",
+      "disabledLogging": "Compile disabled + logging"
+    },
+    "ai": {
+      "contextPack": "Copy context pack",
+      "scaffold": "Copy scaffold prompt",
+      "review": "Copy review prompt",
+      "explainScope": "Copy scope prompt",
+      "testPlan": "Copy test plan",
+      "docs": "Copy docs prompt",
+      "releaseNotes": "Copy release notes",
+      "brief": "Copy mod brief",
+      "copiedContextPack": "Context pack copied",
+      "copiedScaffold": "Scaffold prompt copied",
+      "copiedReview": "Review prompt copied",
+      "copiedExplainScope": "Scope prompt copied",
+      "copiedTestPlan": "Test plan copied",
+      "copiedDocs": "Docs prompt copied",
+      "copiedReleaseNotes": "Release notes prompt copied",
+      "copiedBrief": "Mod brief copied"
+    },
+    "verification": {
+      "copyChecklist": "Copy verification checklist",
+      "copyReleasePacket": "Copy release packet",
+      "copiedChecklist": "Verification checklist copied",
+      "copiedReleasePacket": "Release packet copied"
+    },
+    "workflow": {
+      "shortcutTitle": "Use Ctrl+B for fast rebuilds",
+      "shortcutBody": "The compile action is wired into the editor workflow, so you can rebuild without hunting for the sidebar button.",
+      "safeCompileTitle": "Use disabled builds for risky changes",
+      "safeCompileBody": "Compile disabled first when you are changing hook targets, process scope, or startup behavior.",
+      "loggingTitle": "Turn on logging for first runs",
+      "loggingBody": "Logging is most useful right after a refactor, compile error, or API change because it makes regressions easier to localize."
+    },
     "exit": "Exit Editing Mode",
     "exitConfirmation": "Changes since the last successful compilation will be lost",
     "exitButtonOk": "Exit",

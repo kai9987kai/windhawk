@@ -1,10 +1,11 @@
 import { faPen } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { createNewMod } from '../webviewIPC';
 import DevModeAction from './DevModeAction';
+import NewModStudioModal from './NewModStudioModal';
 
 const ButtonContainer = styled.div`
   position: fixed;
@@ -31,19 +32,26 @@ const CreateButtonIcon = styled(FontAwesomeIcon)`
 
 function CreateNewModButton() {
   const { t } = useTranslation();
+  const [studioOpen, setStudioOpen] = useState(false);
 
   return (
-    <ButtonContainer>
-      <DevModeAction
-        popconfirmPlacement="top"
-        onClick={() => createNewMod()}
-        renderButton={(onClick) => (
-          <CreateButton shape="round" onClick={onClick}>
-            <CreateButtonIcon icon={faPen} /> {t('createNewModButton.title')}
-          </CreateButton>
-        )}
+    <>
+      <ButtonContainer>
+        <DevModeAction
+          popconfirmPlacement="top"
+          onClick={() => setStudioOpen(true)}
+          renderButton={(onClick) => (
+            <CreateButton shape="round" onClick={onClick}>
+              <CreateButtonIcon icon={faPen} /> {t('createNewModButton.title')}
+            </CreateButton>
+          )}
+        />
+      </ButtonContainer>
+      <NewModStudioModal
+        open={studioOpen}
+        onClose={() => setStudioOpen(false)}
       />
-    </ButtonContainer>
+    </>
   );
 }
 

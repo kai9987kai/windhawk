@@ -5,6 +5,37 @@
 
 namespace HwbpHook {
 
+#if defined(_M_ARM64)
+
+bool Initialize() {
+    return false;
+}
+
+void Uninitialize() {
+}
+
+bool SetHook(void* targetFunction, void* hookFunction, void** originalFunction, DWORD threadId) {
+    return false;
+}
+
+bool SetHookAllThreads(void* targetFunction, void* hookFunction, void** originalFunction) {
+    return false;
+}
+
+bool RemoveHook(void* targetFunction, DWORD threadId) {
+    return false;
+}
+
+bool RemoveHookAllThreads(void* targetFunction) {
+    return false;
+}
+
+bool HandleSingleStepException(PEXCEPTION_POINTERS exceptionInfo) {
+    return false;
+}
+
+#else
+
 namespace {
     std::vector<HookContext> g_hooks;
     std::mutex g_hooksMutex;
@@ -242,5 +273,7 @@ bool HandleSingleStepException(PEXCEPTION_POINTERS exceptionInfo) {
 
     return false; // Not our breakpoint
 }
+
+#endif
 
 } // namespace HwbpHook

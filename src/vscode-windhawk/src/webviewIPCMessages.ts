@@ -134,6 +134,15 @@ export type AppRuntimeDiagnostics = {
   platformArch: string;
   arm64Enabled: boolean;
   portable: boolean;
+  windowsProductName: string | null;
+  windowsDisplayVersion: string | null;
+  windowsBuild: string;
+  windowsInstallationType: string | null;
+  hostName: string;
+  userName: string | null;
+  isElevated: boolean | null;
+  windowsDirectory: string | null;
+  tempDirectory: string;
   engineConfigExists: boolean;
   enginePortable: boolean | null;
   engineConfigMatchesAppConfig: boolean;
@@ -174,6 +183,12 @@ export type InitialSettings = InitialSettingItem[];
 
 export type EditModData = {
   modId: string;
+};
+
+export type CreateNewModTemplateKey = 'default' | 'ai-ready';
+
+export type CreateNewModData = {
+  templateKey?: CreateNewModTemplateKey;
 };
 
 export type ForkModData = {
@@ -331,6 +346,24 @@ export type RepairRuntimeConfigReplyData = {
   error?: string;
 };
 
+export type OpenExternalData = {
+  uri: string;
+};
+
+export type OpenExternalReplyData = {
+  succeeded: boolean;
+  error?: string;
+};
+
+export type OpenPathData = {
+  path: string;
+};
+
+export type OpenPathReplyData = {
+  succeeded: boolean;
+  error?: string;
+};
+
 export type GetModSettingsData = {
   modId: string;
 };
@@ -467,5 +500,6 @@ export type SetEditedModIdData = {
 export type SetEditedModDetailsData = {
   modId: string;
   modDetails: ModConfig | null;
+  metadata?: ModMetadata | null;
   modWasModified: boolean;
 };

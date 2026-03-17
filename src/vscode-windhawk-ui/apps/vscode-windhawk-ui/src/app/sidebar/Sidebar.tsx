@@ -21,12 +21,14 @@ function Sidebar() {
         setModDetails({
           modId: data.modId,
           modWasModified: data.modWasModified,
+          metadata: data.metadata || undefined,
           compiled: false,
         });
       } else {
         setModDetails({
           modId: data.modId,
           modWasModified: data.modWasModified,
+          metadata: data.metadata || undefined,
           compiled: true,
           disabled: data.modDetails.disabled,
           loggingEnabled: data.modDetails.loggingEnabled,

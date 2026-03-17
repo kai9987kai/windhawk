@@ -44,6 +44,19 @@ A simple way to get started is by extracting the portable version of Windhawk wi
 
 Contributor setup, verified validation commands, and native build prerequisites are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Portable installer build
+
+This fork includes a portable packaging flow that bundles the rebuilt native binaries, the VS Code extension, and the React webview into a custom installer.
+
+Typical packaging flow:
+
+1. Build the native binaries in `src/windhawk/Release`.
+2. Build the webview in `src/vscode-windhawk-ui`.
+3. Bundle the extension in `src/vscode-windhawk`.
+4. Run `artifacts/installer-build/build_custom_portable.ps1`.
+
+The script produces `artifacts/windhawk-custom-portable-installer.exe` and refreshes the portable payload used by the installer stub. It expects a portable Windhawk baseline at `%LOCALAPPDATA%\Programs\Windhawk-Custom-Portable`.
+
 ## UI preview
 
 The React webview lives in `src/vscode-windhawk-ui` and can be iterated on independently from the native C++ binaries.
@@ -66,6 +79,29 @@ The webview UI now includes:
 * a redesigned settings experience with persistent local interface preferences such as density, wide layout, and reduced motion
 * an expanded About page with current workspace status, runtime diagnostics, path inspection, repair actions, and quicker access to key project resources
 * a richer installed-mods home view with a fast overview strip and an early warning when the engine storage backend diverges from the UI backend
+* a research-informed install decision modal with scope/freshness/community signals and one-click review actions for details, source, and changelog tabs
+* strategy-based install guidance with a disabled-first path for broad-scope or lower-reviewability mods, plus a short pre-install checklist derived from scope and freshness
+* a shared changelog explorer with release-summary cards and inline filtering in both the About page and per-mod changelog views
+* browse-mode insight chips in Explore so fresh, popular, and focused mods stand out even before typing a query
+* guided Explore starting points that jump straight into fresh updates, community favorites, or focused areas such as Taskbar, Explorer, Start menu, and Audio
+* research-backed Explore missions that turn common Windows goals into compare-and-verify flows, with copyable AI comparison briefs and an active mission workbench for top-candidate comparison
+* broader Windows-surface discovery presets for notifications, window management, input, and appearance so the catalog is easier to navigate by the Windows area you want to change
+* richer changelog tooling with release scoping, a latest-only toggle, and copy-to-clipboard support for the currently visible notes
+* a new mod studio that promotes AI-assisted authoring with an AI-ready starter template and copyable prompt packs for ideation, scaffolding, review, and documentation
+* a redesigned editor cockpit with live mod metadata, compile presets, a one-click recommended compile action, an evidence board, a verification pack, a dynamic iteration plan, and copyable AI helper prompts for scope analysis, test planning, release notes, and review
+* a Windows toolkit on the About page with live OS/session diagnostics, quick links into key Windows settings surfaces, and one-click opening of Windhawk runtime paths in Explorer
+* local home quick-focus chips for drafts, compile-needed mods, logging-enabled mods, and pending updates so maintenance work is easier to batch
+
+## Research-informed UX improvements
+
+These interaction changes are intentionally grounded in a small set of papers that map well to Windhawk's mod-install and release-review workflows.
+
+* [Crying Wolf: An Empirical Study of SSL Warning Effectiveness](https://www.usenix.org/conference/usenixsecurity09/technical-sessions/presentation/crying-wolf-empirical-study-ssl) motivated a more concrete install warning with supporting context and clear review paths instead of a single generic caution block.
+* [An Empirical Study of Release Note Production and Usage in Practice](https://www.microsoft.com/en-us/research/publication/an-empirical-study-of-release-note-production-and-usage-in-practice/) informed the release-summary cards and searchable changelog view so the most actionable updates are visible before reading the full Markdown stream.
+* [The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations](https://www.cs.umd.edu/users/ben/papers/Shneiderman1996eyes.pdf) continues to inform the "overview first, zoom and filter, then details on demand" structure used across the Explore page and changelog surfaces.
+* [Using an LLM to Help With Code Understanding](https://research.google/pubs/using-an-llm-to-help-with-code-understanding/) pushed the editor cockpit toward prompt-light, in-IDE requests such as scope explanation, API understanding, and test-plan generation instead of one generic AI action.
+* [Identifying the Factors that Influence Trust in AI Code Completion](https://research.google/pubs/identifying-the-factors-that-influence-trust-in-ai-code-completion/) motivated the evidence board and safer compile recommendations so AI assistance is paired with explicit trust signals and verification steps.
+* [Source-level Debugging with the Whyline](https://faculty.washington.edu/ajko/papers/Ko2008SourceLevelDebugging.pdf) informed the new mission and editor flows that foreground "why this candidate?" and "what should I verify next?" instead of forcing users to build those questions manually.
 
 ## Research-informed reliability
 

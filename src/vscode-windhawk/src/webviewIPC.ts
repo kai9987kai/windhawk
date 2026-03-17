@@ -19,6 +19,8 @@ import {
   GetRepositoryModSourceDataReplyData,
   GetRepositoryModsReplyData,
   InstallModReplyData,
+  OpenExternalReplyData,
+  OpenPathReplyData,
   RepairRuntimeConfigReplyData,
   SetEditedModDetailsData,
   SetEditedModIdData,
@@ -448,6 +450,36 @@ export function repairRuntimeConfigReply(
   const msg: Reply = {
     type: 'reply',
     command: 'repairRuntimeConfig',
+    messageId,
+    data,
+  };
+  webview.postMessage(msg);
+}
+
+export function openExternalReply(
+  webview: vscode.Webview | undefined,
+  messageId: number,
+  data: OpenExternalReplyData
+) {
+  if (!webview) return;
+  const msg: Reply = {
+    type: 'reply',
+    command: 'openExternal',
+    messageId,
+    data,
+  };
+  webview.postMessage(msg);
+}
+
+export function openPathReply(
+  webview: vscode.Webview | undefined,
+  messageId: number,
+  data: OpenPathReplyData
+) {
+  if (!webview) return;
+  const msg: Reply = {
+    type: 'reply',
+    command: 'openPath',
     messageId,
     data,
   };

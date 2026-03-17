@@ -3,7 +3,12 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { AppUISettingsContext } from '../appUISettings';
-import { useGetAppSettings, useRepairRuntimeConfig } from '../webviewIPC';
+import {
+  useGetAppSettings,
+  useOpenExternal,
+  useOpenPath,
+  useRepairRuntimeConfig
+} from '../webviewIPC';
 import { AppRuntimeDiagnostics, AppSettings } from '../webviewIPCMessages';
 import { ChangelogModal } from './ChangelogModal';
 import { mockRuntimeDiagnostics, mockSettings } from './mockData';
@@ -22,6 +27,13 @@ type SummaryItem = {
   value: string;
 };
 
+type PathItem = {
+  key: string;
+  label: string;
+  value: string;
+  openPath?: string | null;
+};
+
 type LinkItem = {
   key: string;
   label: string;
@@ -33,6 +45,14 @@ type BuiltWithItem = {
   label?: string;
   href?: string;
   description: string;
+};
+
+type QuickActionItem = {
+  key: string;
+  title: string;
+  description: string;
+  kind: 'path' | 'uri';
+  target: string;
 };
 
 const AboutContainer = styled.div`
@@ -277,6 +297,53 @@ const DiagnosticsPathValue = styled.div`
   word-break: break-all;
 `;
 
+const DiagnosticsPathActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+`;
+
+const QuickActionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+`;
+
+const QuickActionCard = styled.button`
+  padding: 14px 16px;
+  text-align: left;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    border-color: rgba(23, 125, 220, 0.35);
+    background: rgba(23, 125, 220, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+    transform: none;
+  }
+`;
+
+const QuickActionTitle = styled.div`
+  margin-bottom: 6px;
+  font-weight: 600;
+`;
+
+const QuickActionDescription = styled.div`
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.45;
+`;
+
 function copyText(text: string) {
   const textArea = document.createElement('textarea');
   textArea.value = text;
@@ -344,6 +411,32 @@ function About() {
         [t]
       )
     );
+
+  const { openExternal, openExternalPending } = useOpenExternal(
+    useCallback(
+      (data) => {
+        if (!data.succeeded) {
+          message.error(
+            data.error || (t('about.actions.openError') as string)
+          );
+        }
+      },
+      [t]
+    )
+  );
+
+  const { openPath, openPathPending } = useOpenPath(
+    useCallback(
+      (data) => {
+        if (!data.succeeded) {
+          message.error(
+            data.error || (t('about.actions.openError') as string)
+          );
+        }
+      },
+      [t]
+    )
+  );
 
   useEffect(() => {
     getAppSettings({});
@@ -521,7 +614,57 @@ function About() {
     [runtimeDiagnostics, runtimeModeLabel, t]
   );
 
-  const runtimePathItems = useMemo(
+  const windowsSummaryItems = useMemo<SummaryItem[]>(
+    () =>
+      runtimeDiagnostics
+        ? [
+            {
+              label: t('about.windows.summary.version'),
+              value:
+                runtimeDiagnostics.windowsProductName ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              label: t('about.windows.summary.release'),
+              value:
+                runtimeDiagnostics.windowsDisplayVersion ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              label: t('about.windows.summary.build'),
+              value: runtimeDiagnostics.windowsBuild,
+            },
+            {
+              label: t('about.windows.summary.installationType'),
+              value:
+                runtimeDiagnostics.windowsInstallationType ||
+                t('about.runtime.values.missing'),
+            },
+            {
+              label: t('about.windows.summary.session'),
+              value:
+                runtimeDiagnostics.isElevated === null
+                  ? t('about.runtime.values.missing')
+                  : runtimeDiagnostics.isElevated
+                    ? t('about.windows.values.elevated')
+                    : t('about.windows.values.standard'),
+            },
+            {
+              label: t('about.windows.summary.host'),
+              value: runtimeDiagnostics.hostName,
+            },
+            {
+              label: t('about.windows.summary.user'),
+              value:
+                runtimeDiagnostics.userName ||
+                t('about.runtime.values.missing'),
+            },
+          ]
+        : [],
+    [runtimeDiagnostics, t]
+  );
+
+  const runtimePathItems = useMemo<PathItem[]>(
     () =>
       runtimeDiagnostics
         ? [
@@ -529,16 +672,19 @@ function About() {
               key: 'app-root',
               label: t('about.runtime.paths.appRoot'),
               value: runtimeDiagnostics.appRootPath,
+              openPath: runtimeDiagnostics.appRootPath,
             },
             {
               key: 'app-data',
               label: t('about.runtime.paths.appData'),
               value: runtimeDiagnostics.appDataPath,
+              openPath: runtimeDiagnostics.appDataPath,
             },
             {
               key: 'expected-engine-data',
               label: t('about.runtime.paths.expectedEngineData'),
               value: runtimeDiagnostics.expectedEngineAppDataPath,
+              openPath: runtimeDiagnostics.expectedEngineAppDataPath,
             },
             {
               key: 'actual-engine-data',
@@ -546,11 +692,13 @@ function About() {
               value:
                 runtimeDiagnostics.engineAppDataPath ||
                 t('about.runtime.values.missing'),
+              openPath: runtimeDiagnostics.engineAppDataPath,
             },
             {
               key: 'engine',
               label: t('about.runtime.paths.engine'),
               value: runtimeDiagnostics.enginePath,
+              openPath: runtimeDiagnostics.enginePath,
             },
             {
               key: 'expected-engine-registry',
@@ -570,11 +718,36 @@ function About() {
               key: 'compiler',
               label: t('about.runtime.paths.compiler'),
               value: runtimeDiagnostics.compilerPath,
+              openPath: runtimeDiagnostics.compilerPath,
             },
             {
               key: 'ui',
               label: t('about.runtime.paths.ui'),
               value: runtimeDiagnostics.uiPath,
+              openPath: runtimeDiagnostics.uiPath,
+            },
+          ]
+        : [],
+    [runtimeDiagnostics, t]
+  );
+
+  const windowsPathItems = useMemo<PathItem[]>(
+    () =>
+      runtimeDiagnostics
+        ? [
+            {
+              key: 'windows-directory',
+              label: t('about.windows.paths.windowsDirectory'),
+              value:
+                runtimeDiagnostics.windowsDirectory ||
+                t('about.runtime.values.missing'),
+              openPath: runtimeDiagnostics.windowsDirectory,
+            },
+            {
+              key: 'temp-directory',
+              label: t('about.windows.paths.tempDirectory'),
+              value: runtimeDiagnostics.tempDirectory,
+              openPath: runtimeDiagnostics.tempDirectory,
             },
           ]
         : [],
@@ -585,6 +758,23 @@ function About() {
     () =>
       [
         `Windhawk ${currentVersion}`,
+        runtimeDiagnostics?.windowsProductName
+          ? `Windows: ${runtimeDiagnostics.windowsProductName}`
+          : null,
+        runtimeDiagnostics?.windowsDisplayVersion
+          ? `Windows release: ${runtimeDiagnostics.windowsDisplayVersion}`
+          : null,
+        runtimeDiagnostics ? `Windows build: ${runtimeDiagnostics.windowsBuild}` : null,
+        runtimeDiagnostics
+          ? `Session elevation: ${
+              runtimeDiagnostics.isElevated === null
+                ? t('about.runtime.values.missing')
+                : runtimeDiagnostics.isElevated
+                  ? t('about.windows.values.elevated')
+                  : t('about.windows.values.standard')
+            }`
+          : null,
+        runtimeDiagnostics ? `Host: ${runtimeDiagnostics.hostName}` : null,
         `Language: ${language || appSettings?.language || 'en'}`,
         `Update available: ${
           updateIsAvailable
@@ -661,6 +851,86 @@ function About() {
       message.error(t('about.actions.copyError'));
     }
   }, [supportSnapshot, t]);
+
+  const copyTextWithFeedback = useCallback(
+    (text: string) => {
+      if (copyText(text)) {
+        message.success(t('about.actions.copyPathSuccess'));
+      } else {
+        message.error(t('about.actions.copyPathError'));
+      }
+    },
+    [t]
+  );
+
+  const openPathInShell = useCallback(
+    (targetPath: string) => {
+      openPath({
+        path: targetPath,
+      });
+    },
+    [openPath]
+  );
+
+  const openUri = useCallback(
+    (uri: string) => {
+      openExternal({
+        uri,
+      });
+    },
+    [openExternal]
+  );
+
+  const windowsQuickActions = useMemo<QuickActionItem[]>(
+    () =>
+      runtimeDiagnostics
+        ? [
+            {
+              key: 'windows-update',
+              title: t('about.windows.actions.windowsUpdate.title'),
+              description: t('about.windows.actions.windowsUpdate.description'),
+              kind: 'uri',
+              target: 'ms-settings:windowsupdate',
+            },
+            {
+              key: 'taskbar-settings',
+              title: t('about.windows.actions.taskbar.title'),
+              description: t('about.windows.actions.taskbar.description'),
+              kind: 'uri',
+              target: 'ms-settings:personalization-taskbar',
+            },
+            {
+              key: 'startup-apps',
+              title: t('about.windows.actions.startupApps.title'),
+              description: t('about.windows.actions.startupApps.description'),
+              kind: 'uri',
+              target: 'ms-settings:startupapps',
+            },
+            {
+              key: 'sound-settings',
+              title: t('about.windows.actions.sound.title'),
+              description: t('about.windows.actions.sound.description'),
+              kind: 'uri',
+              target: 'ms-settings:sound',
+            },
+            {
+              key: 'app-data-folder',
+              title: t('about.windows.actions.appData.title'),
+              description: t('about.windows.actions.appData.description'),
+              kind: 'path',
+              target: runtimeDiagnostics.appDataPath,
+            },
+            {
+              key: 'engine-folder',
+              title: t('about.windows.actions.engine.title'),
+              description: t('about.windows.actions.engine.description'),
+              kind: 'path',
+              target: runtimeDiagnostics.enginePath,
+            },
+          ]
+        : [],
+    [runtimeDiagnostics, t]
+  );
 
   const links = useMemo<LinkItem[]>(
     () => [
@@ -830,13 +1100,93 @@ function About() {
               </HeroActionRow>
             )}
           <DiagnosticsPathList>
-            {runtimePathItems.map(({ key, label, value }) => (
+            {runtimePathItems.map(({ key, label, value, openPath: targetPath }) => (
               <DiagnosticsPathItem key={key}>
                 <DiagnosticsPathLabel>{label}</DiagnosticsPathLabel>
                 <DiagnosticsPathValue>{value}</DiagnosticsPathValue>
+                <DiagnosticsPathActions>
+                  {targetPath && (
+                    <Button
+                      size="small"
+                      loading={openPathPending}
+                      onClick={() => openPathInShell(targetPath)}
+                    >
+                      {t('about.actions.openPath')}
+                    </Button>
+                  )}
+                  <Button
+                    size="small"
+                    onClick={() => copyTextWithFeedback(value)}
+                  >
+                    {t('about.actions.copyPath')}
+                  </Button>
+                </DiagnosticsPathActions>
               </DiagnosticsPathItem>
             ))}
           </DiagnosticsPathList>
+        </SectionCard>
+
+        <SectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('about.windows.title')}</SectionTitle>
+            <SectionDescription>{t('about.windows.description')}</SectionDescription>
+          </SectionHeading>
+          <SummaryList>
+            {windowsSummaryItems.map(({ label, value }) => (
+              <SummaryRow key={label}>
+                <SummaryLabel>{label}</SummaryLabel>
+                <SummaryValue>{value}</SummaryValue>
+              </SummaryRow>
+            ))}
+          </SummaryList>
+          <DiagnosticsPathList>
+            {windowsPathItems.map(({ key, label, value, openPath: targetPath }) => (
+              <DiagnosticsPathItem key={key}>
+                <DiagnosticsPathLabel>{label}</DiagnosticsPathLabel>
+                <DiagnosticsPathValue>{value}</DiagnosticsPathValue>
+                <DiagnosticsPathActions>
+                  {targetPath && (
+                    <Button
+                      size="small"
+                      loading={openPathPending}
+                      onClick={() => openPathInShell(targetPath)}
+                    >
+                      {t('about.actions.openPath')}
+                    </Button>
+                  )}
+                  <Button
+                    size="small"
+                    onClick={() => copyTextWithFeedback(value)}
+                  >
+                    {t('about.actions.copyPath')}
+                  </Button>
+                </DiagnosticsPathActions>
+              </DiagnosticsPathItem>
+            ))}
+          </DiagnosticsPathList>
+        </SectionCard>
+
+        <SectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('about.windows.quickActionsTitle')}</SectionTitle>
+            <SectionDescription>
+              {t('about.windows.quickActionsDescription')}
+            </SectionDescription>
+          </SectionHeading>
+          <QuickActionsGrid>
+            {windowsQuickActions.map(({ key, title, description, kind, target }) => (
+              <QuickActionCard
+                key={key}
+                disabled={openExternalPending || openPathPending}
+                onClick={() =>
+                  kind === 'path' ? openPathInShell(target) : openUri(target)
+                }
+              >
+                <QuickActionTitle>{title}</QuickActionTitle>
+                <QuickActionDescription>{description}</QuickActionDescription>
+              </QuickActionCard>
+            ))}
+          </QuickActionsGrid>
         </SectionCard>
 
         <SectionCard bordered={false}>

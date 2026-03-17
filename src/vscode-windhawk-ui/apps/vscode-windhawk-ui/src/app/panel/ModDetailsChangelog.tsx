@@ -1,9 +1,8 @@
-import { ConfigProvider } from 'antd';
 import { Trans, useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import useSWR from 'swr';
-import ReactMarkdownCustom from '../components/ReactMarkdownCustom';
 import { fetchText } from '../swrHelpers';
+import ChangelogViewer from './ChangelogViewer';
 
 const ErrorMessage = styled.div`
   color: rgba(255, 255, 255, 0.45);
@@ -39,11 +38,7 @@ function ModDetailsChangelog({ modId, loadingNode }: Props) {
     return loadingNode;
   }
 
-  return (
-    <ConfigProvider direction="ltr">
-      <ReactMarkdownCustom markdown={data || ''} direction="ltr" />
-    </ConfigProvider>
-  );
+  return <ChangelogViewer markdown={data || ''} />;
 }
 
 export default ModDetailsChangelog;

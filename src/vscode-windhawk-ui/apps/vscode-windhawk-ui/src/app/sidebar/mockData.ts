@@ -8,6 +8,11 @@ export const mockSidebarModDetails = !useMockData
       modId: 'new-mod-test',
       modWasModified: false,
       compiled: true,
+      metadata: {
+        name: 'New Mod Test',
+        version: '0.1',
+        include: ['mspaint.exe'],
+      },
       disabled: false,
       loggingEnabled: false,
       debugLoggingEnabled: false,

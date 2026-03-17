@@ -296,7 +296,7 @@ interface Props {
   repositoryModDetails?: RepositoryModDetails;
   loadRepositoryData?: boolean;
   goBack: () => void;
-  installMod?: (modSource: string) => void;
+  installMod?: (modSource: string, options?: { disabled?: boolean }) => void;
   updateMod?: (modSource: string, disabled: boolean) => void;
   forkModFromSource?: (modSource: string) => void;
   compileMod: () => void;
@@ -597,6 +597,7 @@ function ModDetails(props: Props) {
               (modDetailsToShow === 'installed'
                 && installedModDetails?.config)
               || undefined}
+            installSourceData={selectedModSourceData || undefined}
             modStatus={modStatus}
             updateAvailable={
               !!(
@@ -607,16 +608,14 @@ function ModDetails(props: Props) {
             installedVersionIsLatest={installedVersionIsLatest}
             isDowngrade={isDowngrade}
             userRating={installedModDetails?.userRating}
-            repositoryDetails={
-              (modDetailsToShow === 'repository'
-                && repositoryModDetails?.details)
-              || undefined}
+            repositoryDetails={repositoryModDetails?.details || undefined}
             callbacks={{
               goBack: props.goBack,
               installMod:
                 props.installMod && selectedModSource
-                  ? () => props.installMod?.(selectedModSource)
+                  ? (options) => props.installMod?.(selectedModSource, options)
                   : undefined,
+              openTab: (tab) => setActiveTab(tab),
               updateMod:
                 props.updateMod && selectedModSource
                   ? () => props.updateMod?.(

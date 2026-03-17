@@ -1,6 +1,6 @@
 import { faFilter, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, Empty, Modal, Result, Spin, Typography } from 'antd';
+import { Badge, Button, Empty, Modal, Result, Spin, Typography, message } from 'antd';
 import { produce } from 'immer';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { AppUISettingsContext } from '../appUISettings';
 import { DropdownModal, dropdownModalDismissed, InputWithContextMenu } from '../components/InputWithContextMenu';
+import { copyTextToClipboard } from '../utils';
 import {
   editMod,
   forkMod,
@@ -29,6 +30,11 @@ import { mockModsBrowserOnlineRepositoryMods, useMockData } from './mockData';
 import ModCard from './ModCard';
 import ModDetails from './ModDetails';
 import {
+  buildDiscoveryMissionBrief,
+  buildDiscoveryMissionCandidates,
+  DiscoveryMission,
+  getDiscoveryMissions,
+  getDiscoveryMissionByQuery,
   getSearchCorrection,
   getSearchRecovery,
   getRefinementSuggestions,
@@ -82,6 +88,233 @@ const SearchActions = styled.div`
 
 const SearchMetaText = styled(Typography.Text)`
   color: rgba(255, 255, 255, 0.65);
+`;
+
+const DiscoveryPresetsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+`;
+
+const DiscoveryPresetsTitle = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+const DiscoveryPresetsDescription = styled(Typography.Text)`
+  color: rgba(255, 255, 255, 0.65);
+`;
+
+const DiscoveryPresetsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+`;
+
+const DiscoveryPresetCard = styled.button<{ $active: boolean }>`
+  border: 1px solid ${({ $active }) => (
+    $active ? 'rgba(24, 144, 255, 0.55)' : 'rgba(255, 255, 255, 0.08)'
+  )};
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+  color: inherit;
+  background: ${({ $active }) => (
+    $active ? 'rgba(24, 144, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)'
+  )};
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    border-color: rgba(24, 144, 255, 0.45);
+    background: rgba(24, 144, 255, 0.08);
+    transform: translateY(-1px);
+  }
+`;
+
+const DiscoveryPresetLabel = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+`;
+
+const DiscoveryPresetDescription = styled.div`
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.45;
+`;
+
+const DiscoveryPresetMeta = styled.div`
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const DiscoveryMissionsSection = styled(DiscoveryPresetsSection)`
+  margin-top: 16px;
+`;
+
+const DiscoveryMissionsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+`;
+
+const DiscoveryMissionCard = styled.div<{ $active: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid ${({ $active }) => (
+    $active ? 'rgba(24, 144, 255, 0.55)' : 'rgba(255, 255, 255, 0.08)'
+  )};
+  border-radius: 12px;
+  padding: 16px;
+  background: ${({ $active }) => (
+    $active ? 'rgba(24, 144, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)'
+  )};
+`;
+
+const DiscoveryMissionTitle = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+`;
+
+const DiscoveryMissionDescription = styled.div`
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.45;
+`;
+
+const DiscoveryMissionCue = styled.div`
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.45;
+`;
+
+const DiscoveryMissionLabel = styled.div`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const DiscoveryMissionTokenRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const DiscoveryMissionToken = styled.span`
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+`;
+
+const DiscoveryMissionChecklist = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+`;
+
+const DiscoveryMissionChecklistItem = styled.div`
+  display: flex;
+  gap: 8px;
+
+  &::before {
+    content: '•';
+    color: rgba(255, 255, 255, 0.5);
+  }
+`;
+
+const DiscoveryMissionActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const MissionWorkbenchSection = styled(DiscoveryPresetsSection)`
+  margin-bottom: 20px;
+`;
+
+const MissionWorkbenchGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MissionWorkbenchColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+`;
+
+const MissionWorkbenchCard = styled.div`
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+`;
+
+const MissionWorkbenchTitle = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+`;
+
+const MissionWorkbenchDescription = styled.div`
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+`;
+
+const MissionWorkbenchMeta = styled.div`
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const MissionWorkbenchCandidates = styled.div`
+  display: grid;
+  gap: 12px;
+`;
+
+const MissionWorkbenchCandidate = styled.div`
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+`;
+
+const MissionWorkbenchCandidateTitle = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+`;
+
+const MissionWorkbenchCandidateMeta = styled.div`
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+`;
+
+const MissionWorkbenchCandidateInsights = styled.div`
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.45;
 `;
 
 const SearchFilterInput = styled(InputWithContextMenu)`
@@ -171,6 +404,14 @@ type ModDetailsType = {
     config: ModConfig | null;
     userRating?: number;
   };
+};
+
+type DiscoveryPreset = {
+  key: string;
+  label: string;
+  description: string;
+  query: string;
+  sortingOrder: SortingOrder;
 };
 
 const extractItemsWithCounts = (
@@ -468,6 +709,121 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     [rankedMods, filterText]
   );
 
+  const discoveryPresets = useMemo<DiscoveryPreset[]>(
+    () => [
+      {
+        key: 'fresh',
+        label: t('explore.presets.items.fresh.title') as string,
+        description: t('explore.presets.items.fresh.description') as string,
+        query: '',
+        sortingOrder: 'last-updated',
+      },
+      {
+        key: 'favorites',
+        label: t('explore.presets.items.favorites.title') as string,
+        description: t('explore.presets.items.favorites.description') as string,
+        query: '',
+        sortingOrder: 'popular-top-rated',
+      },
+      {
+        key: 'taskbar',
+        label: t('explore.presets.items.taskbar.title') as string,
+        description: t('explore.presets.items.taskbar.description') as string,
+        query: 'taskbar',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'explorer',
+        label: t('explore.presets.items.explorer.title') as string,
+        description: t('explore.presets.items.explorer.description') as string,
+        query: 'explorer',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'start-menu',
+        label: t('explore.presets.items.startMenu.title') as string,
+        description: t('explore.presets.items.startMenu.description') as string,
+        query: 'start menu',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'audio',
+        label: t('explore.presets.items.audio.title') as string,
+        description: t('explore.presets.items.audio.description') as string,
+        query: 'audio',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'notifications',
+        label: t('explore.presets.items.notifications.title') as string,
+        description: t(
+          'explore.presets.items.notifications.description'
+        ) as string,
+        query: 'notifications',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'window-management',
+        label: t('explore.presets.items.windowManagement.title') as string,
+        description: t(
+          'explore.presets.items.windowManagement.description'
+        ) as string,
+        query: 'window management',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'input',
+        label: t('explore.presets.items.input.title') as string,
+        description: t('explore.presets.items.input.description') as string,
+        query: 'input',
+        sortingOrder: 'smart-relevance',
+      },
+      {
+        key: 'appearance',
+        label: t('explore.presets.items.appearance.title') as string,
+        description: t('explore.presets.items.appearance.description') as string,
+        query: 'appearance',
+        sortingOrder: 'smart-relevance',
+      },
+    ],
+    [t]
+  );
+  const discoveryMissions = useMemo<DiscoveryMission[]>(
+    () => getDiscoveryMissions(),
+    []
+  );
+
+  const discoveryPresetCounts = useMemo(() => {
+    const mods = Object.entries(repositoryMods || {});
+
+    return Object.fromEntries(
+      discoveryPresets.map((preset) => [
+        preset.key,
+        rankMods(mods, preset.query, preset.sortingOrder).length,
+      ])
+    ) as Record<string, number>;
+  }, [discoveryPresets, repositoryMods]);
+  const discoveryMissionRankings = useMemo(() => {
+    const mods = Object.entries(repositoryMods || {});
+
+    return Object.fromEntries(
+      discoveryMissions.map((mission) => [
+        mission.key,
+        rankMods(mods, mission.query, mission.sortingOrder),
+      ])
+    ) as Record<string, RankedMod[]>;
+  }, [discoveryMissions, repositoryMods]);
+  const activeDiscoveryMission = useMemo(
+    () => getDiscoveryMissionByQuery(filterText, sortingOrder),
+    [filterText, sortingOrder]
+  );
+  const activeDiscoveryMissionCandidates = useMemo(
+    () => activeDiscoveryMission && filterOptions.size === 0
+      ? buildDiscoveryMissionCandidates(rankedMods)
+      : [],
+    [activeDiscoveryMission, filterOptions.size, rankedMods]
+  );
+
   const { devModeOptOut } = useContext(AppUISettingsContext);
 
   const { getRepositoryMods } = useGetRepositoryMods(
@@ -605,6 +961,39 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     useState(30);
 
   const resetInfiniteScrollLoadedItems = () => setInfiniteScrollLoadedItems(30);
+  const openModDetails = useCallback((modId: string) => {
+    setDetailsButtonClicked(true);
+    navigate('/mods-browser/' + modId);
+  }, [navigate]);
+
+  const applyDiscoveryPreset = (preset: DiscoveryPreset) => {
+    handleClearFilters();
+    setFilterDropdownOpen(false);
+    resetInfiniteScrollLoadedItems();
+    setSortingOrder(preset.sortingOrder);
+    setFilterText(preset.query);
+  };
+  const applyDiscoveryMission = (mission: DiscoveryMission) => {
+    handleClearFilters();
+    setFilterDropdownOpen(false);
+    resetInfiniteScrollLoadedItems();
+    setSortingOrder(mission.sortingOrder);
+    setFilterText(mission.query);
+  };
+  const copyDiscoveryMission = async (mission: DiscoveryMission) => {
+    try {
+      await copyTextToClipboard(
+        buildDiscoveryMissionBrief(
+          mission,
+          discoveryMissionRankings[mission.key] || []
+        )
+      );
+      message.success(t('explore.missions.copiedBrief'));
+    } catch (error) {
+      console.error('Failed to copy discovery mission brief:', error);
+      message.error(t('explore.missions.copyFailed'));
+    }
+  };
 
   const [detailsButtonClicked, setDetailsButtonClicked] = useState(false);
 
@@ -663,14 +1052,11 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
       description={mod.repository.metadata.description}
       modMetadata={mod.repository.metadata}
       repositoryDetails={mod.repository.details}
-      insights={filterText.trim() ? insights : undefined}
+      insights={insights.length > 0 ? insights : undefined}
       buttons={[
         {
           text: t('mod.details'),
-          onClick: () => {
-            setDetailsButtonClicked(true);
-            navigate('/mods-browser/' + modId);
-          },
+          onClick: () => openModDetails(modId),
         },
       ]}
     />
@@ -817,6 +1203,234 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
               </IconButton>
             </DropdownModal>
           </SearchFilterContainer>
+          {!filterText.trim() && filterOptions.size === 0 && (
+            <>
+              <DiscoveryPresetsSection>
+                <div>
+                  <DiscoveryPresetsTitle>
+                    {t('explore.presets.title')}
+                  </DiscoveryPresetsTitle>
+                  <DiscoveryPresetsDescription>
+                    {t('explore.presets.description')}
+                  </DiscoveryPresetsDescription>
+                </div>
+                <DiscoveryPresetsGrid>
+                  {discoveryPresets.map((preset) => {
+                    const isActive = (
+                      filterText.trim().toLowerCase() === preset.query.toLowerCase() &&
+                      sortingOrder === preset.sortingOrder &&
+                      filterOptions.size === 0
+                    );
+
+                    return (
+                      <DiscoveryPresetCard
+                        key={preset.key}
+                        type="button"
+                        $active={isActive}
+                        onClick={() => applyDiscoveryPreset(preset)}
+                      >
+                        <DiscoveryPresetLabel>
+                          {preset.label}
+                        </DiscoveryPresetLabel>
+                        <DiscoveryPresetDescription>
+                          {preset.description}
+                        </DiscoveryPresetDescription>
+                        <DiscoveryPresetMeta>
+                          {t('explore.presets.modsCount', {
+                            count: discoveryPresetCounts[preset.key] ?? 0,
+                          })}
+                        </DiscoveryPresetMeta>
+                      </DiscoveryPresetCard>
+                    );
+                  })}
+                </DiscoveryPresetsGrid>
+              </DiscoveryPresetsSection>
+              <DiscoveryMissionsSection>
+                <div>
+                  <DiscoveryPresetsTitle>
+                    {t('explore.missions.title')}
+                  </DiscoveryPresetsTitle>
+                  <DiscoveryPresetsDescription>
+                    {t('explore.missions.description')}
+                  </DiscoveryPresetsDescription>
+                </div>
+                <DiscoveryMissionsGrid>
+                  {discoveryMissions.map((mission) => {
+                    const isActive = (
+                      filterText.trim().toLowerCase() === mission.query.toLowerCase() &&
+                      sortingOrder === mission.sortingOrder &&
+                      filterOptions.size === 0
+                    );
+                    const missionResults = discoveryMissionRankings[mission.key] || [];
+
+                    return (
+                      <DiscoveryMissionCard key={mission.key} $active={isActive}>
+                        <div>
+                          <DiscoveryMissionTitle>
+                            {mission.title}
+                          </DiscoveryMissionTitle>
+                          <DiscoveryMissionDescription>
+                            {mission.description}
+                          </DiscoveryMissionDescription>
+                        </div>
+                        <DiscoveryMissionCue>
+                          {mission.researchCue}
+                        </DiscoveryMissionCue>
+                        <div>
+                          <DiscoveryMissionLabel>
+                            {t('explore.missions.followUp')}
+                          </DiscoveryMissionLabel>
+                          <DiscoveryMissionTokenRow>
+                            {mission.followUpQueries.map((query) => (
+                              <DiscoveryMissionToken key={query}>
+                                {query}
+                              </DiscoveryMissionToken>
+                            ))}
+                          </DiscoveryMissionTokenRow>
+                        </div>
+                        <div>
+                          <DiscoveryMissionLabel>
+                            {t('explore.missions.verify')}
+                          </DiscoveryMissionLabel>
+                          <DiscoveryMissionChecklist>
+                            {mission.verificationChecks.slice(0, 2).map((check) => (
+                              <DiscoveryMissionChecklistItem key={check}>
+                                <span>{check}</span>
+                              </DiscoveryMissionChecklistItem>
+                            ))}
+                          </DiscoveryMissionChecklist>
+                        </div>
+                        <DiscoveryPresetMeta>
+                          {t('explore.missions.modsCount', {
+                            count: missionResults.length,
+                          })}
+                        </DiscoveryPresetMeta>
+                        <DiscoveryMissionActions>
+                          <Button
+                            size="small"
+                            type={isActive ? 'primary' : 'default'}
+                            onClick={() => applyDiscoveryMission(mission)}
+                          >
+                            {t('explore.missions.start')}
+                          </Button>
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              void copyDiscoveryMission(mission);
+                            }}
+                          >
+                            {t('explore.missions.copyBrief')}
+                          </Button>
+                        </DiscoveryMissionActions>
+                      </DiscoveryMissionCard>
+                    );
+                  })}
+                </DiscoveryMissionsGrid>
+              </DiscoveryMissionsSection>
+            </>
+          )}
+          {activeDiscoveryMission && filterOptions.size === 0 && (
+            <MissionWorkbenchSection>
+              <div>
+                <DiscoveryPresetsTitle>
+                  {t('explore.missions.workbenchTitle', {
+                    mission: activeDiscoveryMission.title,
+                  })}
+                </DiscoveryPresetsTitle>
+                <DiscoveryPresetsDescription>
+                  {t('explore.missions.workbenchDescription')}
+                </DiscoveryPresetsDescription>
+              </div>
+              <MissionWorkbenchGrid>
+                <MissionWorkbenchColumn>
+                  <MissionWorkbenchCard>
+                    <MissionWorkbenchTitle>
+                      {activeDiscoveryMission.title}
+                    </MissionWorkbenchTitle>
+                    <MissionWorkbenchDescription>
+                      {activeDiscoveryMission.description}
+                    </MissionWorkbenchDescription>
+                    <MissionWorkbenchMeta>
+                      {activeDiscoveryMission.researchCue}
+                    </MissionWorkbenchMeta>
+                    <DiscoveryMissionActions>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          void copyDiscoveryMission(activeDiscoveryMission);
+                        }}
+                      >
+                        {t('explore.missions.copyBrief')}
+                      </Button>
+                      {activeDiscoveryMissionCandidates[0] && (
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() =>
+                            openModDetails(activeDiscoveryMissionCandidates[0].modId)
+                          }
+                        >
+                          {t('explore.missions.openTopCandidate')}
+                        </Button>
+                      )}
+                    </DiscoveryMissionActions>
+                  </MissionWorkbenchCard>
+                  <MissionWorkbenchCard>
+                    <DiscoveryMissionLabel>
+                      {t('explore.missions.followUp')}
+                    </DiscoveryMissionLabel>
+                    <DiscoveryMissionTokenRow>
+                      {activeDiscoveryMission.followUpQueries.map((query) => (
+                        <Button
+                          key={query}
+                          size="small"
+                          onClick={() => {
+                            resetInfiniteScrollLoadedItems();
+                            setFilterText((prevValue) =>
+                              appendSearchRefinement(prevValue, query)
+                            );
+                          }}
+                        >
+                          {query}
+                        </Button>
+                      ))}
+                    </DiscoveryMissionTokenRow>
+                  </MissionWorkbenchCard>
+                </MissionWorkbenchColumn>
+                <MissionWorkbenchColumn>
+                  <DiscoveryMissionLabel>
+                    {t('explore.missions.compareTopCandidates')}
+                  </DiscoveryMissionLabel>
+                  <MissionWorkbenchCandidates>
+                    {activeDiscoveryMissionCandidates.map((candidate) => (
+                      <MissionWorkbenchCandidate key={candidate.modId}>
+                        <MissionWorkbenchCandidateTitle>
+                          {candidate.displayName}
+                        </MissionWorkbenchCandidateTitle>
+                        <MissionWorkbenchCandidateMeta>
+                          {candidate.author}
+                        </MissionWorkbenchCandidateMeta>
+                        <MissionWorkbenchCandidateMeta>
+                          {candidate.communitySummary}
+                        </MissionWorkbenchCandidateMeta>
+                        <MissionWorkbenchCandidateInsights>
+                          {candidate.insightSummary}
+                        </MissionWorkbenchCandidateInsights>
+                        <DiscoveryMissionActions>
+                          <Button
+                            size="small"
+                            onClick={() => openModDetails(candidate.modId)}
+                          >
+                            {t('mod.details')}
+                          </Button>
+                        </DiscoveryMissionActions>
+                      </MissionWorkbenchCandidate>
+                    ))}
+                  </MissionWorkbenchCandidates>
+                </MissionWorkbenchColumn>
+              </MissionWorkbenchGrid>
+            </MissionWorkbenchSection>
+          )}
           {(filterText.trim() || filterOptions.size > 0) && (
             <SearchMetaRow>
               <SearchMetaText>
@@ -957,8 +1571,8 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                 navigate('/mods-browser');
               }
             }}
-            installMod={(modSource) =>
-              installMod({ modId: displayedModId, modSource })
+            installMod={(modSource, options) =>
+              installMod({ modId: displayedModId, modSource, disabled: options?.disabled })
             }
             updateMod={(modSource, disabled) =>
               installMod(

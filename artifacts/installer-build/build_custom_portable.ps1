@@ -265,15 +265,15 @@ Invoke-Step -Message "Overlay updated extension assets" -Action {
 Invoke-Step -Message "Overlay built native binaries when available" -Action {
     $nativeCopies = @(
         @{
-            Source = (Join-Path $RepoRoot 'src\windhawk\x64\Release\windhawk.exe')
+            Source = (Join-Path $RepoRoot 'src\windhawk\Release\windhawk.exe')
             Destination = (Join-Path $stagingRoot 'windhawk.exe')
         }
         @{
-            Source = (Join-Path $RepoRoot 'src\windhawk\engine\Release\32\windhawk.dll')
+            Source = (Join-Path $RepoRoot 'src\windhawk\Release\32\windhawk.dll')
             Destination = (Join-Path $stagingRoot (Join-Path $engineRelativePath '32\windhawk.dll'))
         }
         @{
-            Source = (Join-Path $RepoRoot 'src\windhawk\engine\Release\32\windhawk.lib')
+            Source = (Join-Path $RepoRoot 'src\windhawk\Release\32\windhawk.lib')
             Destination = (Join-Path $stagingRoot (Join-Path $engineRelativePath '32\windhawk.lib'))
         }
         @{

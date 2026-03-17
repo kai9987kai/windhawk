@@ -8,6 +8,7 @@ import {
   CompileEditedModReplyData,
   CompileModData,
   CompileModReplyData,
+  CreateNewModData,
   DeleteModData,
   DeleteModReplyData,
   EditModData,
@@ -38,6 +39,10 @@ import {
   InstallModData,
   InstallModReplyData,
   NoData,
+  OpenExternalData,
+  OpenExternalReplyData,
+  OpenPathData,
+  OpenPathReplyData,
   RepairRuntimeConfigReplyData,
   SetEditedModDetailsData,
   SetEditedModIdData,
@@ -101,11 +106,11 @@ type MessageAny = MessageRegular | MessageWithReply | Reply | Event;
 ////////////////////////////////////////////////////////////
 // Messages.
 
-export function createNewMod() {
+export function createNewMod(data: CreateNewModData = {}) {
   const msg: MessageRegular = {
     type: 'message',
     command: 'createNewMod',
-    data: {},
+    data,
   };
   vsCodeApi?.postMessage(msg);
 }
@@ -171,6 +176,36 @@ export function previewEditedMod() {
     data: {},
   };
   vsCodeApi?.postMessage(msg);
+}
+
+export function useOpenExternal<TContext extends Record<string, unknown>>(
+  handler: (data: OpenExternalReplyData, context?: TContext) => void
+) {
+  const result = usePostMessageWithReplyWithHandler<
+    OpenExternalData,
+    OpenExternalReplyData,
+    TContext
+  >('openExternal', handler);
+  return {
+    openExternal: result.postMessage,
+    openExternalPending: result.pending,
+    openExternalContext: result.context,
+  };
+}
+
+export function useOpenPath<TContext extends Record<string, unknown>>(
+  handler: (data: OpenPathReplyData, context?: TContext) => void
+) {
+  const result = usePostMessageWithReplyWithHandler<
+    OpenPathData,
+    OpenPathReplyData,
+    TContext
+  >('openPath', handler);
+  return {
+    openPath: result.postMessage,
+    openPathPending: result.pending,
+    openPathContext: result.context,
+  };
 }
 
 ////////////////////////////////////////////////////////////

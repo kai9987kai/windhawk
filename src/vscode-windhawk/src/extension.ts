@@ -23,6 +23,7 @@ import {
 	CompileEditedModData,
 	CompileModData,
 	CompileModReplyData,
+	CreateNewModData,
 	DeleteModData,
 	EditModData,
 	EnableEditedModData,
@@ -44,6 +45,8 @@ import {
 	InstallModReplyData,
 	ModConfig,
 	ModMetadata,
+	OpenExternalData,
+	OpenPathData,
 	RepairRuntimeConfigReplyData,
 	SetModSettingsData,
 	StartUpdateReplyData,
@@ -372,6 +375,24 @@ class WindhawkPanel {
 			updateIsAvailable,
 			safeMode: appSettings.safeMode
 		};
+	}
+
+	private async _openExternalUri(uri: string) {
+		const opened = await vscode.env.openExternal(vscode.Uri.parse(uri, true));
+		if (!opened) {
+			throw new Error(`Unable to open ${uri}`);
+		}
+	}
+
+	private async _openPathInShell(targetPath: string) {
+		if (!fs.existsSync(targetPath)) {
+			throw new Error(`Path does not exist: ${targetPath}`);
+		}
+
+		const opened = await vscode.env.openExternal(vscode.Uri.file(targetPath));
+		if (!opened) {
+			throw new Error(`Unable to open ${targetPath}`);
+		}
 	}
 
 	private _userProfileChanged() {
@@ -921,7 +942,12 @@ class WindhawkPanel {
 		},
 		createNewMod: async message => {
 			try {
-				const modSourcePath = path.join(this._extensionPath, 'files', 'mod_template.wh.cpp');
+				const data: CreateNewModData = message.data;
+				const templateKey = data.templateKey === 'ai-ready' ? 'ai-ready' : 'default';
+				const modSourceFileName = templateKey === 'ai-ready'
+					? 'mod_template_ai_ready.wh.cpp'
+					: 'mod_template.wh.cpp';
+				const modSourcePath = path.join(this._extensionPath, 'files', modSourceFileName);
 				let modSource = fs.readFileSync(modSourcePath, 'utf8');
 
 				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
@@ -1137,6 +1163,42 @@ class WindhawkPanel {
 					this._utils.trayProgram.postAppRestartBg();
 				}, 250);
 			}
+		},
+		openExternal: async message => {
+			const data: OpenExternalData = message.data;
+
+			let succeeded = false;
+			let error: string | undefined;
+			try {
+				await this._openExternalUri(data.uri);
+				succeeded = true;
+			} catch (e) {
+				reportException(e);
+				error = e instanceof Error ? e.message : String(e);
+			}
+
+			webviewIPC.openExternalReply(this._panel.webview, message.messageId, {
+				succeeded,
+				error,
+			});
+		},
+		openPath: async message => {
+			const data: OpenPathData = message.data;
+
+			let succeeded = false;
+			let error: string | undefined;
+			try {
+				await this._openPathInShell(data.path);
+				succeeded = true;
+			} catch (e) {
+				reportException(e);
+				error = e instanceof Error ? e.message : String(e);
+			}
+
+			webviewIPC.openPathReply(this._panel.webview, message.messageId, {
+				succeeded,
+				error,
+			});
 		},
 		updateAppSettings: message => {
 			const data: UpdateAppSettingsData = message.data;
@@ -1388,6 +1450,43 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 		webviewIPC.compileEditedModStart(this._view?.webview);
 	}
 
+	private _getCurrentEditedModSource() {
+		if (!this._editedModId) {
+			return null;
+		}
+
+		try {
+			const modSourcePath = this._utils.editorWorkspace.getModSourcePath();
+			const modSourceUri = vscode.Uri.file(modSourcePath);
+			const openEditor = vscode.window.visibleTextEditors.find(
+				editor => editor.document.uri.toString(true) === modSourceUri.toString(true)
+			);
+
+			if (openEditor) {
+				return openEditor.document.getText();
+			}
+
+			return fs.readFileSync(modSourcePath, 'utf8');
+		} catch (e) {
+			console.error('Failed to read edited mod source:', e);
+			return null;
+		}
+	}
+
+	private _getEditedModMetadata() {
+		const modSource = this._getCurrentEditedModSource();
+		if (!modSource) {
+			return null;
+		}
+
+		try {
+			return this._utils.modSource.extractMetadata(modSource, this._language);
+		} catch (e) {
+			console.error('Failed to extract edited mod metadata:', e);
+			return null;
+		}
+	}
+
 	private _postEditedModDetails() {
 		if (this._editedModId) {
 			const localModId = 'local@' + this._editedModId;
@@ -1395,6 +1494,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 			webviewIPC.setEditedModDetails(this._view?.webview, {
 				modId: this._editedModId,
 				modDetails: modConfig,
+				metadata: this._getEditedModMetadata(),
 				modWasModified: this._editedModWasModified
 			});
 		}
@@ -1449,6 +1549,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				this._utils.modConfig.enableMod(localModId, data.enable);
 
 				succeeded = true;
+				this._postEditedModDetails();
 			} catch (e) {
 				reportException(e);
 			}
@@ -1471,6 +1572,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				this._utils.modConfig.enableLogging(localModId, data.enable);
 
 				succeeded = true;
+				this._postEditedModDetails();
 			} catch (e) {
 				reportException(e);
 			}
@@ -1615,6 +1717,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				}
 
 				succeeded = true;
+				this._postEditedModDetails();
 			} catch (e) {
 				reportCompilerException(e);
 				this._editedModCompilationFailed = true;

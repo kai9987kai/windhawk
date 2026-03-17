@@ -1117,8 +1117,14 @@ bool LoadedMod::Initialize() {
 
     m_useHwbpHooking = settings->GetInt(L"UseHwbpHooking").value_or(0) != 0;
     if (m_useHwbpHooking) {
-        HwbpHook::Initialize();
-        VERBOSE(L"Stealth HWBP Hooking Engine initialized for mod %s", m_modName.c_str());
+        if (HwbpHook::Initialize()) {
+            VERBOSE(L"Stealth HWBP Hooking Engine initialized for mod %s",
+                    m_modName.c_str());
+        } else {
+            LOG(L"Stealth HWBP Hooking Engine is not available for mod %s",
+                m_modName.c_str());
+            m_useHwbpHooking = false;
+        }
     }
 
     using WH_MOD_INIT_T = BOOL(__cdecl*)();

@@ -31,6 +31,7 @@ import {
   RepositoryDetails,
 } from '../webviewIPCMessages';
 import localModIcon from './assets/local-mod-icon.svg';
+import { getLocalModsOverview, matchesLocalModFilters } from './localModsInsights';
 import {
   mockModsBrowserLocalFeaturedMods,
   mockModsBrowserLocalInitialMods,
@@ -150,6 +151,20 @@ const RuntimeAlert = styled(Alert)`
   margin-bottom: 18px;
 `;
 
+const QuickFocusRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const QuickFocusButton = styled(Button)<{ $active: boolean }>`
+  ${({ $active }) => css`
+    border-color: ${$active ? 'rgba(24, 144, 255, 0.45)' : 'rgba(255, 255, 255, 0.12)'};
+    background: ${$active ? 'rgba(24, 144, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)'};
+  `}
+`;
+
 type ModDetailsType = {
   metadata: ModMetadata | null;
   config: ModConfig | null;
@@ -241,25 +256,7 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
         }
 
         // Use AND logic - mod must match ALL selected filters
-        if (filterOptions.has('enabled')) {
-          if (!mod.config || mod.config.disabled) {
-            return false;
-          }
-        }
-
-        if (filterOptions.has('disabled')) {
-          if (mod.config && !mod.config.disabled) {
-            return false;
-          }
-        }
-
-        if (filterOptions.has('update-available')) {
-          if (!mod.updateAvailable) {
-            return false;
-          }
-        }
-
-        return true;
+        return matchesLocalModFilters(modId, mod, filterOptions);
       })
       .sort((a, b) => {
         const [modIdA, modA] = a;
@@ -541,32 +538,50 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
         ? t('about.runtime.issue.engineStorageMismatch')
         : null
     : null;
+  const localModsOverview = getLocalModsOverview(installedMods);
+  const quickFocusItems = [
+    {
+      key: 'local-drafts',
+      label: t('home.filter.localDrafts'),
+      count: localModsOverview.localDrafts,
+    },
+    {
+      key: 'needs-compile',
+      label: t('home.filter.needsCompile'),
+      count: localModsOverview.needsCompile,
+    },
+    {
+      key: 'logging-enabled',
+      label: t('home.filter.loggingEnabled'),
+      count: localModsOverview.loggingEnabled,
+    },
+    {
+      key: 'update-available',
+      label: t('home.filter.updateAvailable'),
+      count: localModsOverview.updates,
+    },
+  ];
 
   const overviewItems = [
     {
       key: 'total',
       label: t('home.overview.totalInstalled'),
-      value: Object.keys(installedMods).length,
+      value: localModsOverview.totalInstalled,
     },
     {
       key: 'enabled',
       label: t('home.overview.enabled'),
-      value: Object.values(installedMods).filter(
-        (mod) => mod.config && !mod.config.disabled
-      ).length,
+      value: localModsOverview.enabled,
     },
     {
       key: 'updates',
       label: t('home.overview.updates'),
-      value: Object.values(installedMods).filter((mod) => mod.updateAvailable)
-        .length,
+      value: localModsOverview.updates,
     },
     {
       key: 'attention',
       label: t('home.overview.needsAttention'),
-      value: Object.values(installedMods).filter(
-        (mod) => mod.updateAvailable || !mod.config
-      ).length,
+      value: localModsOverview.needsAttention,
     },
   ];
 
@@ -600,6 +615,19 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
               </OverviewCard>
             ))}
           </OverviewGrid>
+          {!noInstalledMods && (
+            <QuickFocusRow>
+              {quickFocusItems.map((item) => (
+                <QuickFocusButton
+                  key={item.key}
+                  $active={filterOptions.has(item.key)}
+                  onClick={() => handleFilterChange(item.key)}
+                >
+                  {item.label} ({item.count})
+                </QuickFocusButton>
+              ))}
+            </QuickFocusRow>
+          )}
           <SectionHeader>
             <h2>
               <SectionIcon icon={faHdd} /> {t('home.installedMods.title')}
@@ -633,6 +661,18 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
                     {
                       label: t('home.filter.updateAvailable'),
                       key: 'update-available',
+                    },
+                    {
+                      label: t('home.filter.localDrafts'),
+                      key: 'local-drafts',
+                    },
+                    {
+                      label: t('home.filter.needsCompile'),
+                      key: 'needs-compile',
+                    },
+                    {
+                      label: t('home.filter.loggingEnabled'),
+                      key: 'logging-enabled',
                     },
                     {
                       type: 'divider',
@@ -1064,8 +1104,12 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
                   navigate('/');
                 }
               }}
-              installMod={(modSource) =>
-                installMod({ modId: displayedModId, modSource: modSource })
+              installMod={(modSource, options) =>
+                installMod({
+                  modId: displayedModId,
+                  modSource,
+                  disabled: options?.disabled,
+                })
               }
               updateMod={(modSource, disabled) =>
                 installMod(

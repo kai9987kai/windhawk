@@ -17,7 +17,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         bool silent = args.Any(arg => string.Equals(arg, "/silent", StringComparison.OrdinalIgnoreCase));
-        string targetDir = Path.Combine(
+        string targetDir = GetTargetDir(args) ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Programs",
             "Windhawk-Custom-Portable");
@@ -82,6 +82,29 @@ internal static class Program
 
             return 2;
         }
+    }
+
+    private static string GetTargetDir(string[] args)
+    {
+        const string Prefix = "/dir=";
+
+        foreach (string arg in args)
+        {
+            if (!arg.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            string configuredPath = arg.Substring(Prefix.Length).Trim().Trim('"');
+            if (string.IsNullOrWhiteSpace(configuredPath))
+            {
+                throw new ArgumentException("The /dir argument must include a target path.");
+            }
+
+            return Path.GetFullPath(Environment.ExpandEnvironmentVariables(configuredPath));
+        }
+
+        return null;
     }
 
     private static void InstallPayload(string targetDir)

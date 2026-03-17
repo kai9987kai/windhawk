@@ -1,3 +1,5 @@
+import { execFileSync } from 'child_process';
+import * as os from 'os';
 import * as path from 'path';
 import * as ini from '../ini';
 import { StoragePaths } from '../storagePaths';
@@ -14,6 +16,19 @@ type ExpectedEngineStorage = {
 	expectedEngineAppDataPath: string;
 	expectedEngineRegistryKey: string | null;
 };
+
+type WindowsEnvironmentSnapshot = Pick<
+	AppRuntimeDiagnostics,
+	| 'windowsProductName'
+	| 'windowsDisplayVersion'
+	| 'windowsBuild'
+	| 'windowsInstallationType'
+	| 'hostName'
+	| 'userName'
+	| 'isElevated'
+	| 'windowsDirectory'
+	| 'tempDirectory'
+>;
 
 function expandEnvironmentVariables(input: string) {
 	return input.replace(/%([^%]+)%/g, (original, matched) => {
@@ -60,6 +75,104 @@ function sameRegistryKey(left: string | null | undefined, right: string | null |
 
 function appendWindowsChild(base: string, child: string) {
 	return base.replace(/[\\\/]+$/, '') + '\\' + child;
+}
+
+function readWindowsEnvironmentSnapshot(): WindowsEnvironmentSnapshot {
+	const fallbackUserName = (() => {
+		try {
+			return os.userInfo().username;
+		} catch (e) {
+			console.error('Failed to read Windows user info:', e);
+			return process.env.USERNAME || null;
+		}
+	})();
+
+	const fallback: WindowsEnvironmentSnapshot = {
+		windowsProductName: 'Windows',
+		windowsDisplayVersion: null,
+		windowsBuild: os.release(),
+		windowsInstallationType: null,
+		hostName: os.hostname(),
+		userName: fallbackUserName,
+		isElevated: null,
+		windowsDirectory: process.env.WINDIR || null,
+		tempDirectory: os.tmpdir(),
+	};
+
+	if (process.platform !== 'win32') {
+		return fallback;
+	}
+
+	try {
+		const command = [
+			"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
+			"$currentVersion = Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'",
+			"$isElevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+			"[pscustomobject]@{",
+			"  ProductName = $currentVersion.ProductName",
+			"  DisplayVersion = $currentVersion.DisplayVersion",
+			"  ReleaseId = $currentVersion.ReleaseId",
+			"  CurrentBuild = $currentVersion.CurrentBuild",
+			"  UBR = $currentVersion.UBR",
+			"  InstallationType = $currentVersion.InstallationType",
+			"  IsElevated = $isElevated",
+			"} | ConvertTo-Json -Compress",
+		].join('; ');
+
+		const output = execFileSync(
+			'powershell.exe',
+			[
+				'-NoProfile',
+				'-NonInteractive',
+				'-ExecutionPolicy',
+				'Bypass',
+				'-Command',
+				command,
+			],
+			{
+				encoding: 'utf8',
+				timeout: 4000,
+				windowsHide: true,
+			}
+		).trim();
+
+		if (!output) {
+			return fallback;
+		}
+
+		const parsed = JSON.parse(output) as Partial<{
+			ProductName: string;
+			DisplayVersion: string;
+			ReleaseId: string;
+			CurrentBuild: string;
+			UBR: number | string;
+			InstallationType: string;
+			IsElevated: boolean;
+		}>;
+
+		const baseBuild = parsed.CurrentBuild || fallback.windowsBuild;
+		const ubr =
+			parsed.UBR !== undefined && parsed.UBR !== null && parsed.UBR !== ''
+				? `.${parsed.UBR}`
+				: '';
+
+		return {
+			...fallback,
+			windowsProductName: parsed.ProductName || fallback.windowsProductName,
+			windowsDisplayVersion:
+				parsed.DisplayVersion || parsed.ReleaseId || fallback.windowsDisplayVersion,
+			windowsBuild: `${baseBuild}${ubr}`,
+			windowsInstallationType:
+				parsed.InstallationType || fallback.windowsInstallationType,
+			isElevated:
+				typeof parsed.IsElevated === 'boolean'
+					? parsed.IsElevated
+					: fallback.isElevated,
+		};
+	} catch (e) {
+		console.error('Failed to read Windows environment snapshot:', e);
+		return fallback;
+	}
 }
 
 function getExpectedEngineStorage(paths: StoragePaths): ExpectedEngineStorage {
@@ -112,9 +225,11 @@ function getExpectedEngineStorage(paths: StoragePaths): ExpectedEngineStorage {
 
 export default class RuntimeDiagnosticsUtils {
 	private readonly paths: StoragePaths;
+	private readonly windowsEnvironmentSnapshot: WindowsEnvironmentSnapshot;
 
 	constructor(paths: StoragePaths) {
 		this.paths = paths;
+		this.windowsEnvironmentSnapshot = readWindowsEnvironmentSnapshot();
 	}
 
 	public getDiagnostics(): AppRuntimeDiagnostics {
@@ -161,6 +276,7 @@ export default class RuntimeDiagnosticsUtils {
 			platformArch: process.arch,
 			arm64Enabled: process.env.WINDHAWK_ARM64_ENABLED === '1',
 			portable: this.paths.portable,
+			...this.windowsEnvironmentSnapshot,
 			engineConfigExists,
 			enginePortable,
 			engineConfigMatchesAppConfig,

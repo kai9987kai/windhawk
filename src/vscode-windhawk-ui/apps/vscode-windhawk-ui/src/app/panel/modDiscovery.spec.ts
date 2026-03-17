@@ -1,5 +1,9 @@
 import {
+  buildDiscoveryMissionCandidates,
+  buildDiscoveryMissionBrief,
   getRefinementSuggestions,
+  getDiscoveryMissions,
+  getDiscoveryMissionByQuery,
   getSearchCorrection,
   getSearchRecovery,
   rankMods,
@@ -96,6 +100,50 @@ describe('modDiscovery', () => {
     expect(ranked[0].insights).toContain('Fuzzy match');
   });
 
+  it('adds browse-mode insights even without a search query', () => {
+    const mods = [
+      createMod({
+        modId: 'fresh-explorer',
+        name: 'Fresh Explorer',
+        description: 'Explorer quality-of-life tweaks.',
+        users: 12000,
+        rating: 9.4,
+        updatedDaysAgo: 7,
+      }),
+    ];
+
+    const ranked = rankMods(mods, '', 'smart-relevance');
+
+    expect(ranked[0].insights).toEqual(
+      expect.arrayContaining(['Fresh update', 'Explorer'])
+    );
+  });
+
+  it('connects notification and context-menu queries to Windows shell concepts', () => {
+    const mods = [
+      createMod({
+        modId: 'notification-center-plus',
+        name: 'Notification Center Plus',
+        description: 'Improve toast handling and quick settings flow.',
+        include: ['ShellExperienceHost.exe'],
+      }),
+      createMod({
+        modId: 'context-menu-cleanup',
+        name: 'Context Menu Cleanup',
+        description: 'Tidy right-click and shell menu entries in Explorer.',
+        include: ['explorer.exe'],
+      }),
+    ];
+
+    const notificationResults = rankMods(mods, 'notifications', 'smart-relevance');
+    const contextMenuResults = rankMods(mods, 'context menu', 'smart-relevance');
+
+    expect(notificationResults[0].modId).toBe('notification-center-plus');
+    expect(notificationResults[0].insights).toContain('Notifications');
+    expect(contextMenuResults[0].modId).toBe('context-menu-cleanup');
+    expect(contextMenuResults[0].insights).toContain('Context menu');
+  });
+
   it('diversifies the first results instead of stacking one author cluster', () => {
     const mods = [
       createMod({
@@ -178,9 +226,12 @@ describe('modDiscovery', () => {
     const ranked = rankMods(mods, 'explorer', 'smart-relevance');
     const suggestions = getRefinementSuggestions(ranked, 'explorer');
 
+    const labels = suggestions.map((suggestion) => suggestion.label);
+
     expect(
-      suggestions.some((suggestion) => suggestion.label === 'Taskbar')
+      labels.some((label) => ['Taskbar', 'Start menu', 'Desktop'].includes(label))
     ).toBe(true);
+    expect(labels).not.toContain('Explorer');
   });
 
   it('suggests a corrected query for likely misspellings', () => {
@@ -221,5 +272,72 @@ describe('modDiscovery', () => {
     expect(recovery?.suggestedQuery).toBe('taskbar');
     expect(recovery?.reason).toBe('broadened');
     expect(recovery?.results[0].modId).toBe('taskbar-clock');
+  });
+
+  it('provides research missions with copy-ready AI briefs', () => {
+    const mods = [
+      createMod({
+        modId: 'notification-center-plus',
+        name: 'Notification Center Plus',
+        description: 'Improve toast handling and quick settings flow.',
+        include: ['ShellExperienceHost.exe'],
+      }),
+      createMod({
+        modId: 'quiet-notifications',
+        name: 'Quiet Notifications',
+        description: 'Reduce shell interruption cost and noisy alerts.',
+        include: ['explorer.exe'],
+      }),
+    ];
+
+    const mission = getDiscoveryMissions().find(
+      (candidate) => candidate.key === 'notification-calm'
+    );
+
+    expect(mission).toBeDefined();
+
+    const ranked = rankMods(mods, mission?.query || '', mission?.sortingOrder || 'smart-relevance');
+    const brief = buildDiscoveryMissionBrief(mission!, ranked);
+
+    expect(brief).toContain('Calm notifications');
+    expect(brief).toContain('Notification Center Plus');
+    expect(brief).toContain('Top candidate mods');
+    expect(brief).toContain('Manual verification priorities');
+  });
+
+  it('matches an active mission and summarizes its top candidates', () => {
+    const mods = [
+      createMod({
+        modId: 'taskbar-focus',
+        name: 'Taskbar Focus',
+        description: 'Taskbar and tray cleanup for daily use.',
+        author: 'Alice',
+        users: 6000,
+        rating: 9.2,
+      }),
+      createMod({
+        modId: 'taskbar-alerts',
+        name: 'Taskbar Alerts',
+        description: 'Taskbar notification and tray tweaks.',
+        author: 'Bob',
+        users: 5500,
+        rating: 9.0,
+      }),
+    ];
+
+    const mission = getDiscoveryMissionByQuery('taskbar', 'smart-relevance');
+    const ranked = rankMods(mods, 'taskbar', 'smart-relevance');
+    const candidates = buildDiscoveryMissionCandidates(ranked);
+
+    expect(mission?.key).toBe('taskbar-flow');
+    expect(candidates).toHaveLength(2);
+    expect(
+      candidates.some(
+        (candidate) =>
+          candidate.displayName === 'Taskbar Focus' && candidate.author === 'Alice'
+      )
+    ).toBe(true);
+    expect(candidates[0].communitySummary).toContain('users');
+    expect(candidates[0].insightSummary.length).toBeGreaterThan(0);
   });
 });

@@ -1,9 +1,9 @@
-import { ConfigProvider, Modal, Result, Spin } from 'antd';
+import { Modal, Result, Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import ReactMarkdownCustom from '../components/ReactMarkdownCustom';
 import { fetchText } from '../swrHelpers';
+import ChangelogViewer from './ChangelogViewer';
 
 const CHANGELOG_URL = 'https://ramensoftware.com/downloads/windhawk_setup.exe?version&changelog';
 
@@ -81,13 +81,7 @@ export function ChangelogModal(props: Props) {
           />
         )}
         {changelog && !loading && !hasError && (
-          <ConfigProvider direction="ltr">
-            <ReactMarkdownCustom
-              markdown={changelog}
-              allowHtml
-              direction="ltr"
-            />
-          </ConfigProvider>
+          <ChangelogViewer markdown={changelog} allowHtml />
         )}
       </ModalContent>
     </Modal>
