@@ -1,0 +1,19 @@
+
+<--- Last few GCs --->
+
+[21152:0000029BE5A36000]     2703 ms: Scavenge 228.3 (299.3) -> 179.2 (304.6) MB, pooled: 0 MB, 3.93 / 0.01 ms  (average mu = 0.995, current mu = 0.997) task; 
+[21152:0000029BE5A36000]     2776 ms: Scavenge 228.0 (305.3) -> 185.6 (309.6) MB, pooled: 0 MB, 4.75 / 0.00 ms  (average mu = 0.995, current mu = 0.997) task; 
+[21152:0000029BE5A36000]     2852 ms: Scavenge 246.3 (312.1) -> 201.1 (316.3) MB, pooled: 0 MB, 8.74 / 0.00 ms  (average mu = 0.995, current mu = 0.997) allocation failure; 
+
+
+<--- Last few GCs --->
+
+[21152:0000029C01687000]      306 ms: Scavenge (interleaved) 63.9 (96.9) -> 42.0 (104.6) MB, pooled: 0 MB, 5.02 / 0.00 ms  (average mu = 0.962, current mu = 0.962) allocation failure; 
+[21152:0000029C01687000]      428 ms: Scavenge (interleaved) 74.2 (107.1) -> 48.4 (109.9) MB, pooled: 0 MB, 2.64 / 0.00 ms  (average mu = 0.962, current mu = 0.962) allocation failure; 
+
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
+FATAL ERROR: NewSpace::EnsureCurrentCapacity Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+

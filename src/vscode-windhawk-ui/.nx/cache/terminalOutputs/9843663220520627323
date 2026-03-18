@@ -1,0 +1,13 @@
+
+Linting "vscode-windhawk-ui"...
+[0m[0m
+[0m[4mC:\Users\kai99\Desktop\New folder (12)\windhawk\src\vscode-windhawk-ui\apps\vscode-windhawk-ui\src\app\panel\ModsBrowserOnline.tsx[24m[0m
+[0m    [2m3:65[22m  [33mwarning[39m  'message' is defined but never used                            [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m12:10[22m  [33mwarning[39m  'copyTextToClipboard' is defined but never used                [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m33:3[22m   [33mwarning[39m  'buildDiscoveryMissionBrief' is defined but never used         [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m877:9[22m   [33mwarning[39m  'discoveryMissionRankings' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[33m[1m✖ 4 problems (0 errors, 4 warnings)[22m[39m[0m
+[0m[33m[1m[22m[39m[0m
+✖ 4 problems (0 errors, 4 warnings)
+

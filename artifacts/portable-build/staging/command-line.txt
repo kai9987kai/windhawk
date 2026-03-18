@@ -1,0 +1,13 @@
+Windhawk command-line flags
+===========================
+
+One question that comes up a lot is how to run Windhawk without opening the main
+window. This is possible with the -tray-only flag, as following:
+
+windhawk.exe -tray-only
+
+Other command-line flags that may be useful:
+
+windhawk.exe -exit [-wait]
+windhawk.exe -restart [-tray-only]
+windhawk.exe -safe-mode

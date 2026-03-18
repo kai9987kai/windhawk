@@ -1,0 +1,25 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260317172229
+Username: NOLANS-TECHSUPP\kai99
+RunAs User: NOLANS-TECHSUPP\kai99
+Configuration Name: 
+Machine: NOLANS-TECHSUPP (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File artifacts\installer-build\replace_programfiles_windhawk.ps1
+Process ID: 19760
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS>TerminatingError(Stop-Process): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot stop process "windhawk (5488)" because of the following error: Access is denied"
+WARNING: Could not stop PID : Cannot stop process "windhawk (5488)" because of the following error: Access is denied
+PS>TerminatingError(Copy-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Access to the path 'C:\Program Files\Windhawk\command-line.txt' is denied."
+**********************
+Windows PowerShell transcript end
+End time: 20260317172321
+**********************

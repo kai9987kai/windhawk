@@ -1,0 +1,668 @@
+{
+  "version": "6.0",
+  "nxVersion": "20.8.3",
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "nonProjectFiles": [
+      {
+        "file": "libs/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "build_err.log",
+        "hash": "7483477458919472307"
+      },
+      {
+        "file": "tools/tsconfig.tools.json",
+        "hash": "11810713488198132402"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "hash": "3631615085677690706"
+      },
+      {
+        "file": "build_err_utf8.log",
+        "hash": "821123663470091312"
+      },
+      {
+        "file": "jest.preset.js",
+        "hash": "17666962557300311861"
+      },
+      {
+        "file": ".prettierignore",
+        "hash": "1324685984948235314"
+      },
+      {
+        "file": "tools/generators/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "5439913239862254453"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "8304168470551444824"
+      },
+      {
+        "file": ".eslintrc.json",
+        "hash": "9483251403686547478"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "3069074216761126282"
+      },
+      {
+        "file": "nx.json",
+        "hash": "17520093226414838971"
+      },
+      {
+        "file": ".prettierrc",
+        "hash": "6820402234827505055"
+      },
+      {
+        "file": "apps/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": ".vscode/extensions.json",
+        "hash": "13391140343975966684"
+      },
+      {
+        "file": "babel.config.json",
+        "hash": "6619451454968768629"
+      },
+      {
+        "file": "package.json",
+        "hash": "16590811369976751349"
+      },
+      {
+        "file": ".editorconfig",
+        "hash": "11532813898455409296"
+      }
+    ],
+    "projectFileMap": {
+      "vscode-windhawk-ui-e2e": [
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/.eslintrc.json",
+          "hash": "5570788962263802893"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/cypress.config.ts",
+          "hash": "14925566057180716649"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/project.json",
+          "hash": "3778517849271594665"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/src/e2e/app.cy.ts",
+          "hash": "12095481822138417415"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/src/fixtures/example.json",
+          "hash": "17341819486505642070"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/src/support/app.po.ts",
+          "hash": "5364106453863571025"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/src/support/commands.ts",
+          "hash": "11031723810997510506"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/src/support/e2e.ts",
+          "hash": "15928825062325902088"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui-e2e/tsconfig.json",
+          "hash": "6711070650399197251"
+        }
+      ],
+      "vscode-windhawk-ui": [
+        {
+          "file": "apps/vscode-windhawk-ui/.babelrc",
+          "hash": "1755705465116792798"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/.browserslistrc",
+          "hash": "15083903566230435468"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/.eslintrc.json",
+          "hash": "659015603474373109"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/jest.config.ts",
+          "hash": "1427361749469612269"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/project.json",
+          "hash": "15662631869614408261"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/app.css",
+          "hash": "6940777814719417380"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/app.less",
+          "hash": "9729948389866714930"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/app.tsx",
+          "hash": "12623466742804465805"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/appUISettings.spec.ts",
+          "hash": "7740897333044206056"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/appUISettings.ts",
+          "hash": "10145612334802691922"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/components/EllipsisText.tsx",
+          "hash": "18175494755923246940"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/components/InputWithContextMenu.tsx",
+          "hash": "10943279015181094226"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/components/ReactMarkdownCustom.tsx",
+          "hash": "14747669943037154639"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/fonts/Oxanium-Medium.ttf",
+          "hash": "1729968484716918987"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/i18n.ts",
+          "hash": "614478366428336028"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/About.tsx",
+          "hash": "10960678676160357333"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/AppHeader.tsx",
+          "hash": "11161811838653586876"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ChangelogModal.tsx",
+          "hash": "16223611937741092987"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ChangelogViewer.tsx",
+          "hash": "642214421634665832"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/CreateNewModButton.tsx",
+          "hash": "13653569813395054651"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/DevModeAction.tsx",
+          "hash": "16311894616541715272"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModCard.tsx",
+          "hash": "13665079473612552621"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetails.tsx",
+          "hash": "3409599806097418937"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsAdvanced.tsx",
+          "hash": "17526426379973989837"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsChangelog.tsx",
+          "hash": "16577385426124993387"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsHeader.tsx",
+          "hash": "10282550923932646165"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsReadme.tsx",
+          "hash": "2895828017312360545"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsSettings.spec.ts",
+          "hash": "14535081423562200244"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsSettings.tsx",
+          "hash": "8338393760291970420"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsSource.tsx",
+          "hash": "2791301767873341133"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetailsSourceDiff.tsx",
+          "hash": "741935202201535001"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModMetadataLine.tsx",
+          "hash": "9287178240606554839"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModPreview.tsx",
+          "hash": "1107382017338127881"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModsBrowserLocal.tsx",
+          "hash": "13568522371725233448"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/ModsBrowserOnline.tsx",
+          "hash": "12162390377561477185"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/NewModStudioModal.tsx",
+          "hash": "13443396044854661218"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/Panel.tsx",
+          "hash": "16097448354489931221"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/SafeModeIndicator.tsx",
+          "hash": "17249254258849319852"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/Settings.tsx",
+          "hash": "805314802845907099"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/UpdateModal.tsx",
+          "hash": "16224647974453483236"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/VersionSelectorModal.tsx",
+          "hash": "3962581972679234230"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/aiModStudio.spec.ts",
+          "hash": "9985922331561185199"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/aiModStudio.ts",
+          "hash": "4035036727178841264"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/assets/local-mod-icon.svg",
+          "hash": "4662217507992006879"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/assets/logo-black.svg",
+          "hash": "15784730300795289212"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/assets/logo-white.svg",
+          "hash": "12643786861494195098"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/changelogUtils.spec.ts",
+          "hash": "10411725018814385992"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/changelogUtils.ts",
+          "hash": "5536548130218704121"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/installDecisionUtils.spec.ts",
+          "hash": "16805063835173131152"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/installDecisionUtils.ts",
+          "hash": "553483836357551451"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/localModsInsights.spec.ts",
+          "hash": "6331575132675631791"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/localModsInsights.ts",
+          "hash": "6611871466474918823"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/mockData.ts",
+          "hash": "18428111639344323839"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/modDiscovery.spec.ts",
+          "hash": "12557728934316546786"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/panel/modDiscovery.ts",
+          "hash": "1791371607589068495"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/sidebar/EditorModeControls.tsx",
+          "hash": "7925048669840063661"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/sidebar/Sidebar.tsx",
+          "hash": "5827821017908965691"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/sidebar/editorModeUtils.spec.ts",
+          "hash": "13200843135224885395"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/sidebar/editorModeUtils.ts",
+          "hash": "10332291159979494642"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/sidebar/mockData.ts",
+          "hash": "8304150327752424566"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/swrHelpers.ts",
+          "hash": "7604968587105607246"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/utils.spec.ts",
+          "hash": "9416236031151171174"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/utils.ts",
+          "hash": "11737085968284548531"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/vsCodeApi.ts",
+          "hash": "6165404776896178259"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/webviewIPC.ts",
+          "hash": "8483195061835514013"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/app/webviewIPCMessages.ts",
+          "hash": "10397505359793625695"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/environments/environment.prod.ts",
+          "hash": "3926102656993804675"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/environments/environment.ts",
+          "hash": "4977765895979373768"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/favicon.ico",
+          "hash": "7380503295697296099"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/index.html",
+          "hash": "11628900873539975048"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ar/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ar/translation.json",
+          "hash": "13685410020598470925"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/cs/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/cs/translation.json",
+          "hash": "2124193608556574795"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/da/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/da/translation.json",
+          "hash": "17975579525737703443"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/de/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/de/translation.json",
+          "hash": "1622172961647308222"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/el/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/el/translation.json",
+          "hash": "8979208688832786404"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/en/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/en/translation.json",
+          "hash": "14923488859078381140"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/es/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/es/translation.json",
+          "hash": "12096837020777199276"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/fr/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/fr/translation.json",
+          "hash": "16034538605838533500"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hi/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hi/translation.json",
+          "hash": "12776944778924646809"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hr/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hr/translation.json",
+          "hash": "9555753510704031542"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hu/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/hu/translation.json",
+          "hash": "7538338432164631962"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/id/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/id/translation.json",
+          "hash": "17713300495598169903"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/it/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/it/translation.json",
+          "hash": "12606816242799775577"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ja/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ja/translation.json",
+          "hash": "17133228416966271963"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ko/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ko/translation.json",
+          "hash": "12775858708037058985"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/nl/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/nl/translation.json",
+          "hash": "16772954584580949963"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/pl/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/pl/translation.json",
+          "hash": "13829624741536427681"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/pt-BR/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/pt-BR/translation.json",
+          "hash": "8667986482080525491"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ro/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ro/translation.json",
+          "hash": "16264704046515385267"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ru/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ru/translation.json",
+          "hash": "9895361735752201136"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/sv/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/sv/translation.json",
+          "hash": "16012337006929883383"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ta/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/ta/translation.json",
+          "hash": "6650618490209213882"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/th/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/th/translation.json",
+          "hash": "16296963316546337626"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/tr/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/tr/translation.json",
+          "hash": "7443142872945186753"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/uk/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/uk/translation.json",
+          "hash": "11120543110788374324"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/vi/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/vi/translation.json",
+          "hash": "12780997240355051367"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/zh-CN/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/zh-CN/translation.json",
+          "hash": "14171656342676212386"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/zh-TW/DO_NOT_EDIT.txt",
+          "hash": "12217296041068891892"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/locales/zh-TW/translation.json",
+          "hash": "15395650320056530298"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/main.css",
+          "hash": "3917665369392837309"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/main.tsx",
+          "hash": "6141103194410800782"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/polyfills.ts",
+          "hash": "665023768905917724"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/src/test/monacoEditorApiMock.cjs",
+          "hash": "3429130306414473014"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/tsconfig.app.json",
+          "hash": "3014325948479127667"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/tsconfig.json",
+          "hash": "11467488481238851422"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/tsconfig.spec.json",
+          "hash": "16995480535754382312"
+        },
+        {
+          "file": "apps/vscode-windhawk-ui/webpack.config.js",
+          "hash": "1224161002615678039"
+        }
+      ]
+    }
+  }
+}

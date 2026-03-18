@@ -1,0 +1,17 @@
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\shared\logger_base.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\logger_base.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\shared\portable_settings.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\portable_settings.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\app.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\engine_control.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\engine_control.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\event_viewer_crash_monitor.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\event_viewer_crash_monitor.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\functions.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\functions.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\logger.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\logger.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\main_window.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\main_window.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\service.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\service.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\stdafx.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\stdafx.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\storage_manager.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\storage_manager.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\task_manager_dlg.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\task_manager_dlg.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\tray_icon.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\tray_icon.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\ui_control.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\ui_control.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\update_checker.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\update_checker.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\userprofile.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\userprofile.obj
+c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\toolkit_dlg.cpp;c:\Users\kai99\Desktop\New folder (12)\windhawk\src\windhawk\app\app\Release\toolkit_dlg.obj

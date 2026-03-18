@@ -1,0 +1,9 @@
+Entrypoint [1mmain[39m[22m [1m[33m[big][39m[22m 17.4 MiB (20.6 MiB) = [1m[32mruntime.js[39m[22m 14.5 KiB [1m[32mvendor.css[39m[22m 211 KiB [1m[32mvendor.js[39m[22m 16 MiB [1m[32mmain.css[39m[22m 670 KiB [1m[32mmain.js[39m[22m 560 KiB 7 auxiliary assets
+Entrypoint [1mpolyfills[39m[22m [1m[33m[big][39m[22m 636 KiB (749 KiB) = [1m[32mruntime.js[39m[22m 14.5 KiB [1m[32mpolyfills.js[39m[22m 621 KiB 2 auxiliary assets
+chunk (runtime: runtime) [1m[32mruntime.js[39m[22m (runtime) 8.94 KiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+chunk (runtime: runtime) [1m[32mpolyfills.js[39m[22m (polyfills) 565 KiB [1m[33m[initial][39m[22m [1m[32m[rendered][39m[22m
+chunk (runtime: runtime) [1m[32mvendor.css[39m[22m, [1m[32mvendor.js[39m[22m (vendor) (id hint: vendor) 15 MiB (javascript) 210 KiB (css/mini-extract) [1m[33m[initial][39m[22m [1m[32m[rendered][39m[22m [1m[33msplit chunk (cache group: vendor) (name: vendor)[39m[22m
+chunk (runtime: runtime) [1m[32mmain.css[39m[22m, [1m[32mmain.js[39m[22m (main) 525 KiB (javascript) 670 KiB (css/mini-extract) [1m[33m[initial][39m[22m [1m[32m[rendered][39m[22m
+chunk (runtime: runtime) [1m[32m826.js[39m[22m 10.7 KiB [1m[32m[rendered][39m[22m
+chunk (runtime: runtime) [1m[32m842.js[39m[22m 18.9 KiB [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (007295d16d2ee631)

@@ -3,3 +3,9 @@
 /src/windhawk/*/libraries/** linguist-vendored
 /src/vscode-windhawk-ui/apps/vscode-windhawk-ui/src/app/app.css linguist-vendored
 artifacts/windhawk-custom-portable-installer.exe filter=lfs diff=lfs merge=lfs -text
+artifacts/portable-build/staging/UI/VSCodium.exe filter=lfs diff=lfs merge=lfs -text
+artifacts/portable-build/windhawk-custom-portable.zip filter=lfs diff=lfs merge=lfs -text
+src/windhawk/app/app/Release/windhawk.pch filter=lfs diff=lfs merge=lfs -text
+src/windhawk/engine/engine/ARM64/Release/windhawk.pch filter=lfs diff=lfs merge=lfs -text
+src/windhawk/engine/engine/Release/windhawk.pch filter=lfs diff=lfs merge=lfs -text
+src/windhawk/engine/engine/x64/Release/windhawk.pch filter=lfs diff=lfs merge=lfs -text

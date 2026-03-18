@@ -1,0 +1,291 @@
+{
+  "general": {
+    "loading": "加载中...",
+    "loadingFailed": "加载失败，请检查您的网络连接",
+    "loadingFailedTitle": "加载失败",
+    "loadingFailedSubtitle": "请检查您的网络连接并重试",
+    "tryAgain": "请重试",
+    "updating": "更新中...",
+    "installing": "安装中...",
+    "compiling": "编译中...",
+    "cut": "剪切",
+    "copy": "复制",
+    "paste": "粘贴",
+    "selectAll": "全选"
+  },
+  "appHeader": {
+    "home": "主页",
+    "explore": "搜索",
+    "settings": "设置",
+    "about": "关于"
+  },
+  "mod": {
+    "updateAvailable": "更新可用",
+    "installed": "已安装",
+    "details": "详情",
+    "update": "更新",
+    "install": "安装",
+    "compile": "编译",
+    "disable": "禁用",
+    "enable": "启用",
+    "edit": "编辑",
+    "fork": "克隆",
+    "remove": "移除",
+    "removeConfirm": "您确定要移除此Mod吗？",
+    "removeConfirmOk": "确认移除",
+    "removeConfirmCancel": "取消",
+    "notCompiled": "Mod需要编译",
+    "editedLocally": "Mod已在本地编辑",
+    "noDescription": "（无描述）",
+    "users_one": "{{formattedCount}} 用户",
+    "users_other": "{{formattedCount}} 用户"
+  },
+  "modDetails": {
+    "header": {
+      "installedVersion": "已安装版本",
+      "latestVersion": "最新版本",
+      "loading": "加载中...",
+      "loadingFailed": "加载失败",
+      "modId": "Mod ID",
+      "modVersion": "Mod版本",
+      "modAuthor": {
+        "title": "Mod开发者",
+        "homepage": "主页",
+        "github": "GitHub主页",
+        "twitter": "X (Twitter)主页"
+      },
+      "processes": {
+        "all": "全部进程",
+        "allBut": "全部进程，除了{{list}}",
+        "except": "{{included}}除了{{excluded}}",
+        "tooltip": {
+          "targets": "目标进程",
+          "excluded": "不包括"
+        }
+      },
+      "updateNotNeeded": "安装的版本与最新版本相同"
+    },
+    "details": {
+      "title": "详情",
+      "noData": "无详情"
+    },
+    "settings": {
+      "title": "设置",
+      "noData": "当前Mod无设置。",
+      "saveButton": "保存",
+      "sampleValue": "示例值",
+      "arrayItemAdd": "增加新的条目",
+      "arrayItemRemove": "移除条目"
+    },
+    "code": {
+      "title": "源代码",
+      "noData": "无源代码",
+      "collapseExtra": "折叠README和设置"
+    },
+    "changelog": {
+      "title": "更新日志",
+      "loadingFailed": "无法加载更新日志。<0>点击此处</0>访问Github。"
+    },
+    "advanced": {
+      "title": "高级设置",
+      "debugLogging": {
+        "title": "调试日志",
+        "description": "可以帮我们迅速定位Mod存在的问题。",
+        "none": "无",
+        "modLogs": "Mod日志",
+        "detailedLogs": "调试日志详情",
+        "showLogButton": "查看日志"
+      },
+      "modSettings": {
+        "title": "Mod设置",
+        "description": "便捷的导出和分享您的Mod设置。",
+        "loadButton": "加载",
+        "loadFormattedButton": "格式化后加载",
+        "saveButton": "保存",
+        "invalidData": "无效的JSON数据"
+      },
+      "customList": {
+        "titleInclusion": "自定义进程包含列表",
+        "descriptionInclusion": "Mod将作用于此自定义列表中的可执行文件/路径。该列表被添加到Mod开发者定义的包含列表中，以确定目标进程。对于每个进程，如果可执行文件/路径匹配一个包含项，而不匹配任何排除项，则加载Mod。",
+        "titleExclusion": "自定义进程排除列表",
+        "descriptionExclusion": "Mod将作用于不在此自定义列表中的可执行文件/路径。该列表被添加到Mod开发者定义的包含列表中，以确定目标进程。对于每个进程，如果可执行文件/路径匹配一个包含项，而不匹配任何排除项，则加载Mod。",
+        "processListPlaceholder": "进程名称/路径，每行一条内容，例如：",
+        "invalidCharactersWarning": "进程列表包含无效字符，这些字符将会被去除：{{invalidCharacters}}",
+        "saveButton": "保存"
+      },
+      "includeExcludeCustomOnly": {
+        "title": "忽略Mod包含/排除列表",
+        "description": "忽略该Mod的进程包含/排除列表，仅使用上述自定义列表。"
+      },
+      "patternsMatchCriticalSystemProcesses": {
+        "title": "考虑针对关键系统进程的包含列表模式",
+        "description": "默认情况下，Windhawk仅在关键系统进程被包含时才会加载Mod，例如像 <0>critical.exe</0>”这样的形式，而不是 <0></0>或者<0>.exe</0>这样的形式。如需了解有关关键系统进程的更多详细信息，请参阅 <1> 文档 </1>。"
+      }
+    },
+    "changes": {
+      "title": "新版本更新内容",
+      "noData": "安装的版本与最新版本相同。",
+      "splitView": "拆分视图",
+      "expandLines_one": "展开1行隐藏行",
+      "expandLines_other": "展开{{count}}行隐藏行"
+    }
+  },
+  "modSearch": {
+    "placeholder": "搜索您想要的Mods..."
+  },
+  "home": {
+    "browse": "浏览Mods",
+    "installedMods": {
+      "title": "已安装的Mods",
+      "noMods": "尚未安装任何Mods"
+    },
+    "featuredMods": {
+      "title": "精选Mods",
+      "noMods": "尚未安装任何精选Mods",
+      "explore": "浏览更多Mods"
+    }
+  },
+  "explore": {
+    "search": {
+      "popularAndTopRated": "高分受欢迎的",
+      "popular": "受欢迎的",
+      "topRated": "高分的",
+      "newest": "最新的",
+      "lastUpdated": "上次更新",
+      "alphabeticalOrder": "按字母排序"
+    }
+  },
+  "settings": {
+    "language": {
+      "title": "语言",
+      "description": "选择Windhawk首选的显示语言",
+      "contribute": "<0>协助我们贡献您的翻译</0>.",
+      "credits": "简体中文翻译由<0>Shifeng Zhao</0>提供。",
+      "creditsLink": "mailto:1193008599@qq.com"
+    },
+    "updates": {
+      "title": "检查软件更新",
+      "description": "定期检查最新版本的Windhawk和Mods"
+    },
+    "devMode": {
+      "title": "开发者选项",
+      "description": "为开发者显示的操作，例如创建和修改Mods。"
+    },
+    "advancedSettings": "高级设置",
+    "hideTrayIcon": {
+      "title": "隐藏托盘图标",
+      "description": "您必须禁用此选项才能退出Windhawk。"
+    },
+    "requireElevation": {
+      "title": "需要管理员权限（UAC）来运行Windhawk",
+      "description": "Windhawk需要管理员权限，但当您电脑只有一个账户时，每次都弹出用户账户控制（UAC）或许很影响您的正常使用，所以Windhawk选择绕过它。启用此选项可在运行Windhawk时要求用户账户控制（UAC）提升权限。"
+    },
+    "dontAutoShowToolkit": {
+      "title": "禁止自动显示Toolkit窗口。",
+      "description": "默认情况下，当Windhawk检测到任务栏无法访问时（可能是由于系统不稳定或其他原因），会自动显示Toolkit窗口。Toolkit窗口允许退出Windhawk，切换到安全模式和进行其他操作。禁用后仍可以使用Ctrl+Win+W键盘快捷键显示Toolkit窗口。"
+    },
+    "modInitDialogDelay": {
+      "title": "Mod初始化对话延迟",
+      "description": "在显示Mod初始化进度对话框之前需要等待的毫秒数。"
+    },
+    "moreAdvancedSettings": {
+      "title": "更多高级设置",
+      "restartNotice": "Windhawk将重启以应用软件设置。",
+      "saveButton": "保存并重启Windhawk",
+      "cancelButton": "取消"
+    },
+    "loggingVerbosity": {
+      "appLoggingTitle": "Windhawk日志",
+      "engineLoggingTitle": "Windhawk引擎的日志信息",
+      "description": "可以使用DebugView等工具查看日志。",
+      "none": "无",
+      "error": "错误",
+      "verbose": "详细日志信息"
+    },
+    "processList": {
+      "titleExclusion": "排除的进程列表",
+      "descriptionExclusion": "这是一个Windhawk不会注入的进程名称/路径列表。当Windhawk与某个特定程序不兼容时，该列表可能会很有用。需要注意的是，将某个进程添加到这个列表中，不仅会阻止Windhawk对其进行自定义设置，还会阻止Windhawk拦截该进程所创建的子进程。在这种情况下，这将导致Windhawk加载Mods时会稍有延迟。",
+      "descriptionExclusionWiki": "如需了解有关排除进程以及内置进程排除列表的更多详细信息，请参阅<0> 相关文档 </0>。",
+      "excludeCriticalProcesses": "排除关键系统进程",
+      "excludeIncompatiblePrograms": "排除已知不兼容的程序",
+      "excludeGames": "排除知名游戏",
+      "titleInclusion": "包含的进程列表",
+      "descriptionInclusion": "Windhawk将注入的进程名/路径列表，即使它们在排除列表中。",
+      "inclusionWithoutExclusionNotice": "进程包含列表对于空的进程排除列表无效。",
+      "inclusionWithoutTotalExclusionNotice": "如果您打算排除除这些之外的所有进程，您可以用“*”在进程排除列表中设置。",
+      "processListPlaceholder": "进程名/路径，每行一个，例如:",
+      "invalidCharactersWarning": "进程列表中包含无效字符，这些无效字符将会被去除：{{invalidCharacters}}"
+    }
+  },
+  "about": {
+    "title": "Windhawk版本{{version}}",
+    "beta": "beta版本",
+    "subtitle": "可以魔改您Windows功能的得力软件",
+    "credit": "<0>{{author}}团队倾情巨献</0>",
+    "update": {
+      "title": "一项更新可用",
+      "subtitle": "更新Windhawk以获得最新的功能",
+      "updateButton": "更多详情"
+    },
+    "links": {
+      "title": "官方链接",
+      "homepage": "官方主页",
+      "documentation": "官方文档"
+    },
+    "builtWith": {
+      "title": "使用以下项目",
+      "vscodium": "一个开源免费的代码编辑器",
+      "llvmMingw": "基于LLVM、Clang和LLD的mingw-w64工具链",
+      "minHook": "Windows平台下简单好用的API钩子库",
+      "others": "以及其他工具和库、一些开源代码"
+    }
+  },
+  "installModal": {
+    "title": "安装{{mod}}",
+    "warningTitle": "请谨慎安装Mod",
+    "warningDescription": "恶意的Mod可能会破坏您的电脑系统或侵犯您的个人隐私。确保只从您信任的开发者那里安装Mod。",
+    "modAuthor": "Mod开发者",
+    "homepage": "主页",
+    "github": "GitHub主页",
+    "twitter": "X (Twitter)主页",
+    "verified": "已认证",
+    "verifiedTooltip": "我们已验证此配置文件属于此Mod开发者，但请您注意<0>已认证的Mods</0>不同于<0>可信任的Mods</0>。请确保您信任对应的Mod开发者，或仔细检查源代码后再进行安装。",
+    "acceptButton": "接受风险并安装",
+    "cancelButton": "取消"
+  },
+  "createNewModButton": {
+    "title": "新建Mod"
+  },
+  "devModeAction": {
+    "message": "创建和修改Mod需要一定的Windows C/C++开发知识。如果您不了解相关知识，建议您不要进行相关操作。",
+    "hideOptionsCheckbox": "隐藏所有与开发相关的选项",
+    "hideOptionsButton": "隐藏选项",
+    "beginCodingButton": "开始编写代码",
+    "cancelButton": "取消"
+  },
+  "safeMode": {
+    "alert": "Windhawk正在安全模式下运行，所有代码注入功能已关闭。",
+    "offButton": "退出安全模式",
+    "offConfirm": "应用设置后Windhawk将会重启",
+    "offConfirmOk": "重启Windhawk",
+    "offConfirmCancel": "取消"
+  },
+  "modPreview": {
+    "actionUnavailable": "预览模式下该操作不可用",
+    "notCompiled": "Mod需要编译后才可预览"
+  },
+  "sidebar": {
+    "modId": "Mod ID",
+    "enableMod": "启用Mod",
+    "enableLogging": "启用日志",
+    "notCompiled": "Mod需要编译",
+    "compile": "编译Mod",
+    "compilationFailed": "编译失败",
+    "preview": "预览Mod",
+    "showLogOutput": "显示输出的日志",
+    "exit": "退出编辑模式",
+    "exitConfirmation": "是否确认退出，最后一次成功编译的改动都将丢失",
+    "exitButtonOk": "退出",
+    "exitButtonCancel": "取消退出"
+  }
+}

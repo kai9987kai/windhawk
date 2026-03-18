@@ -1,0 +1,390 @@
+{
+  "apps/vscode-windhawk-ui": {
+    "root": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "tags": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.executor": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.outputs": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.defaultConfiguration": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.compiler": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.outputPath": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.index": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.main": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.polyfills": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.tsConfig": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.assets": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.styles": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.scripts": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.options.webpackConfig": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.extractLicenses": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.optimization": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.sourceMap": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.development.vendorChunk": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.fileReplacements": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.optimization": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.outputHashing": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.sourceMap": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.namedChunks": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.extractLicenses": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.configurations.production.vendorChunk": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.executor": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.defaultConfiguration": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.buildTarget": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.options.hmr": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.development": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.development.buildTarget": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.production": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.production.buildTarget": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.production.hmr": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.e2e": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.e2e.buildTarget": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.serve.configurations.e2e.port": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.executor": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.outputs": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.options": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.options.lintFilePatterns": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test.executor": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test.outputs": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test.options": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test.options.jestConfig": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.test.options.passWithNoTests": [
+      "apps/vscode-windhawk-ui/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.build.dependsOn": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.build.inputs": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.build.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.lint.inputs": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.lint.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.test.inputs": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.test.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ]
+  },
+  "apps/vscode-windhawk-ui-e2e": {
+    "root": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "name": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "$schema": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "sourceRoot": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "projectType": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "tags": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "implicitDependencies.vscode-windhawk-ui": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.executor": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.options": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.configurations": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.options.cypressConfig": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.options.devServerTarget": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.options.testingType": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.configurations.production": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.configurations.production.devServerTarget": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.executor": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.outputs": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.options": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.lint.options.lintFilePatterns": [
+      "apps/vscode-windhawk-ui-e2e/project.json",
+      "nx/core/project-json"
+    ],
+    "targets.e2e.inputs": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.e2e.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.lint.inputs": [
+      "nx.json",
+      "nx/target-defaults"
+    ],
+    "targets.lint.parallelism": [
+      "nx.json",
+      "nx/target-defaults"
+    ]
+  }
+}
