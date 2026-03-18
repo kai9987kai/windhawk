@@ -1,0 +1,18 @@
+﻿
+> nx run vscode-windhawk-ui:build:production
+
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+<--- Last few GCs --->
+
+[884:0000017479A25000]      230 ms: Scavenge 14.0 (19.5) -> 11.1 (28.0) MB, pooled: 0 MB, 1.38 / 0.00 ms  (average mu = 1.000, current mu = 1.000) allocation failure; 
+[884:0000017479A25000]      274 ms: Mark-Compact 15.7 (28.5) -> 10.3 (28.5) MB, pooled: 0 MB, 1.62 / 0.00 ms  (+ 0.0 ms in 2 steps since start of marking, biggest step 0.0 ms, walltime since 
+start of marking 8 ms) (average mu = 0.994, current mu = 0.994) 
+FATAL ERROR: Zone Allocation failed - process out of memory
+----- Native stack trace -----
+
