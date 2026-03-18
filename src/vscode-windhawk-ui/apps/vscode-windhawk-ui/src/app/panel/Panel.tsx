@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createHashRouter, Outlet, RouterProvider, useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
+import { readLocalUISettings } from '../appUISettings';
 import About from './About';
 import AppHeader from './AppHeader';
 import CreateNewModButton from './CreateNewModButton';
@@ -103,6 +104,23 @@ if (previewModId) {
   const url = new URL(window.location.href);
   url.hash = '#/mod-preview/' + previewModId;
   window.history.replaceState(null, '', url);
+} else {
+  const startupPage = readLocalUISettings().startupPage;
+  const startupRouteMap = {
+    home: '#/',
+    explore: '#/mods-browser',
+    settings: '#/settings',
+    about: '#/about',
+  } as const;
+
+  if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+    const preferredHash = startupRouteMap[startupPage];
+    if (preferredHash !== '#/') {
+      const url = new URL(window.location.href);
+      url.hash = preferredHash;
+      window.history.replaceState(null, '', url);
+    }
+  }
 }
 
 const router = createHashRouter([

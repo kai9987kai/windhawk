@@ -144,6 +144,40 @@ describe('modDiscovery', () => {
     expect(contextMenuResults[0].insights).toContain('Context menu');
   });
 
+  it('connects app switching and desktop queries to richer Windows customization concepts', () => {
+    const mods = [
+      createMod({
+        modId: 'alt-tab-tuner',
+        name: 'Alt+Tab Tuner',
+        description: 'Improve task switching and virtual desktop flow.',
+        include: ['dwm.exe', 'explorer.exe'],
+      }),
+      createMod({
+        modId: 'desktop-polish',
+        name: 'Desktop Polish',
+        description: 'Adjust desktop icons, wallpaper behavior, and right-click flow.',
+        include: ['explorer.exe'],
+      }),
+    ];
+
+    const altTabResults = rankMods(mods, 'alt tab', 'smart-relevance');
+    const virtualDesktopResults = rankMods(
+      mods,
+      'virtual desktops',
+      'smart-relevance'
+    );
+    const desktopResults = rankMods(mods, 'desktop', 'smart-relevance');
+
+    expect(altTabResults[0].modId).toBe('alt-tab-tuner');
+    expect(altTabResults[0].insights).toContain('Alt+Tab');
+    expect(virtualDesktopResults[0].modId).toBe('alt-tab-tuner');
+    expect(virtualDesktopResults[0].inferredConcepts).toContain(
+      'Virtual desktops'
+    );
+    expect(desktopResults[0].modId).toBe('desktop-polish');
+    expect(desktopResults[0].insights).toContain('Desktop');
+  });
+
   it('diversifies the first results instead of stacking one author cluster', () => {
     const mods = [
       createMod({
@@ -229,7 +263,17 @@ describe('modDiscovery', () => {
     const labels = suggestions.map((suggestion) => suggestion.label);
 
     expect(
-      labels.some((label) => ['Taskbar', 'Start menu', 'Desktop'].includes(label))
+      labels.some((label) =>
+        [
+          'Taskbar',
+          'Start menu',
+          'Desktop',
+          'Context menu',
+          'Window management',
+          'Alt+Tab',
+          'Virtual desktops',
+        ].includes(label)
+      )
     ).toBe(true);
     expect(labels).not.toContain('Explorer');
   });
@@ -295,9 +339,12 @@ describe('modDiscovery', () => {
     );
 
     expect(mission).toBeDefined();
+    if (!mission) {
+      throw new Error('Expected notification-calm mission to exist');
+    }
 
-    const ranked = rankMods(mods, mission?.query || '', mission?.sortingOrder || 'smart-relevance');
-    const brief = buildDiscoveryMissionBrief(mission!, ranked);
+    const ranked = rankMods(mods, mission.query, mission.sortingOrder);
+    const brief = buildDiscoveryMissionBrief(mission, ranked);
 
     expect(brief).toContain('Calm notifications');
     expect(brief).toContain('Notification Center Plus');
@@ -339,5 +386,14 @@ describe('modDiscovery', () => {
     ).toBe(true);
     expect(candidates[0].communitySummary).toContain('users');
     expect(candidates[0].insightSummary.length).toBeGreaterThan(0);
+  });
+
+  it('matches new missions for context-menu and app-switching workflows', () => {
+    expect(
+      getDiscoveryMissionByQuery('context menu', 'smart-relevance')?.key
+    ).toBe('context-menu-cleanup');
+    expect(getDiscoveryMissionByQuery('alt tab', 'smart-relevance')?.key).toBe(
+      'app-switching'
+    );
   });
 });

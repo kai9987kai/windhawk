@@ -1,3 +1,4 @@
+import { CompileRecommendationMode } from '../appUISettings';
 import { ModMetadata } from '../webviewIPCMessages';
 
 function normalizeProcessName(process: string): string {
@@ -32,10 +33,22 @@ export type EditorPromptKind =
   | 'review'
   | 'docs'
   | 'explain-scope'
+  | 'explain-api'
+  | 'explain-terms'
+  | 'usage-examples'
   | 'test-plan'
-  | 'release-notes';
+  | 'release-notes'
+  | 'challenge-assumptions'
+  | 'counterexample-hunt'
+  | 'best-practices'
+  | 'compile-recovery';
 
 export type EditorEvidenceTone = 'positive' | 'neutral' | 'caution';
+export type EditorCompileProfileKey =
+  | 'current'
+  | 'disabled'
+  | 'logging'
+  | 'disabled-logging';
 
 export type EditorSessionState = {
   modWasModified: boolean;
@@ -65,6 +78,19 @@ export type EditorVerificationItem = {
   detail: string;
 };
 
+export type EditorProvocation = {
+  key: string;
+  title: string;
+  body: string;
+};
+
+export type EditorWindowsAction = {
+  key: string;
+  title: string;
+  description: string;
+  uri: string;
+};
+
 const DEFAULT_EDITOR_SESSION_STATE: EditorSessionState = {
   modWasModified: false,
   isModCompiled: false,
@@ -72,6 +98,107 @@ const DEFAULT_EDITOR_SESSION_STATE: EditorSessionState = {
   isLoggingEnabled: false,
   compilationFailed: false,
 };
+
+const WINDOWS_ACTIONS: Record<string, EditorWindowsAction> = {
+  'windows-update': {
+    key: 'windows-update',
+    title: 'Windows Update',
+    description: 'Check the active system build before blaming a draft for shell regressions.',
+    uri: 'ms-settings:windowsupdate',
+  },
+  taskbar: {
+    key: 'taskbar',
+    title: 'Taskbar settings',
+    description: 'Compare native taskbar behavior with the modded shell surface.',
+    uri: 'ms-settings:personalization-taskbar',
+  },
+  start: {
+    key: 'start',
+    title: 'Start settings',
+    description: 'Inspect Start menu layout and defaults before changing shell expectations.',
+    uri: 'ms-settings:personalization-start',
+  },
+  notifications: {
+    key: 'notifications',
+    title: 'Notifications',
+    description: 'Check banners, badges, and notification center behavior against the edited flow.',
+    uri: 'ms-settings:notifications',
+  },
+  sound: {
+    key: 'sound',
+    title: 'Sound settings',
+    description: 'Open baseline audio controls for mods that affect devices, volume, or media surfaces.',
+    uri: 'ms-settings:sound',
+  },
+  'apps-volume': {
+    key: 'apps-volume',
+    title: 'App volume mixer',
+    description: 'Validate per-app routing and volume levels when the mod touches media behavior.',
+    uri: 'ms-settings:apps-volume',
+  },
+  multitasking: {
+    key: 'multitasking',
+    title: 'Multitasking',
+    description: 'Review snap and Alt+Tab defaults before iterating on window-management hooks.',
+    uri: 'ms-settings:multitasking',
+  },
+  colors: {
+    key: 'colors',
+    title: 'Colors',
+    description: 'Check transparency, accent, and theme state against visual shell changes.',
+    uri: 'ms-settings:colors',
+  },
+  typing: {
+    key: 'typing',
+    title: 'Typing',
+    description: 'Inspect native typing and text-input behavior for input or touch-keyboard mods.',
+    uri: 'ms-settings:typing',
+  },
+};
+
+const WINDOWS_SURFACE_RULES: Array<{
+  key: string;
+  label: string;
+  matches: string[];
+  actions: string[];
+}> = [
+  {
+    key: 'explorer-shell',
+    label: 'Explorer shell',
+    matches: ['explorer.exe'],
+    actions: ['taskbar', 'colors', 'notifications'],
+  },
+  {
+    key: 'start-search',
+    label: 'Start and search',
+    matches: ['startmenuexperiencehost.exe', 'searchhost.exe'],
+    actions: ['start', 'taskbar', 'notifications'],
+  },
+  {
+    key: 'notification-host',
+    label: 'Notifications and tray',
+    matches: ['shellexperiencehost.exe'],
+    actions: ['notifications', 'taskbar', 'colors'],
+  },
+  {
+    key: 'window-management',
+    label: 'Window management',
+    matches: ['dwm.exe', 'applicationframehost.exe'],
+    actions: ['multitasking', 'colors', 'taskbar'],
+  },
+  {
+    key: 'audio-media',
+    label: 'Audio and media',
+    matches: ['sndvol.exe', 'audiodg.exe'],
+    actions: ['sound', 'apps-volume', 'notifications'],
+  },
+  {
+    key: 'input',
+    label: 'Input and typing',
+    matches: ['textinputhost.exe', 'ctfmon.exe', 'tabtip.exe'],
+    actions: ['typing', 'colors', 'notifications'],
+  },
+];
 
 function getNormalizedTargets(include?: string[]): string[] {
   return Array.from(
@@ -83,6 +210,66 @@ function hasWildcardTargets(include?: string[]): boolean {
   return (include || []).some(
     (target) => target === '*' || target.includes('?') || target.includes('*')
   );
+}
+
+function getMatchedWindowsSurfaceRules(include?: string[]): typeof WINDOWS_SURFACE_RULES {
+  const targets = getNormalizedTargets(include).map((target) => target.toLowerCase());
+
+  return WINDOWS_SURFACE_RULES.filter((rule) =>
+    rule.matches.some((processName) => targets.includes(processName))
+  );
+}
+
+export function getCurrentCompileProfileKey(
+  state?: Partial<EditorSessionState>
+): EditorCompileProfileKey {
+  const sessionState = {
+    ...DEFAULT_EDITOR_SESSION_STATE,
+    ...state,
+  };
+
+  if (sessionState.isModDisabled) {
+    return sessionState.isLoggingEnabled ? 'disabled-logging' : 'disabled';
+  }
+
+  return sessionState.isLoggingEnabled ? 'logging' : 'current';
+}
+
+export function getEditorWindowsSurfaceLabels(
+  metadata?: ModMetadata | null
+): string[] {
+  const matchedRules = getMatchedWindowsSurfaceRules(metadata?.include);
+
+  if (matchedRules.length > 0) {
+    return matchedRules.map((rule) => rule.label);
+  }
+
+  if (hasWildcardTargets(metadata?.include)) {
+    return ['System-wide behavior'];
+  }
+
+  if (getNormalizedTargets(metadata?.include).length === 0) {
+    return ['Windows surfaces'];
+  }
+
+  return ['Focused process behavior'];
+}
+
+export function getEditorWindowsActions(
+  metadata?: ModMetadata | null,
+  maxItems = 4
+): EditorWindowsAction[] {
+  const matchedRules = getMatchedWindowsSurfaceRules(metadata?.include);
+  const actionKeys = Array.from(
+    new Set([
+      ...(hasWildcardTargets(metadata?.include) ? ['windows-update'] : []),
+      ...(matchedRules.length > 0
+        ? matchedRules.flatMap((rule) => rule.actions)
+        : ['windows-update', 'taskbar', 'notifications']),
+    ])
+  ).slice(0, maxItems);
+
+  return actionKeys.map((key) => WINDOWS_ACTIONS[key]);
 }
 
 function getScopeAssessment(include?: string[]): {
@@ -134,9 +321,10 @@ function getScopeAssessment(include?: string[]): {
 
 export function getRecommendedCompileProfile(
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): {
-  key: 'current' | 'disabled' | 'logging' | 'disabled-logging';
+  key: EditorCompileProfileKey;
   label: string;
   rationale: string;
 } {
@@ -153,6 +341,60 @@ export function getRecommendedCompileProfile(
       label: 'Compile disabled + logging',
       rationale: 'Recover from build failures with the safest, most observable first run.',
     };
+  }
+
+  if (preference === 'safe-first') {
+    if (!sessionState.isModCompiled || wildcardTargets || targetCount >= 2) {
+      return {
+        key: 'disabled-logging',
+        label: 'Compile disabled + logging',
+        rationale:
+          'Safe-first mode keeps new or multi-target drafts observable before they are allowed to run live.',
+      };
+    }
+
+    if (sessionState.modWasModified && !sessionState.isLoggingEnabled) {
+      return {
+        key: 'logging',
+        label: 'Compile with logging',
+        rationale:
+          'Safe-first mode prefers an evidence-heavy pass after each edit, even for focused drafts.',
+      };
+    }
+
+    if (sessionState.isModDisabled) {
+      return {
+        key: 'disabled',
+        label: 'Compile disabled',
+        rationale:
+          'Safe-first mode keeps the mod unloaded until you decide the next live run is justified.',
+      };
+    }
+  }
+
+  if (preference === 'fast-feedback') {
+    if (!sessionState.isModCompiled && !wildcardTargets && targetCount <= 1) {
+      return {
+        key: 'current',
+        label: 'Compile with current switches',
+        rationale:
+          'Fast-feedback mode favors the shortest direct loop for a focused first draft.',
+      };
+    }
+
+    if (
+      sessionState.modWasModified &&
+      sessionState.isModCompiled &&
+      !wildcardTargets &&
+      targetCount <= 1
+    ) {
+      return {
+        key: 'current',
+        label: 'Compile with current switches',
+        rationale:
+          'Fast-feedback mode keeps focused iteration direct once the draft has already compiled cleanly.',
+      };
+    }
   }
 
   if (!sessionState.isModCompiled || wildcardTargets || targetCount >= 4) {
@@ -189,7 +431,8 @@ export function getRecommendedCompileProfile(
 export function buildEditorContextPacket(
   modId: string,
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): string {
   const sessionState = {
     ...DEFAULT_EDITOR_SESSION_STATE,
@@ -198,7 +441,11 @@ export function buildEditorContextPacket(
   const modName = metadata?.name || modId;
   const version = metadata?.version || '0.1';
   const scopeSummary = summarizeTargetProcesses(metadata?.include);
-  const recommendedProfile = getRecommendedCompileProfile(metadata, sessionState);
+  const recommendedProfile = getRecommendedCompileProfile(
+    metadata,
+    sessionState,
+    preference
+  );
 
   return [
     `Mod name: ${modName}`,
@@ -217,14 +464,19 @@ export function buildEditorContextPacket(
 
 export function getEditorEvidenceCards(
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): EditorEvidenceCard[] {
   const sessionState = {
     ...DEFAULT_EDITOR_SESSION_STATE,
     ...state,
   };
   const scopeAssessment = getScopeAssessment(metadata?.include);
-  const recommendedProfile = getRecommendedCompileProfile(metadata, sessionState);
+  const recommendedProfile = getRecommendedCompileProfile(
+    metadata,
+    sessionState,
+    preference
+  );
 
   const nextRunCard: EditorEvidenceCard = sessionState.compilationFailed
     ? {
@@ -305,20 +557,26 @@ export function getEditorEvidenceCards(
 
 export function getEditorIterationPlan(
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): EditorIterationStep[] {
   const sessionState = {
     ...DEFAULT_EDITOR_SESSION_STATE,
     ...state,
   };
   const scopeSummary = summarizeTargetProcesses(metadata?.include);
-  const recommendedProfile = getRecommendedCompileProfile(metadata, sessionState);
+  const surfaceSummary = getEditorWindowsSurfaceLabels(metadata).join(', ');
+  const recommendedProfile = getRecommendedCompileProfile(
+    metadata,
+    sessionState,
+    preference
+  );
 
   return [
     {
       key: 'scope',
       title: 'Frame the change',
-      body: `Keep the first validation anchored to ${scopeSummary} so one workflow proves or disproves the idea quickly.`,
+      body: `Keep the first validation anchored to ${scopeSummary} and the ${surfaceSummary} surface so one workflow proves or disproves the idea quickly.`,
     },
     {
       key: 'compile',
@@ -346,6 +604,7 @@ export function getEditorVerificationPack(
   const targets = getNormalizedTargets(metadata?.include);
   const wildcardTargets = hasWildcardTargets(metadata?.include);
   const scopeLabel = summarizeTargetProcesses(metadata?.include);
+  const surfaceSummary = getEditorWindowsSurfaceLabels(metadata).join(', ');
 
   const firstStep = sessionState.compilationFailed
     ? {
@@ -356,7 +615,7 @@ export function getEditorVerificationPack(
     : {
       key: 'primary-flow',
       title: 'Exercise the primary flow',
-      detail: `Run the exact Windows flow affected by ${scopeLabel} and note what changed for the user.`,
+      detail: `Run the exact Windows flow affected by ${scopeLabel} across ${surfaceSummary} and note what changed for the user.`,
     };
 
   const scopeStep = wildcardTargets
@@ -404,10 +663,74 @@ export function getEditorVerificationPack(
   return [firstStep, scopeStep, evidenceStep, releaseStep];
 }
 
+export function getEditorProvocations(
+  metadata?: ModMetadata | null,
+  state?: Partial<EditorSessionState>
+): EditorProvocation[] {
+  const sessionState = {
+    ...DEFAULT_EDITOR_SESSION_STATE,
+    ...state,
+  };
+  const targets = getNormalizedTargets(metadata?.include);
+  const wildcardTargets = hasWildcardTargets(metadata?.include);
+  const surfaceSummary = getEditorWindowsSurfaceLabels(metadata).join(', ');
+
+  const scopeProvocation = wildcardTargets
+    ? {
+      key: 'scope-challenge',
+      title: 'What should stay untouched?',
+      body: `This mod reaches broadly across ${surfaceSummary}. Name one Windows behavior that must remain unchanged, then verify it before trusting the draft.`,
+    }
+    : targets.length <= 1
+      ? {
+        key: 'scope-challenge',
+        title: 'What is the nearest counterexample?',
+        body: `Treat ${surfaceSummary} as the primary surface, then ask what adjacent shell flow should not change if the hook target is really correct.`,
+      }
+      : {
+        key: 'scope-challenge',
+        title: 'Which target is least obvious?',
+        body: `Do not treat ${targets.join(', ')} as one environment. Identify the most doubtful process and verify it separately first.`,
+      };
+
+  const bestPracticeProvocation = metadata?.version
+    ? {
+      key: 'best-practice',
+      title: 'Which practice would a reviewer challenge?',
+      body: 'Assume a language expert is reviewing this draft for context-dependent C++ and Windows best practices, not just syntax. What would they flag first?',
+    }
+    : {
+      key: 'best-practice',
+      title: 'What release signal is missing?',
+      body: 'Missing or draft metadata lowers trust. Identify the smallest metadata or documentation change that would make the next review easier.',
+    };
+
+  const feedbackProvocation = sessionState.compilationFailed
+    ? {
+      key: 'feedback-loop',
+      title: 'What is the smallest recovery step?',
+      body: 'Use the failed build as feedback, not just as a blocker. Ask what minimal code change would address the most plausible root cause before trying a larger rewrite.',
+    }
+    : sessionState.isLoggingEnabled
+      ? {
+        key: 'feedback-loop',
+        title: 'What evidence could disprove the idea?',
+        body: 'Logs are available. Decide which one observation would falsify your current design so the next run teaches you something concrete.',
+      }
+      : {
+        key: 'feedback-loop',
+        title: 'What evidence is missing?',
+        body: 'Before another risky change, ask what compiler, log, or UI observation would let you validate the draft instead of judging it by feel.',
+      };
+
+  return [scopeProvocation, bestPracticeProvocation, feedbackProvocation];
+}
+
 export function buildEditorVerificationChecklist(
   modId: string,
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): string {
   const checklist = getEditorVerificationPack(metadata, state);
 
@@ -420,12 +743,31 @@ export function buildEditorVerificationChecklist(
 export function buildEditorReleasePacket(
   modId: string,
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): string {
   return [
-    buildEditorContextPacket(modId, metadata, state),
+    buildEditorContextPacket(modId, metadata, state, preference),
     '',
-    buildEditorVerificationChecklist(modId, metadata, state),
+    buildEditorVerificationChecklist(modId, metadata, state, preference),
+  ].join('\n');
+}
+
+export function buildEditorChallengeBrief(
+  modId: string,
+  metadata?: ModMetadata | null,
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
+): string {
+  const provocations = getEditorProvocations(metadata, state);
+
+  return [
+    buildEditorContextPacket(modId, metadata, state, preference),
+    '',
+    'Challenge prompts:',
+    ...provocations.map(
+      (provocation) => `- ${provocation.title}: ${provocation.body}`
+    ),
   ].join('\n');
 }
 
@@ -433,12 +775,18 @@ export function buildEditorAiPrompt(
   kind: EditorPromptKind,
   modId: string,
   metadata?: ModMetadata | null,
-  state?: Partial<EditorSessionState>
+  state?: Partial<EditorSessionState>,
+  preference: CompileRecommendationMode = 'balanced'
 ): string {
   const modName = metadata?.name || modId;
   const targetProcesses = summarizeTargetProcesses(metadata?.include);
   const version = metadata?.version || '0.1';
-  const contextPacket = buildEditorContextPacket(modId, metadata, state);
+  const contextPacket = buildEditorContextPacket(
+    modId,
+    metadata,
+    state,
+    preference
+  );
 
   switch (kind) {
     case 'scaffold':
@@ -484,6 +832,35 @@ Answer:
 1. Which Windows processes and UX surfaces this mod most likely affects
 2. Why those targets make sense for the requested behavior
 3. What should be verified manually before expanding the scope`;
+    case 'explain-api':
+      return `Explain the APIs and hook surfaces that this Windhawk mod is most likely using or should use.
+${contextPacket}
+Focus on:
+- Relevant Windows APIs, message flows, and shell surfaces
+- Why each API or hook surface fits the requested behavior
+- Any risky or less-obvious API assumptions that should be validated manually
+Output:
+1. Candidate APIs or hook points
+2. Why they fit
+3. What to inspect in the current code`;
+    case 'explain-terms':
+      return `Explain the Windows and Windhawk-specific terms behind this mod so an implementer can reason about the code correctly.
+${contextPacket}
+Clarify:
+- Process names, shell components, and Windows UX surfaces
+- Any domain-specific terms that could confuse a contributor
+- Which terms matter most before editing hook logic
+Output:
+1. Term glossary
+2. Why each term matters here
+3. Likely places those concepts appear in code`;
+    case 'usage-examples':
+      return `Give concrete usage examples and implementation patterns for the APIs, hooks, or Windows behaviors relevant to this Windhawk mod.
+${contextPacket}
+Output:
+1. Small usage examples or pseudocode patterns
+2. How each example maps to this mod's likely goal
+3. The safest first experiment to try in the current draft`;
     case 'test-plan':
       return `Create a practical manual test plan for this Windhawk mod.
 ${contextPacket}
@@ -504,5 +881,44 @@ Output:
 1. A concise changelog entry
 2. A short 'what to verify' checklist for users
 3. Any compatibility or caution notes`;
+    case 'challenge-assumptions':
+      return `Challenge this Windhawk mod design instead of agreeing with it.
+${buildEditorChallengeBrief(modId, metadata, state, preference)}
+Act like a Socratic reviewer:
+1. Identify the weakest assumption in the current design
+2. Propose one plausible counterexample or failure mode
+3. Suggest the smallest experiment that would prove or disprove that assumption`;
+    case 'counterexample-hunt':
+      return `Generate counterexamples for this Windhawk mod draft.
+${buildEditorChallengeBrief(modId, metadata, state, preference)}
+Focus on:
+- Windows flows that should remain unchanged
+- Adjacent shell surfaces or processes that could regress
+- Conditions where the chosen hook target is probably wrong
+Output:
+1. Three concrete counterexamples
+2. Why each one is plausible
+3. A manual check for each counterexample`;
+    case 'best-practices':
+      return `Audit this Windhawk mod for context-dependent C++ and Windows best practices.
+${contextPacket}
+Review it like an expert code reviewer, similar to an automated best-practice commenter.
+Focus on:
+- Risky Windows or shell assumptions
+- Missing defensive checks
+- Maintainability or readability issues
+- Metadata and release communication gaps
+Output:
+1. Findings ordered by importance
+2. Which findings are best-practice issues versus correctness issues
+3. The most valuable fix to make next`;
+    case 'compile-recovery':
+      return `Use validation feedback to recover this Windhawk mod draft.
+${buildEditorChallengeBrief(modId, metadata, state, preference)}
+Current build status: ${state?.compilationFailed ? 'recent compile failure' : 'build status not obviously failed'}
+Help me run a validation-driven recovery loop:
+1. List the most likely root causes to check first
+2. Suggest the smallest corrective edit before a full rewrite
+3. Tell me what compiler or log feedback I should bring back into the next iteration`;
   }
 }

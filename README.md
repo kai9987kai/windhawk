@@ -50,12 +50,23 @@ This fork includes a portable packaging flow that bundles the rebuilt native bin
 
 Typical packaging flow:
 
-1. Build the native binaries in `src/windhawk/Release`.
-2. Build the webview in `src/vscode-windhawk-ui`.
-3. Bundle the extension in `src/vscode-windhawk`.
-4. Run `artifacts/installer-build/build_custom_portable.ps1`.
+1. Refresh the native Release binaries:
 
-The script produces `artifacts/windhawk-custom-portable-installer.exe` and refreshes the portable payload used by the installer stub. It expects a portable Windhawk baseline at `%LOCALAPPDATA%\Programs\Windhawk-Custom-Portable`.
+```powershell
+$vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+  -latest -products * -property installationPath
+cmd /c "call `"$vsPath\VC\Auxiliary\Build\vcvars64.bat`" && cd /d src\windhawk && build.bat Release"
+```
+
+2. Run the packaging script from the repository root. It rebuilds the webview and extension by default before staging the portable payload:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File artifacts\installer-build\build_custom_portable.ps1
+```
+
+If `src\windhawk\build.bat` doesn't detect the local Visual Studio installation automatically, a Visual Studio developer shell or the explicit `vswhere` + `vcvars64.bat` sequence above is the supported fallback.
+
+The script produces `artifacts/windhawk-custom-portable-installer.exe` and `artifacts/portable-build/windhawk-custom-portable.zip`, refreshes the staged portable payload used by the installer stub, and expects a portable Windhawk baseline at `%LOCALAPPDATA%\Programs\Windhawk-Custom-Portable`. Use `-SkipBuild` only when you intentionally want to reuse the current webview and extension outputs.
 
 ## UI preview
 
@@ -76,7 +87,7 @@ Then open `http://127.0.0.1:4200/`.
 The webview UI now includes:
 
 * smarter mod discovery with typo recovery, query broadening, and refinement suggestions
-* a redesigned settings experience with persistent local interface preferences such as density, wide layout, and reduced motion
+* a redesigned settings experience with persistent local workspace controls for density, startup page, Explore default sorting, editor assistance level, Windows quick-action density, wide layout, reduced motion, and performance tuning
 * an expanded About page with current workspace status, runtime diagnostics, path inspection, repair actions, and quicker access to key project resources
 * a richer installed-mods home view with a fast overview strip and an early warning when the engine storage backend diverges from the UI backend
 * a research-informed install decision modal with scope/freshness/community signals and one-click review actions for details, source, and changelog tabs
@@ -86,11 +97,19 @@ The webview UI now includes:
 * guided Explore starting points that jump straight into fresh updates, community favorites, or focused areas such as Taskbar, Explorer, Start menu, and Audio
 * research-backed Explore missions that turn common Windows goals into compare-and-verify flows, with copyable AI comparison briefs and an active mission workbench for top-candidate comparison
 * broader Windows-surface discovery presets for notifications, window management, input, and appearance so the catalog is easier to navigate by the Windows area you want to change
+* more Windows customization entry points in Explore for context menus, the desktop surface, Alt+Tab, virtual desktops, and widgets so it is easier to start from the part of Windows you actually want to change
 * richer changelog tooling with release scoping, a latest-only toggle, and copy-to-clipboard support for the currently visible notes
-* a new mod studio that promotes AI-assisted authoring with an AI-ready starter template and copyable prompt packs for ideation, scaffolding, review, and documentation
-* a redesigned editor cockpit with live mod metadata, compile presets, a one-click recommended compile action, an evidence board, a verification pack, a dynamic iteration plan, and copyable AI helper prompts for scope analysis, test planning, release notes, and review
-* a Windows toolkit on the About page with live OS/session diagnostics, quick links into key Windows settings surfaces, and one-click opening of Windhawk runtime paths in Explorer
+* a new mod studio that promotes AI-assisted authoring with code-first and visual creation modes, language-aware C++ and Python starter filtering, a structured core starter, an AI-ready starter template, focused starters for Explorer shell work, Chromium/Chrome browser mods, window behavior mods, settings-first experiments, and optional `.wh.py` Python automation authoring that renders back to compatible `.wh.cpp`
+* workflow bundles inside the mod studio with recommended launch paths, copyable kickoff packets, and CLI playbooks that combine the chosen starter, prompt packs, and verification checklist into one handoff
+* persistent recent studio sessions in New Mod Studio so starters, visual presets, and workflow bundles can be relaunched with the same launch brief, packet, authoring language, and studio mode
+* a redesigned editor cockpit with a real scroll shell, a pinned exit action, live mod metadata, visible compile mode cards, a one-click recommended compile action, an evidence board, a verification pack, a dynamic iteration plan, and copyable AI helper prompts for scope analysis, test planning, release notes, and review
+* contextual Windows integration inside the editor cockpit, including inferred shell-surface tags and one-click deep links into the Windows settings pages that match the current mod's target processes
+* newer research-driven editor innovations including prompt-less AI explainers for APIs, Windows terms, and usage examples, a visible challenge board that pushes the draft with counterquestions instead of agreement, a best-practice audit prompt, and a validation-feedback recovery prompt for failed builds
+* a Windows toolkit on the About page with live OS/session diagnostics, expanded quick links into key Windows settings surfaces such as Start, Notifications, Multitasking, Colors, Background, Themes, Lock screen, Clipboard, and one-click opening of Windhawk runtime paths in Explorer
 * local home quick-focus chips for drafts, compile-needed mods, logging-enabled mods, and pending updates so maintenance work is easier to batch
+* a new Performance and AI settings section with runtime-based profile recommendations, NPU-aware acceleration preferences, and coordinated local UI presets for balanced, responsive, or efficient workspaces
+* richer runtime diagnostics that now surface system memory and detected NPU hardware so local recommendations and Windows troubleshooting are grounded in the active machine
+* a curated `force-process-accelerators` repository mod surfaced as a featured available install so process CPU/GPU/NPU preference tuning is easier to discover from the default catalog
 
 ## Research-informed UX improvements
 
@@ -98,10 +117,13 @@ These interaction changes are intentionally grounded in a small set of papers th
 
 * [Crying Wolf: An Empirical Study of SSL Warning Effectiveness](https://www.usenix.org/conference/usenixsecurity09/technical-sessions/presentation/crying-wolf-empirical-study-ssl) motivated a more concrete install warning with supporting context and clear review paths instead of a single generic caution block.
 * [An Empirical Study of Release Note Production and Usage in Practice](https://www.microsoft.com/en-us/research/publication/an-empirical-study-of-release-note-production-and-usage-in-practice/) informed the release-summary cards and searchable changelog view so the most actionable updates are visible before reading the full Markdown stream.
-* [The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations](https://www.cs.umd.edu/users/ben/papers/Shneiderman1996eyes.pdf) continues to inform the "overview first, zoom and filter, then details on demand" structure used across the Explore page and changelog surfaces.
+* [The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations](https://www.cs.umd.edu/users/ben/papers/Shneiderman1996eyes.pdf) continues to inform the "overview first, zoom and filter, then details on demand" structure used across Explore, changelog, and the editor cockpit's visible mode cards and status surfaces.
 * [Using an LLM to Help With Code Understanding](https://research.google/pubs/using-an-llm-to-help-with-code-understanding/) pushed the editor cockpit toward prompt-light, in-IDE requests such as scope explanation, API understanding, and test-plan generation instead of one generic AI action.
-* [Identifying the Factors that Influence Trust in AI Code Completion](https://research.google/pubs/identifying-the-factors-that-influence-trust-in-ai-code-completion/) motivated the evidence board and safer compile recommendations so AI assistance is paired with explicit trust signals and verification steps.
-* [Source-level Debugging with the Whyline](https://faculty.washington.edu/ajko/papers/Ko2008SourceLevelDebugging.pdf) informed the new mission and editor flows that foreground "why this candidate?" and "what should I verify next?" instead of forcing users to build those questions manually.
+* [Identifying the Factors that Influence Trust in AI Code Completion](https://research.google/pubs/identifying-the-factors-that-influence-trust-in-ai-code-completion/) motivated the evidence board, visible compile mode states, and safer compile recommendations so AI assistance is paired with explicit trust signals and verification steps.
+* [Source-level Debugging with the Whyline](https://faculty.washington.edu/ajko/papers/Ko2008SourceLevelDebugging.pdf) informed the new mission and editor flows that foreground "why this candidate?", "what Windows surface should I check?", and "what should I verify next?" instead of forcing users to build those questions manually.
+* [AI-assisted Assessment of Coding Practices in Industrial Code Review](https://research.google/pubs/ai-assisted-assessment-of-coding-practices-in-industrial-code-review/) motivated the new best-practice audit prompt so contributors can ask for language-aware C++ and Windows review comments instead of only generic summaries.
+* [AI Should Challenge, Not Obey](https://www.microsoft.com/en-us/research/publication/ai-should-challenge-not-obey/) directly informed the editor challenge board and counterexample-hunt prompts so the assistant can question assumptions rather than merely comply.
+* [A Case Study of LLM for Automated Vulnerability Repair: Assessing Impact of Reasoning and Patch Validation Feedback](https://arxiv.org/abs/2405.15690) pushed the new compile-recovery prompt toward smaller, validation-driven iteration loops after build failures instead of broader speculative rewrites.
 
 ## Research-informed reliability
 

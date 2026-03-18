@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 /* stylelint-disable at-rule-empty-line-before,at-rule-name-space-after,at-rule-no-unknown */
 /* stylelint-disable no-duplicate-selectors */
 /* stylelint-disable */
@@ -30,6 +31,7 @@ html {
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   -ms-overflow-style: scrollbar;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -40,7 +42,7 @@ body {
   margin: 0;
   color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family: 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-variant: tabular-nums;
   line-height: 1.5715;
   background-color: var(--app-background-color);
@@ -139,7 +141,7 @@ a {
   outline: none;
   cursor: pointer;
   transition: color 0.3s;
-  -webkit-text-decoration-skip: objects;
+  text-decoration-skip-ink: auto;
 }
 a:hover {
   color: #165996;
@@ -26865,6 +26867,16 @@ div.ant-typography-edit-content.ant-typography-rtl {
 html[data-windhawk-layout='wide'] {
   --app-max-width: 1440px;
 }
+html[data-windhawk-performance='responsive'] {
+  --app-max-width: 1480px;
+}
+html[data-windhawk-performance='efficient'] {
+  --app-section-gap: 16px;
+  --app-card-padding: 16px;
+  --app-surface-radius: 14px;
+  --app-surface-background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018));
+  --app-surface-shadow: none;
+}
 html[data-windhawk-density='compact'] {
   --app-horizontal-padding: 16px;
   --app-section-gap: 18px;
@@ -26916,4 +26928,262 @@ html[data-windhawk-reduce-motion='true'] *::after {
   animation-iteration-count: 1 !important;
   scroll-behavior: auto !important;
   transition-duration: 0.01ms !important;
+}
+
+.app-boot {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(23, 125, 220, 0.24), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(246, 173, 85, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(9, 15, 26, 0.98), rgba(12, 18, 30, 0.98));
+}
+
+.app-boot__halo {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(28px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.app-boot__halo--one {
+  top: 8%;
+  left: -4%;
+  width: 340px;
+  height: 340px;
+  background: rgba(23, 125, 220, 0.22);
+  animation: appBootFloat 14s ease-in-out infinite;
+}
+
+.app-boot__halo--two {
+  right: -6%;
+  bottom: 4%;
+  width: 300px;
+  height: 300px;
+  background: rgba(246, 173, 85, 0.16);
+  animation: appBootFloat 18s ease-in-out infinite reverse;
+}
+
+.app-boot__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+  gap: 24px;
+  align-items: center;
+  min-height: 100vh;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48px 32px;
+}
+
+.app-boot--sidebar .app-boot__grid {
+  max-width: 900px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-boot__hero,
+.app-boot__status {
+  position: relative;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(9, 15, 26, 0.72);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.app-boot__brand-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.app-boot__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(23, 125, 220, 0.95), rgba(73, 180, 255, 0.72));
+  color: #f7fbff;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 12px 32px rgba(23, 125, 220, 0.35);
+}
+
+.app-boot__eyebrow {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.app-boot__brand {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.app-boot__title {
+  margin: 22px 0 12px;
+  color: #f7fbff;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.app-boot__description {
+  max-width: 640px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.app-boot__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.app-boot__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.app-boot__status-title {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.app-boot__phase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.app-boot__phase {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.app-boot__phase--complete {
+  border-color: rgba(82, 196, 26, 0.2);
+  background: rgba(82, 196, 26, 0.07);
+}
+
+.app-boot__phase--active {
+  border-color: rgba(23, 125, 220, 0.26);
+  background: rgba(23, 125, 220, 0.1);
+}
+
+.app-boot__phase-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-boot__phase--complete .app-boot__phase-index {
+  background: rgba(82, 196, 26, 0.2);
+}
+
+.app-boot__phase--active .app-boot__phase-index {
+  background: rgba(23, 125, 220, 0.24);
+}
+
+.app-boot__phase-copy {
+  min-width: 0;
+}
+
+.app-boot__phase-label {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.app-boot__phase-state {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.app-boot__hint {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@keyframes appBootFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -16px, 0) scale(1.04);
+  }
+}
+
+[data-windhawk-reduce-motion='true'] .app-boot__halo {
+  animation: none;
+}
+
+@media (max-width: 900px) {
+  .app-boot__grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 32px 20px;
+  }
+
+  .app-boot__hero,
+  .app-boot__status {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .app-boot__title {
+    font-size: clamp(30px, 10vw, 42px);
+  }
+}
+.setup-assistant__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
 }

@@ -52,6 +52,10 @@ export type webviewIPCMessageAny =
 
 export type NoData = Record<string, unknown>;
 
+export type ModSourceExtension = '.wh.cpp' | '.wh.py';
+
+export type ModAuthoringLanguage = 'cpp' | 'python';
+
 export type ModConfig = {
   // libraryFileName: string;
   disabled: boolean;
@@ -75,6 +79,12 @@ export type AppSettings = {
   devModeUsedAtLeastOnce: boolean;
   hideTrayIcon: boolean;
   alwaysCompileModsLocally: boolean;
+  parallelCompileTargets: boolean;
+  preferPrecompiledHeaders: boolean;
+  pythonAuthoringCommand: string;
+  pythonAuthoringArgs: string;
+  copilotCliCommand: string;
+  copilotCliArgs: string;
   dontAutoShowToolkit: boolean;
   modTasksDialogDelay: number;
   safeMode: boolean;
@@ -86,6 +96,9 @@ export type AppSettings = {
     injectIntoCriticalProcesses: boolean;
     injectIntoIncompatiblePrograms: boolean;
     injectIntoGames: boolean;
+    usePhantomInjection: boolean;
+    useModuleStomping: boolean;
+    useIndirectSyscalls: boolean;
   };
 };
 
@@ -137,6 +150,9 @@ export type AppRuntimeDiagnostics = {
   windowsProductName: string | null;
   windowsDisplayVersion: string | null;
   windowsBuild: string;
+  totalMemoryGb: number;
+  npuDetected: boolean;
+  npuName: string | null;
   windowsInstallationType: string | null;
   hostName: string;
   userName: string | null;
@@ -178,6 +194,13 @@ export type InitialSettingItem = {
 
 export type InitialSettings = InitialSettingItem[];
 
+export type CompileExecutionSummary = {
+  durationMs: number;
+  targetsCompiled: number;
+  compiledInParallel: boolean;
+  usedPrecompiledHeaders: boolean;
+};
+
 ////////////////////////////////////////////////////////////
 // Messages.
 
@@ -185,10 +208,45 @@ export type EditModData = {
   modId: string;
 };
 
-export type CreateNewModTemplateKey = 'default' | 'ai-ready';
+export type CreateNewModTemplateKey =
+  | 'default'
+  | 'ai-ready'
+  | 'structured-core'
+  | 'explorer-shell'
+  | 'chromium-browser'
+  | 'window-behavior'
+  | 'settings-lab'
+  | 'python-automation';
+
+export type EditorLaunchContextKind =
+  | 'starter'
+  | 'workflow'
+  | 'visual-preset';
+
+export type EditorLaunchContextResource = {
+  key: string;
+  title: string;
+  command?: string;
+};
+
+export type EditorLaunchContext = {
+  kind: EditorLaunchContextKind;
+  title: string;
+  summary: string;
+  templateKey?: CreateNewModTemplateKey;
+  studioMode?: 'code' | 'visual';
+  authoringLanguage?: ModAuthoringLanguage;
+  checklist?: string[];
+  tools?: EditorLaunchContextResource[];
+  prompts?: EditorLaunchContextResource[];
+  packet?: string;
+};
 
 export type CreateNewModData = {
   templateKey?: CreateNewModTemplateKey;
+  sourceExtension?: ModSourceExtension;
+  authoringLanguage?: ModAuthoringLanguage;
+  launchContext?: EditorLaunchContext;
 };
 
 export type ForkModData = {
@@ -455,6 +513,7 @@ export type CompileEditedModData = {
 export type CompileEditedModReplyData = {
   succeeded: boolean;
   clearModified: boolean;
+  summary?: CompileExecutionSummary;
 };
 
 export type ExitEditorModeData = {
@@ -502,4 +561,5 @@ export type SetEditedModDetailsData = {
   modDetails: ModConfig | null;
   metadata?: ModMetadata | null;
   modWasModified: boolean;
+  launchContext?: EditorLaunchContext;
 };

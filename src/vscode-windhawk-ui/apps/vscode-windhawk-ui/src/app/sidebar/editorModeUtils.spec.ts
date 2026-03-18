@@ -1,11 +1,16 @@
 import {
   buildEditorAiPrompt,
+  buildEditorChallengeBrief,
   buildEditorContextPacket,
   buildEditorReleasePacket,
   buildEditorVerificationChecklist,
+  getCurrentCompileProfileKey,
   getEditorEvidenceCards,
   getEditorIterationPlan,
+  getEditorProvocations,
   getEditorVerificationPack,
+  getEditorWindowsActions,
+  getEditorWindowsSurfaceLabels,
   getRecommendedCompileProfile,
   summarizeTargetProcesses,
 } from './editorModeUtils';
@@ -37,6 +42,13 @@ describe('editorModeUtils', () => {
   });
 
   it('recommends safer compile profiles for broad or failed drafts', () => {
+    expect(
+      getCurrentCompileProfileKey({
+        isModDisabled: true,
+        isLoggingEnabled: true,
+      })
+    ).toBe('disabled-logging');
+
     expect(
       getRecommendedCompileProfile(
         {
@@ -129,6 +141,45 @@ describe('editorModeUtils', () => {
     expect(iterationPlan[2].body).toContain('Preview');
   });
 
+  it('builds research-driven explainers and challenge prompts', () => {
+    const apiPrompt = buildEditorAiPrompt('explain-api', 'taskbar-calm', {
+      name: 'Taskbar Calm',
+      include: ['explorer.exe'],
+      version: '1.4.0',
+    });
+    const challengePrompt = buildEditorAiPrompt(
+      'challenge-assumptions',
+      'taskbar-calm',
+      {
+        name: 'Taskbar Calm',
+        include: ['explorer.exe', 'StartMenuExperienceHost.exe'],
+        version: '1.4.0',
+      },
+      {
+        modWasModified: true,
+        isModCompiled: true,
+      }
+    );
+    const recoveryPrompt = buildEditorAiPrompt(
+      'compile-recovery',
+      'taskbar-calm',
+      {
+        name: 'Taskbar Calm',
+        include: ['explorer.exe'],
+      },
+      {
+        compilationFailed: true,
+      }
+    );
+
+    expect(apiPrompt).toContain('Candidate APIs or hook points');
+    expect(apiPrompt).toContain('explorer.exe');
+    expect(challengePrompt).toContain('Socratic reviewer');
+    expect(challengePrompt).toContain('Challenge prompts:');
+    expect(recoveryPrompt).toContain('validation-driven recovery loop');
+    expect(recoveryPrompt).toContain('recent compile failure');
+  });
+
   it('builds a verification pack and release packet from the current draft', () => {
     const verificationPack = getEditorVerificationPack(
       {
@@ -174,5 +225,65 @@ describe('editorModeUtils', () => {
     expect(checklist).toContain('Verification checklist for Taskbar Calm');
     expect(releasePacket).toContain('Recommended next compile profile');
     expect(releasePacket).toContain('Write the release delta');
+  });
+
+  it('creates provocation cards and a challenge brief from draft state', () => {
+    const provocations = getEditorProvocations(
+      {
+        include: ['*'],
+      },
+      {
+        compilationFailed: true,
+      }
+    );
+    const challengeBrief = buildEditorChallengeBrief(
+      'global-shell-check',
+      {
+        name: 'Global Shell Check',
+        include: ['*'],
+      },
+      {
+        compilationFailed: true,
+      }
+    );
+
+    expect(provocations).toHaveLength(3);
+    expect(provocations[0].title).toContain('stay untouched');
+    expect(provocations[2].body).toContain('failed build');
+    expect(challengeBrief).toContain('Challenge prompts:');
+    expect(challengeBrief).toContain('Global Shell Check');
+  });
+
+  it('infers Windows surfaces and quick actions from the target processes', () => {
+    const surfaceLabels = getEditorWindowsSurfaceLabels({
+      include: ['explorer.exe', 'StartMenuExperienceHost.exe'],
+    });
+    const windowsActions = getEditorWindowsActions({
+      include: ['sndvol.exe'],
+    });
+    const expandedWindowsActions = getEditorWindowsActions(
+      {
+        include: ['explorer.exe', 'sndvol.exe', 'tabtip.exe'],
+      },
+      Number.POSITIVE_INFINITY
+    );
+
+    expect(surfaceLabels).toEqual(
+      expect.arrayContaining(['Explorer shell', 'Start and search'])
+    );
+    expect(windowsActions[0]).toMatchObject({
+      key: 'sound',
+      uri: 'ms-settings:sound',
+    });
+    expect(windowsActions[1]).toMatchObject({
+      key: 'apps-volume',
+    });
+    expect(expandedWindowsActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'typing' }),
+        expect.objectContaining({ key: 'sound' }),
+      ])
+    );
+    expect(expandedWindowsActions.length).toBeGreaterThan(windowsActions.length);
   });
 });

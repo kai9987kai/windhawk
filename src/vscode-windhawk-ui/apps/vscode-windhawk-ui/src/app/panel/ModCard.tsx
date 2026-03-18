@@ -28,6 +28,21 @@ const ModCardWrapperInner = styled(Card)`
   // Fill whole height and stick buttons to the bottom.
   height: 100%;
 
+  /* Premium Glassmorphism */
+  background: rgba(26, 26, 26, 0.4) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out !important;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
   > .ant-card-body {
     height: 100%;
     display: flex;
@@ -147,9 +162,11 @@ const InsightsRow = styled.div`
 const InsightTag = styled(Tag)`
   margin-inline-end: 0;
   border-radius: 999px;
-  background: rgba(56, 142, 211, 0.1);
-  border-color: rgba(56, 142, 211, 0.35);
-  color: rgba(255, 255, 255, 0.88);
+  background: linear-gradient(135deg, rgba(56, 142, 211, 0.15) 0%, rgba(56, 142, 211, 0.05) 100%);
+  border-color: rgba(56, 142, 211, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0 10px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
 `;
 
 interface Props {

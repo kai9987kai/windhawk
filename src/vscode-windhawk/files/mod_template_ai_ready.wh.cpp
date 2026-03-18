@@ -27,6 +27,14 @@ Before asking an AI tool for help, give it:
 - Safety constraints, fallback behavior, and any settings you want exposed.
 - The exact errors, logs, or manual test results you already observed.
 
+## Structure brief
+Tell the AI to preserve the current section layout:
+- `ModSettings` for user-configurable values.
+- `RuntimeState` for runtime-only state.
+- Hook callbacks for the behavior you are changing.
+- Helpers such as settings loading and hook installation.
+- Lifecycle callbacks for init, uninit, and settings changes.
+
 ## Suggested prompt
 Paste something like this into your AI assistant:
 
@@ -36,6 +44,8 @@ Target process: mspaint.exe
 Goal: Force Paint to use one color and optionally block file opening.
 Constraints:
 - Keep the metadata, readme, and settings blocks valid for Windhawk.
+- Preserve the section layout for settings, runtime state, hook callbacks,
+  helpers, and lifecycle callbacks.
 - Explain why each hook target is appropriate.
 - Minimize risk to unrelated behavior.
 - Provide manual test steps and edge cases.
@@ -56,7 +66,7 @@ Output:
 
 ## Manual test plan
 - Compile the mod with the button on the left or with Ctrl+B.
-- Run Microsoft Paint from the Start menu or by launching mspaint.exe.
+- Run Microsoft Paint from the Start menu or by launching `mspaint.exe`.
 - Draw something and confirm that the orange color is always used.
 - Try opening a file and confirm that it is blocked when the setting is
   enabled.
@@ -96,29 +106,36 @@ Check out the documentation
 
 using namespace Gdiplus;
 
-struct {
+namespace {
+
+struct ModSettings {
     BYTE red;
     BYTE green;
     BYTE blue;
     bool blockOpen;
 } settings;
 
+struct RuntimeState {
+    HMODULE gdiPlusModule;
+} runtimeState;
+
 using GdipSetSolidFillColor_t = decltype(&DllExports::GdipSetSolidFillColor);
 GdipSetSolidFillColor_t GdipSetSolidFillColor_Original;
+
+using GetOpenFileNameW_t = decltype(&GetOpenFileNameW);
+GetOpenFileNameW_t GetOpenFileNameW_Original;
+
 GpStatus WINAPI GdipSetSolidFillColor_Hook(GpSolidFill* brush, ARGB color) {
     Wh_Log(L"GdipSetSolidFillColor_Hook: color=%08X", color);
 
-    // If the color is not transparent, replace it.
     if (Color(color).GetAlpha() == 255) {
-        color =
-            Color::MakeARGB(255, settings.red, settings.green, settings.blue);
+        color = Color::MakeARGB(255, settings.red, settings.green,
+                                settings.blue);
     }
 
     return GdipSetSolidFillColor_Original(brush, color);
 }
 
-using GetOpenFileNameW_t = decltype(&GetOpenFileNameW);
-GetOpenFileNameW_t GetOpenFileNameW_Original;
 BOOL WINAPI GetOpenFileNameW_Hook(LPOPENFILENAMEW params) {
     Wh_Log(L"GetOpenFileNameW_Hook");
 
@@ -138,15 +155,20 @@ void LoadSettings() {
     settings.blockOpen = Wh_GetIntSetting(L"blockOpen");
 }
 
-BOOL Wh_ModInit() {
-    Wh_Log(L"Init");
+BOOL InstallHooks() {
+    runtimeState.gdiPlusModule = LoadLibraryW(L"gdiplus.dll");
+    if (!runtimeState.gdiPlusModule) {
+        Wh_Log(L"Failed to load gdiplus.dll");
+        return FALSE;
+    }
 
-    LoadSettings();
-
-    HMODULE gdiPlusModule = LoadLibrary(L"gdiplus.dll");
-    GdipSetSolidFillColor_t GdipSetSolidFillColor =
-        (GdipSetSolidFillColor_t)GetProcAddress(gdiPlusModule,
-                                                "GdipSetSolidFillColor");
+    auto GdipSetSolidFillColor =
+        reinterpret_cast<GdipSetSolidFillColor_t>(GetProcAddress(
+            runtimeState.gdiPlusModule, "GdipSetSolidFillColor"));
+    if (!GdipSetSolidFillColor) {
+        Wh_Log(L"Failed to resolve GdipSetSolidFillColor");
+        return FALSE;
+    }
 
     Wh_SetFunctionHook((void*)GdipSetSolidFillColor,
                        (void*)GdipSetSolidFillColor_Hook,
@@ -156,6 +178,16 @@ BOOL Wh_ModInit() {
                        (void**)&GetOpenFileNameW_Original);
 
     return TRUE;
+}
+
+}  // namespace
+
+BOOL Wh_ModInit() {
+    Wh_Log(L"Init");
+
+    LoadSettings();
+
+    return InstallHooks();
 }
 
 void Wh_ModUninit() {

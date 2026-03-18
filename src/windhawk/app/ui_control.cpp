@@ -176,6 +176,20 @@ void RunUI() {
         StorageManager::GetInstance().GetEditorWorkspacePath();
     MakeSureDirectoryExists(editorWorkspacePath);
 
+    // Some shells and automation environments export ELECTRON_RUN_AS_NODE.
+    // If VSCodium inherits it, the GUI launcher turns into a Node process and
+    // fails before the editor window opens.
+    std::wstring inheritedElectronRunAsNode =
+        wil::TryGetEnvironmentVariableW<std::wstring>(
+            L"ELECTRON_RUN_AS_NODE");
+    SetEnvironmentVariable(L"ELECTRON_RUN_AS_NODE", nullptr);
+    auto restoreElectronRunAsNode = wil::scope_exit([&] {
+        if (!inheritedElectronRunAsNode.empty()) {
+            SetEnvironmentVariable(L"ELECTRON_RUN_AS_NODE",
+                                   inheritedElectronRunAsNode.c_str());
+        }
+    });
+
     // The --locale command line switch is needed to avoid the "Install
     // language pack to change the display language" message if the OS
     // locale is not English.

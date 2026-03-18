@@ -1,13 +1,20 @@
+import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 import config from '../config';
+import { ModSourceExtension } from '../webviewIPCMessages';
+
+type DraftSourceInfo = {
+	source: string;
+	extension: ModSourceExtension;
+};
 
 export default class EditorWorkspaceUtils {
 	private workspacePath: string;
+	private extensionPath: string;
 
-	public constructor() {
+	public constructor(extensionPath: string) {
 		const firstWorkspaceFolder = vscode.workspace.workspaceFolders?.[0];
 		if (!firstWorkspaceFolder) {
 			vscode.commands.executeCommand('workbench.action.files.openFolder');
@@ -15,6 +22,7 @@ export default class EditorWorkspaceUtils {
 		}
 
 		this.workspacePath = firstWorkspaceFolder.uri.fsPath;
+		this.extensionPath = extensionPath;
 	}
 
 	public getFilePath(fileName: string) {
@@ -25,15 +33,22 @@ export default class EditorWorkspaceUtils {
 		return this.workspacePath;
 	}
 
-	public getModSourcePath() {
-		return this.getFilePath('mod.wh.cpp');
+	public getModSourcePath(extension?: ModSourceExtension) {
+		const effectiveExtension = extension || this.getEditedModSourceExtension();
+		return this.getFilePath(`mod${effectiveExtension}`);
 	}
 
 	public getDraftsPath() {
 		return path.join(this.workspacePath, 'Drafts');
 	}
 
-	private initializeEditorSettings() {
+	public getEditedModSourceExtension() {
+		const vscodeConfig = vscode.workspace.getConfiguration();
+		const sourceExtension = vscodeConfig.get('windhawk.editedModSourceExtension');
+		return sourceExtension === '.wh.py' ? '.wh.py' : '.wh.cpp';
+	}
+
+	private initializeEditorSettings(extension: ModSourceExtension) {
 		// Flags for clangd.
 		const compileFlags = [
 			'-x',
@@ -79,43 +94,89 @@ export default class EditorWorkspaceUtils {
 		}
 
 		if (fs.existsSync(this.getFilePath('.git'))) {
-			child_process.spawnSync('git', ['add', 'mod.wh.cpp'], { cwd: this.workspacePath, stdio: 'ignore' });
+			child_process.spawnSync('git', ['add', path.basename(this.getModSourcePath(extension))], {
+				cwd: this.workspacePath,
+				stdio: 'ignore',
+			});
 		}
 	}
 
-	public initializeFromModSource(modSource: string, modSourceFromDrafts?: string | null) {
-		fs.writeFileSync(this.getFilePath('mod.wh.cpp'), modSource);
+	private ensurePythonAuthoringRuntime() {
+		const sourcePath = path.join(this.extensionPath, 'files', 'python', 'windhawk_py');
+		const targetPath = this.getFilePath('windhawk_py');
+		copyDirectoryRecursive(sourcePath, targetPath);
+	}
+
+	private clearPythonAuthoringRuntime() {
+		try {
+			fs.rmSync(this.getFilePath('windhawk_py'), { recursive: true, force: true });
+		} catch (e) {
+			if (e.code !== 'ENOENT') {
+				throw e;
+			}
+		}
+	}
+
+	private clearInactiveWorkspaceSource(activeExtension: ModSourceExtension) {
+		const inactiveExtension = activeExtension === '.wh.py' ? '.wh.cpp' : '.wh.py';
+		const inactivePath = this.getModSourcePath(inactiveExtension);
+		try {
+			fs.unlinkSync(inactivePath);
+		} catch (e) {
+			if (e.code !== 'ENOENT') {
+				throw e;
+			}
+		}
+	}
+
+	public initializeFromModSource(
+		modSource: string,
+		sourceExtension: ModSourceExtension,
+		modSourceFromDrafts?: DraftSourceInfo | null
+	) {
+		const effectiveExtension = modSourceFromDrafts?.extension || sourceExtension;
+		const effectiveSource = modSourceFromDrafts?.source || modSource;
+
+		fs.writeFileSync(this.getModSourcePath(effectiveExtension), effectiveSource);
+		this.clearInactiveWorkspaceSource(effectiveExtension);
 
 		// Remove windhawk_api.h from older versions, it now resides in the
 		// compiler include folder.
 		try {
 			fs.unlinkSync(this.getFilePath('windhawk_api.h'));
 		} catch (e) {
-			// Ignore if file doesn't exist.
 			if (e.code !== 'ENOENT') {
 				throw e;
 			}
 		}
 
-		this.initializeEditorSettings();
-
-		if (modSourceFromDrafts) {
-			// Write the new content after initializing, so that git won't stage the draft changes.
-			fs.writeFileSync(this.getFilePath('mod.wh.cpp'), modSourceFromDrafts);
+		if (effectiveExtension === '.wh.py') {
+			this.ensurePythonAuthoringRuntime();
+		} else {
+			this.clearPythonAuthoringRuntime();
 		}
+
+		this.initializeEditorSettings(effectiveExtension);
 	}
 
-	public saveModToDrafts(modId: string) {
+	public saveModToDrafts(modId: string, sourceExtension?: ModSourceExtension) {
+		const extension = sourceExtension || this.getEditedModSourceExtension();
 		const draftsDir = this.getDraftsPath();
 		fs.mkdirSync(draftsDir, { recursive: true });
-		fs.copyFileSync(this.getFilePath('mod.wh.cpp'), path.join(draftsDir, modId + '.wh.cpp'));
+		fs.copyFileSync(this.getModSourcePath(extension), path.join(draftsDir, modId + extension));
 	}
 
-	public loadModFromDrafts(modId: string) {
+	public loadModFromDrafts(modId: string): DraftSourceInfo | null {
 		const draftsPath = this.getDraftsPath();
-		const modSourcePath = path.join(draftsPath, modId + '.wh.cpp');
-		if (fs.existsSync(modSourcePath)) {
-			return fs.readFileSync(modSourcePath, 'utf8');
+
+		for (const extension of ['.wh.py', '.wh.cpp'] as const) {
+			const modSourcePath = path.join(draftsPath, modId + extension);
+			if (fs.existsSync(modSourcePath)) {
+				return {
+					source: fs.readFileSync(modSourcePath, 'utf8'),
+					extension,
+				};
+			}
 		}
 
 		return null;
@@ -123,13 +184,14 @@ export default class EditorWorkspaceUtils {
 
 	public deleteModFromDrafts(modId: string) {
 		const draftsPath = this.getDraftsPath();
-		const modSourcePath = path.join(draftsPath, modId + '.wh.cpp');
-		try {
-			fs.unlinkSync(modSourcePath);
-		} catch (e) {
-			// Ignore if file doesn't exist.
-			if (e.code !== 'ENOENT') {
-				throw e;
+		for (const extension of ['.wh.py', '.wh.cpp'] as const) {
+			const modSourcePath = path.join(draftsPath, modId + extension);
+			try {
+				fs.unlinkSync(modSourcePath);
+			} catch (e) {
+				if (e.code !== 'ENOENT') {
+					throw e;
+				}
 			}
 		}
 	}
@@ -150,21 +212,26 @@ export default class EditorWorkspaceUtils {
 		return Promise.all(thenableArray);
 	}
 
-	public async enterEditorMode(modId: string, modWasModified = false) {
+	public async enterEditorMode(
+		modId: string,
+		modWasModified = false,
+		sourceExtension: ModSourceExtension = '.wh.cpp'
+	) {
 		const vscodeConfig = vscode.workspace.getConfiguration();
 		await Promise.all([
 			vscodeConfig.update('windhawk.editedModId', modId),
 			vscodeConfig.update('windhawk.editedModWasModified', modWasModified),
-			vscodeConfig.update('git.enabled', true)
+			vscodeConfig.update('windhawk.editedModSourceExtension', sourceExtension),
+			vscodeConfig.update('git.enabled', true),
 		]);
 
-		await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(this.getFilePath('mod.wh.cpp')), {
-			preview: false
+		await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(this.getModSourcePath(sourceExtension)), {
+			preview: false,
 		});
 		await vscode.commands.executeCommand('workbench.action.closeEditorsInOtherGroups');
 		await vscode.commands.executeCommand('workbench.action.closeOtherEditors');
 		await vscode.commands.executeCommand('windhawk.sidebar.focus', {
-			preserveFocus: true
+			preserveFocus: true,
 		});
 
 		if (!config.debug.disableMinimalMode) {
@@ -177,6 +244,7 @@ export default class EditorWorkspaceUtils {
 		await Promise.all([
 			vscodeConfig.update('windhawk.editedModId', undefined),
 			vscodeConfig.update('windhawk.editedModWasModified', undefined),
+			vscodeConfig.update('windhawk.editedModSourceExtension', undefined),
 			vscodeConfig.update('git.enabled', undefined),
 		]);
 
@@ -193,18 +261,21 @@ export default class EditorWorkspaceUtils {
 		const vscodeConfig = vscode.workspace.getConfiguration();
 		const modIdConfig = vscodeConfig.get('windhawk.editedModId');
 		const modId = typeof modIdConfig === 'string' ? modIdConfig : null;
+		const sourceExtension = this.getEditedModSourceExtension();
 
 		if (modId) {
 			const modWasModified = !!vscodeConfig.get('windhawk.editedModWasModified');
-			await this.enterEditorMode(modId, modWasModified);
+			await this.enterEditorMode(modId, modWasModified, sourceExtension);
 			return {
 				modId,
-				modWasModified
+				modWasModified,
+				sourceExtension,
 			};
 		} else {
 			await this.exitEditorMode();
 			return {
-				modId: null
+				modId: null,
+				sourceExtension,
 			};
 		}
 	}
@@ -214,12 +285,36 @@ export default class EditorWorkspaceUtils {
 		await vscodeConfig.update('windhawk.editedModId', modId);
 	}
 
+	public async setEditorModeSourceExtension(sourceExtension: ModSourceExtension) {
+		const vscodeConfig = vscode.workspace.getConfiguration();
+		await vscodeConfig.update('windhawk.editedModSourceExtension', sourceExtension);
+	}
+
 	public async markEditorModeModAsModified(modified: boolean) {
 		if (!modified && fs.existsSync(this.getFilePath('.git'))) {
-			child_process.spawn('git', ['add', 'mod.wh.cpp'], { cwd: this.workspacePath, stdio: 'ignore' });
+			child_process.spawn('git', ['add', path.basename(this.getModSourcePath())], {
+				cwd: this.workspacePath,
+				stdio: 'ignore',
+			});
 		}
 
 		const vscodeConfig = vscode.workspace.getConfiguration();
 		await vscodeConfig.update('windhawk.editedModWasModified', modified);
+	}
+}
+
+function copyDirectoryRecursive(sourcePath: string, targetPath: string) {
+	fs.mkdirSync(targetPath, { recursive: true });
+
+	for (const entry of fs.readdirSync(sourcePath, { withFileTypes: true })) {
+		const sourceEntryPath = path.join(sourcePath, entry.name);
+		const targetEntryPath = path.join(targetPath, entry.name);
+
+		if (entry.isDirectory()) {
+			copyDirectoryRecursive(sourceEntryPath, targetEntryPath);
+			continue;
+		}
+
+		fs.copyFileSync(sourceEntryPath, targetEntryPath);
 	}
 }

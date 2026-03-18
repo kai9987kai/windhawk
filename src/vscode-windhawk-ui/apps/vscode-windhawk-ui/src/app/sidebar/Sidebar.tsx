@@ -22,6 +22,7 @@ function Sidebar() {
           modId: data.modId,
           modWasModified: data.modWasModified,
           metadata: data.metadata || undefined,
+          launchContext: data.launchContext,
           compiled: false,
         });
       } else {
@@ -29,6 +30,7 @@ function Sidebar() {
           modId: data.modId,
           modWasModified: data.modWasModified,
           metadata: data.metadata || undefined,
+          launchContext: data.launchContext,
           compiled: true,
           disabled: data.modDetails.disabled,
           loggingEnabled: data.modDetails.loggingEnabled,

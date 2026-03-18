@@ -62,13 +62,21 @@ const AboutContainer = styled.div`
 const HeroCard = styled.section`
   margin-bottom: var(--app-section-gap);
   padding: calc(var(--app-card-padding) + 4px);
-  border: 1px solid var(--app-surface-border);
-  border-radius: var(--app-surface-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   background:
-    radial-gradient(circle at top right, rgba(23, 125, 220, 0.18), transparent 36%),
-    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.08), transparent 30%),
-    var(--app-surface-background);
-  box-shadow: var(--app-surface-shadow);
+    radial-gradient(circle at top right, rgba(23, 125, 220, 0.25), transparent 45%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.12), transparent 40%),
+    rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  }
 `;
 
 const HeroEyebrow = styled.div`
@@ -115,10 +123,20 @@ const AboutGrid = styled.div`
 `;
 
 const SectionCard = styled(Card)`
-  border: 1px solid var(--app-surface-border);
-  border-radius: var(--app-surface-radius);
-  background: var(--app-surface-background);
-  box-shadow: var(--app-surface-shadow);
+  /* Premium Glassmorphism */
+  background: rgba(26, 26, 26, 0.4) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out !important;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
 
   .ant-card-body {
     padding: var(--app-card-padding);
@@ -446,6 +464,105 @@ function About() {
     process.env['REACT_APP_VERSION'] || 'unknown'
   ).replace(/^(\d+(?:\.\d+)+?)(\.0+)+$/, '$1');
 
+  const performanceProfileLabel = useCallback(
+    (profile: 'balanced' | 'responsive' | 'efficient') => {
+      switch (profile) {
+        case 'responsive':
+          return t('settings.performance.profile.options.responsive');
+        case 'efficient':
+          return t('settings.performance.profile.options.efficient');
+        case 'balanced':
+        default:
+          return t('settings.performance.profile.options.balanced');
+      }
+    },
+    [t]
+  );
+
+  const aiAccelerationLabel = useCallback(
+    (preference: 'auto' | 'prefer-npu' | 'off') => {
+      switch (preference) {
+        case 'prefer-npu':
+          return t('settings.performance.aiAcceleration.options.preferNpu');
+        case 'off':
+          return t('settings.performance.aiAcceleration.options.off');
+        case 'auto':
+        default:
+          return t('settings.performance.aiAcceleration.options.auto');
+      }
+    },
+    [t]
+  );
+
+  const startupPageLabel = useCallback(
+    (startupPage: 'home' | 'explore' | 'settings' | 'about') => {
+      switch (startupPage) {
+        case 'explore':
+          return t('settings.workflow.startupPage.options.explore');
+        case 'settings':
+          return t('settings.workflow.startupPage.options.settings');
+        case 'about':
+          return t('settings.workflow.startupPage.options.about');
+        case 'home':
+        default:
+          return t('settings.workflow.startupPage.options.home');
+      }
+    },
+    [t]
+  );
+
+  const exploreDefaultSortLabel = useCallback(
+    (
+      sortPreference:
+        | 'smart-relevance'
+        | 'last-updated'
+        | 'popular-top-rated'
+    ) => {
+      switch (sortPreference) {
+        case 'last-updated':
+          return t('settings.workflow.exploreDefaultSort.options.lastUpdated');
+        case 'popular-top-rated':
+          return t(
+            'settings.workflow.exploreDefaultSort.options.popularTopRated'
+          );
+        case 'smart-relevance':
+        default:
+          return t(
+            'settings.workflow.exploreDefaultSort.options.smartRelevance'
+          );
+      }
+    },
+    [t]
+  );
+
+  const editorAssistanceLabel = useCallback(
+    (assistanceLevel: 'streamlined' | 'guided' | 'full') => {
+      switch (assistanceLevel) {
+        case 'streamlined':
+          return t('settings.workflow.editorAssistance.options.streamlined');
+        case 'guided':
+          return t('settings.workflow.editorAssistance.options.guided');
+        case 'full':
+        default:
+          return t('settings.workflow.editorAssistance.options.full');
+      }
+    },
+    [t]
+  );
+
+  const windowsQuickActionDensityLabel = useCallback(
+    (density: 'focused' | 'expanded') => {
+      switch (density) {
+        case 'focused':
+          return t('settings.workflow.windowsQuickActions.options.focused');
+        case 'expanded':
+        default:
+          return t('settings.workflow.windowsQuickActions.options.expanded');
+      }
+    },
+    [t]
+  );
+
   const workspaceItems = useMemo<SummaryItem[]>(
     () => [
       {
@@ -501,8 +618,46 @@ function About() {
           ? t('about.values.reduced')
           : t('about.values.standard'),
       },
+      {
+        label: t('about.workspace.performanceProfile'),
+        value: performanceProfileLabel(localUISettings.performanceProfile),
+      },
+      {
+        label: t('about.workspace.aiAcceleration'),
+        value: aiAccelerationLabel(localUISettings.aiAccelerationPreference),
+      },
+      {
+        label: t('about.workspace.startupPage'),
+        value: startupPageLabel(localUISettings.startupPage),
+      },
+      {
+        label: t('about.workspace.exploreDefaultSort'),
+        value: exploreDefaultSortLabel(localUISettings.exploreDefaultSort),
+      },
+      {
+        label: t('about.workspace.editorAssistance'),
+        value: editorAssistanceLabel(localUISettings.editorAssistanceLevel),
+      },
+      {
+        label: t('about.workspace.windowsQuickActions'),
+        value: windowsQuickActionDensityLabel(
+          localUISettings.windowsQuickActionDensity
+        ),
+      },
     ],
-    [appSettings, devModeOptOut, language, localUISettings, t]
+    [
+      aiAccelerationLabel,
+      appSettings,
+      devModeOptOut,
+      editorAssistanceLabel,
+      exploreDefaultSortLabel,
+      language,
+      localUISettings,
+      performanceProfileLabel,
+      startupPageLabel,
+      t,
+      windowsQuickActionDensityLabel,
+    ]
   );
 
   const runtimeModeLabel = useCallback(
@@ -633,6 +788,18 @@ function About() {
             {
               label: t('about.windows.summary.build'),
               value: runtimeDiagnostics.windowsBuild,
+            },
+            {
+              label: t('about.windows.summary.memory'),
+              value: `${runtimeDiagnostics.totalMemoryGb} GB`,
+            },
+            {
+              label: t('about.windows.summary.npu'),
+              value:
+                runtimeDiagnostics.npuName ||
+                (runtimeDiagnostics.npuDetected
+                  ? t('about.windows.values.detected')
+                  : t('about.windows.values.none')),
             },
             {
               label: t('about.windows.summary.installationType'),
@@ -812,6 +979,16 @@ function About() {
             ? t('about.values.reduced')
             : t('about.values.standard')
         }`,
+        `Startup page: ${startupPageLabel(localUISettings.startupPage)}`,
+        `Explore default sort: ${exploreDefaultSortLabel(
+          localUISettings.exploreDefaultSort
+        )}`,
+        `Editor assistance: ${editorAssistanceLabel(
+          localUISettings.editorAssistanceLevel
+        )}`,
+        `Windows quick actions: ${windowsQuickActionDensityLabel(
+          localUISettings.windowsQuickActionDensity
+        )}`,
         runtimeDiagnostics
           ? `Runtime storage: ${
               runtimeDiagnostics.engineConfigMatchesAppConfig
@@ -831,16 +1008,24 @@ function About() {
       appSettings?.language,
       currentVersion,
       devModeOptOut,
+      editorAssistanceLabel,
+      exploreDefaultSortLabel,
       language,
+      localUISettings.editorAssistanceLevel,
+      localUISettings.exploreDefaultSort,
       localUISettings.interfaceDensity,
       localUISettings.reduceMotion,
+      localUISettings.startupPage,
       localUISettings.useWideLayout,
+      localUISettings.windowsQuickActionDensity,
       loggingEnabled,
       runtimeDiagnostics,
       runtimeModeLabel,
       safeMode,
+      startupPageLabel,
       t,
       updateIsAvailable,
+      windowsQuickActionDensityLabel,
     ]
   );
 
@@ -900,6 +1085,62 @@ function About() {
               target: 'ms-settings:personalization-taskbar',
             },
             {
+              key: 'start-settings',
+              title: t('about.windows.actions.start.title'),
+              description: t('about.windows.actions.start.description'),
+              kind: 'uri',
+              target: 'ms-settings:personalization-start',
+            },
+            {
+              key: 'notification-settings',
+              title: t('about.windows.actions.notifications.title'),
+              description: t('about.windows.actions.notifications.description'),
+              kind: 'uri',
+              target: 'ms-settings:notifications',
+            },
+            {
+              key: 'multitasking-settings',
+              title: t('about.windows.actions.multitasking.title'),
+              description: t('about.windows.actions.multitasking.description'),
+              kind: 'uri',
+              target: 'ms-settings:multitasking',
+            },
+            {
+              key: 'colors-settings',
+              title: t('about.windows.actions.colors.title'),
+              description: t('about.windows.actions.colors.description'),
+              kind: 'uri',
+              target: 'ms-settings:colors',
+            },
+            {
+              key: 'background-settings',
+              title: t('about.windows.actions.background.title'),
+              description: t('about.windows.actions.background.description'),
+              kind: 'uri',
+              target: 'ms-settings:personalization-background',
+            },
+            {
+              key: 'themes-settings',
+              title: t('about.windows.actions.themes.title'),
+              description: t('about.windows.actions.themes.description'),
+              kind: 'uri',
+              target: 'ms-settings:themes',
+            },
+            {
+              key: 'lockscreen-settings',
+              title: t('about.windows.actions.lockScreen.title'),
+              description: t('about.windows.actions.lockScreen.description'),
+              kind: 'uri',
+              target: 'ms-settings:lockscreen',
+            },
+            {
+              key: 'clipboard-settings',
+              title: t('about.windows.actions.clipboard.title'),
+              description: t('about.windows.actions.clipboard.description'),
+              kind: 'uri',
+              target: 'ms-settings:clipboard',
+            },
+            {
               key: 'startup-apps',
               title: t('about.windows.actions.startupApps.title'),
               description: t('about.windows.actions.startupApps.description'),
@@ -931,6 +1172,28 @@ function About() {
         : [],
     [runtimeDiagnostics, t]
   );
+
+  const visibleWindowsQuickActions = useMemo(() => {
+    if (localUISettings.windowsQuickActionDensity === 'expanded') {
+      return windowsQuickActions;
+    }
+
+    const focusedActionKeys = new Set([
+      'windows-update',
+      'taskbar-settings',
+      'start-settings',
+      'notification-settings',
+      'multitasking-settings',
+      'colors-settings',
+      'app-data-folder',
+      'engine-folder',
+    ]);
+
+    return windowsQuickActions.filter(({ key }) => focusedActionKeys.has(key));
+  }, [
+    localUISettings.windowsQuickActionDensity,
+    windowsQuickActions,
+  ]);
 
   const links = useMemo<LinkItem[]>(
     () => [
@@ -1174,7 +1437,7 @@ function About() {
             </SectionDescription>
           </SectionHeading>
           <QuickActionsGrid>
-            {windowsQuickActions.map(({ key, title, description, kind, target }) => (
+            {visibleWindowsQuickActions.map(({ key, title, description, kind, target }) => (
               <QuickActionCard
                 key={key}
                 disabled={openExternalPending || openPathPending}

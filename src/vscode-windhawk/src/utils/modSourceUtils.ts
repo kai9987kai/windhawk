@@ -2,7 +2,12 @@ import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
-import { InitialSettingItem, InitialSettings, InitialSettingsValue } from '../webviewIPCMessages';
+import {
+	InitialSettingItem,
+	InitialSettings,
+	InitialSettingsValue,
+	ModSourceExtension,
+} from '../webviewIPCMessages';
 
 const modMetadataParams = {
 	singleValue: [
@@ -54,8 +59,20 @@ export default class ModSourceUtils {
 		this.modsSourcePath = path.join(appDataPath, 'ModsSource');
 	}
 
-	private getModSourcePath(modId: string) {
-		return path.join(this.modsSourcePath, modId + '.wh.cpp');
+	private getModSourcePath(modId: string, extension: ModSourceExtension = '.wh.cpp') {
+		return path.join(this.modsSourcePath, modId + extension);
+	}
+
+	private getAllModSourcePaths(modId: string) {
+		return {
+			cpp: this.getModSourcePath(modId, '.wh.cpp'),
+			python: this.getModSourcePath(modId, '.wh.py'),
+		};
+	}
+
+	public getAuthoringSourcePath(modId: string) {
+		const { cpp, python } = this.getAllModSourcePaths(modId);
+		return fs.existsSync(python) ? python : cpp;
 	}
 
 	private getBestLanguageMatch(matchLanguage: string, candidates: {
@@ -281,19 +298,52 @@ export default class ModSourceUtils {
 	}
 
 	public getSource(modId: string) {
-		const modSourcePath = this.getModSourcePath(modId);
+		const modSourcePath = this.getModSourcePath(modId, '.wh.cpp');
 		return fs.readFileSync(modSourcePath, 'utf8');
 	}
 
+	public getAuthoringSource(modId: string) {
+		const { cpp, python } = this.getAllModSourcePaths(modId);
+		if (fs.existsSync(python)) {
+			return {
+				source: fs.readFileSync(python, 'utf8'),
+				extension: '.wh.py' as const,
+			};
+		}
+
+		return {
+			source: fs.readFileSync(cpp, 'utf8'),
+			extension: '.wh.cpp' as const,
+		};
+	}
+
+	public setCompiledSource(
+		modId: string,
+		authoringSource: string,
+		authoringExtension: ModSourceExtension,
+		generatedSource: string
+	) {
+		const { cpp, python } = this.getAllModSourcePaths(modId);
+		fs.mkdirSync(this.modsSourcePath, { recursive: true });
+
+		fs.writeFileSync(cpp, generatedSource);
+
+		if (authoringExtension === '.wh.py') {
+			fs.writeFileSync(python, authoringSource);
+		} else if (fs.existsSync(python)) {
+			fs.unlinkSync(python);
+		}
+	}
+
 	public setSource(modId: string, modSource: string) {
-		const modSourcePath = this.getModSourcePath(modId);
+		const modSourcePath = this.getModSourcePath(modId, '.wh.cpp');
 		fs.mkdirSync(path.dirname(modSourcePath), { recursive: true });
 		fs.writeFileSync(modSourcePath, modSource);
 	}
 
 	public doesSourceExist(modId: string) {
-		const modSourcePath = this.getModSourcePath(modId);
-		return fs.existsSync(modSourcePath);
+		const { cpp, python } = this.getAllModSourcePaths(modId);
+		return fs.existsSync(cpp) || fs.existsSync(python);
 	}
 
 	public extractReadme(modSource: string) {
@@ -493,13 +543,15 @@ export default class ModSourceUtils {
 	}
 
 	public deleteSource(modId: string) {
-		const modSourcePath = this.getModSourcePath(modId);
-		try {
-			fs.unlinkSync(modSourcePath);
-		} catch (e) {
-			// Ignore if file doesn't exist.
-			if (e.code !== 'ENOENT') {
-				throw e;
+		const { cpp, python } = this.getAllModSourcePaths(modId);
+		for (const modSourcePath of [cpp, python]) {
+			try {
+				fs.unlinkSync(modSourcePath);
+			} catch (e) {
+				// Ignore if file doesn't exist.
+				if (e.code !== 'ENOENT') {
+					throw e;
+				}
 			}
 		}
 	}

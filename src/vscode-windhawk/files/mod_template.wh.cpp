@@ -23,11 +23,16 @@ mod, explain why it's useful, and add any other relevant details. You can use
 This short sample customizes Microsoft Paint by forcing it to use just a single
 color, and by blocking file opening. To see the mod in action:
 - Compile the mod with the button on the left or with Ctrl+B.
-- Run Microsoft Paint from the start menu (type "Paint") or by running
-  mspaint.exe.
+- Run Microsoft Paint from the Start menu (type "Paint") or by running
+  `mspaint.exe`.
 - Draw something and notice that the orange color is always used, regardless of
   the color you pick.
 - Try opening a file and notice that it's blocked.
+
+# Structure guide
+This sample is organized into settings, runtime state, hook callbacks, helper
+functions, and lifecycle callbacks. Keep that shape as the mod grows so
+`Wh_ModInit` stays focused on startup work instead of becoming one large block.
 
 # Getting started
 Check out the documentation
@@ -63,36 +68,40 @@ Check out the documentation
 
 using namespace Gdiplus;
 
-struct {
+namespace {
+
+struct ModSettings {
     BYTE red;
     BYTE green;
     BYTE blue;
     bool blockOpen;
 } settings;
 
+struct RuntimeState {
+    HMODULE gdiPlusModule;
+} runtimeState;
+
 using GdipSetSolidFillColor_t = decltype(&DllExports::GdipSetSolidFillColor);
 GdipSetSolidFillColor_t GdipSetSolidFillColor_Original;
-GpStatus WINAPI GdipSetSolidFillColor_Hook(GpSolidFill* brush, ARGB color) {
-    Wh_Log(L"GdipSetSolidFillColor_Hook: color=%08X", color);
-
-    // If the color is not transparent, replace it.
-    if (Color(color).GetAlpha() == 255) {
-        color =
-            Color::MakeARGB(255, settings.red, settings.green, settings.blue);
-    }
-
-    // Call the original function.
-    return GdipSetSolidFillColor_Original(brush, color);
-}
 
 using GetOpenFileNameW_t = decltype(&GetOpenFileNameW);
 GetOpenFileNameW_t GetOpenFileNameW_Original;
+
+GpStatus WINAPI GdipSetSolidFillColor_Hook(GpSolidFill* brush, ARGB color) {
+    Wh_Log(L"GdipSetSolidFillColor_Hook: color=%08X", color);
+
+    if (Color(color).GetAlpha() == 255) {
+        color = Color::MakeARGB(255, settings.red, settings.green,
+                                settings.blue);
+    }
+
+    return GdipSetSolidFillColor_Original(brush, color);
+}
+
 BOOL WINAPI GetOpenFileNameW_Hook(LPOPENFILENAMEW params) {
     Wh_Log(L"GetOpenFileNameW_Hook");
 
     if (settings.blockOpen) {
-        // Forbid the operation and return without calling the original
-        // function.
         MessageBoxW(GetActiveWindow(), L"Opening files is forbidden",
                     L"Surprise!", MB_OK);
         return FALSE;
@@ -108,17 +117,20 @@ void LoadSettings() {
     settings.blockOpen = Wh_GetIntSetting(L"blockOpen");
 }
 
-// The mod is being initialized, load settings, hook functions, and do other
-// initialization stuff if required.
-BOOL Wh_ModInit() {
-    Wh_Log(L"Init");
+BOOL InstallHooks() {
+    runtimeState.gdiPlusModule = LoadLibraryW(L"gdiplus.dll");
+    if (!runtimeState.gdiPlusModule) {
+        Wh_Log(L"Failed to load gdiplus.dll");
+        return FALSE;
+    }
 
-    LoadSettings();
-
-    HMODULE gdiPlusModule = LoadLibrary(L"gdiplus.dll");
-    GdipSetSolidFillColor_t GdipSetSolidFillColor =
-        (GdipSetSolidFillColor_t)GetProcAddress(gdiPlusModule,
-                                                "GdipSetSolidFillColor");
+    auto GdipSetSolidFillColor =
+        reinterpret_cast<GdipSetSolidFillColor_t>(GetProcAddress(
+            runtimeState.gdiPlusModule, "GdipSetSolidFillColor"));
+    if (!GdipSetSolidFillColor) {
+        Wh_Log(L"Failed to resolve GdipSetSolidFillColor");
+        return FALSE;
+    }
 
     Wh_SetFunctionHook((void*)GdipSetSolidFillColor,
                        (void*)GdipSetSolidFillColor_Hook,
@@ -130,12 +142,20 @@ BOOL Wh_ModInit() {
     return TRUE;
 }
 
-// The mod is being unloaded, free all allocated resources.
+}  // namespace
+
+BOOL Wh_ModInit() {
+    Wh_Log(L"Init");
+
+    LoadSettings();
+
+    return InstallHooks();
+}
+
 void Wh_ModUninit() {
     Wh_Log(L"Uninit");
 }
 
-// The mod setting were changed, reload them.
 void Wh_ModSettingsChanged() {
     Wh_Log(L"SettingsChanged");
 

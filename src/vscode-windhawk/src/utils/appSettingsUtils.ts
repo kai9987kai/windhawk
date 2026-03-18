@@ -26,6 +26,12 @@ const APP_SETTINGS_FIELDS = [
 	{ name: 'devModeUsedAtLeastOnce', storageName: 'DevModeUsedAtLeastOnce', type: 'boolean', location: 'app' },
 	{ name: 'hideTrayIcon', storageName: 'HideTrayIcon', type: 'boolean', location: 'app' },
 	{ name: 'alwaysCompileModsLocally', storageName: 'AlwaysCompileModsLocally', type: 'boolean', location: 'app' },
+	{ name: 'parallelCompileTargets', storageName: 'ParallelCompileTargets', type: 'boolean', location: 'app', defaultValue: true },
+	{ name: 'preferPrecompiledHeaders', storageName: 'PreferPrecompiledHeaders', type: 'boolean', location: 'app', defaultValue: true },
+	{ name: 'pythonAuthoringCommand', storageName: 'PythonAuthoringCommand', type: 'string', location: 'app', defaultValue: 'py' },
+	{ name: 'pythonAuthoringArgs', storageName: 'PythonAuthoringArgs', type: 'string', location: 'app', defaultValue: '-3' },
+	{ name: 'copilotCliCommand', storageName: 'CopilotCliCommand', type: 'string', location: 'app', defaultValue: '' },
+	{ name: 'copilotCliArgs', storageName: 'CopilotCliArgs', type: 'string', location: 'app', defaultValue: '' },
 	{ name: 'dontAutoShowToolkit', storageName: 'DontAutoShowToolkit', type: 'boolean', location: 'app' },
 	{ name: 'modTasksDialogDelay', storageName: 'ModTasksDialogDelay', type: 'number', location: 'app', defaultValue: 2000 },
 	{ name: 'safeMode', storageName: 'SafeMode', type: 'boolean', location: 'app' },
@@ -36,6 +42,9 @@ const APP_SETTINGS_FIELDS = [
 	{ name: 'injectIntoCriticalProcesses', storageName: 'InjectIntoCriticalProcesses', type: 'boolean', location: 'engine' },
 	{ name: 'injectIntoIncompatiblePrograms', storageName: 'InjectIntoIncompatiblePrograms', type: 'boolean', location: 'engine' },
 	{ name: 'injectIntoGames', storageName: 'InjectIntoGames', type: 'boolean', location: 'engine' },
+	{ name: 'usePhantomInjection', storageName: 'UsePhantomInjection', type: 'boolean', location: 'engine' },
+	{ name: 'useModuleStomping', storageName: 'UseModuleStomping', type: 'boolean', location: 'engine' },
+	{ name: 'useIndirectSyscalls', storageName: 'UseIndirectSyscalls', type: 'boolean', location: 'engine', defaultValue: true },
 ] as const satisfies readonly FieldDescriptor[];
 
 type StorageFieldName = typeof APP_SETTINGS_FIELDS[number]['storageName'];

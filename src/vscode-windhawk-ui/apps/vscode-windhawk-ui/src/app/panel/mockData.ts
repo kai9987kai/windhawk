@@ -23,6 +23,12 @@ export const mockSettings = !useMockData
     devModeUsedAtLeastOnce: false,
     hideTrayIcon: false,
     alwaysCompileModsLocally: false,
+    parallelCompileTargets: true,
+    preferPrecompiledHeaders: true,
+    pythonAuthoringCommand: 'py',
+    pythonAuthoringArgs: '-3',
+    copilotCliCommand: 'python',
+    copilotCliArgs: 'scripts\\windhawk_tool.py',
     dontAutoShowToolkit: false,
     modTasksDialogDelay: 2000,
     safeMode: false,
@@ -34,6 +40,9 @@ export const mockSettings = !useMockData
       injectIntoCriticalProcesses: false,
       injectIntoIncompatiblePrograms: false,
       injectIntoGames: false,
+      usePhantomInjection: false,
+      useModuleStomping: false,
+      useIndirectSyscalls: true,
     },
   };
 
@@ -43,6 +52,9 @@ export const mockRuntimeDiagnostics = !useMockData
     platformArch: 'arm64',
     arm64Enabled: true,
     portable: true,
+    totalMemoryGb: 32,
+    npuDetected: true,
+    npuName: 'Qualcomm Hexagon NPU',
     windowsProductName: 'Windows 11 Pro',
     windowsDisplayVersion: '24H2',
     windowsBuild: '26100.2605',
@@ -162,6 +174,7 @@ export const mockModsBrowserOnlineRepositoryMods = !useMockData
       installed: {
         metadata: mockModMetadata,
         config: mockModConfig,
+        userRating: 0,
       },
     },
     ...Object.fromEntries(

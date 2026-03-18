@@ -234,6 +234,26 @@ function AppHeader() {
     localUISettings.useWideLayout
       ? { key: 'wide', text: t('appHeader.status.wideLayout'), tone: 'default' as const }
       : null,
+    localUISettings.performanceProfile === 'responsive'
+      ? {
+        key: 'responsive-profile',
+        text: t('appHeader.status.responsiveProfile'),
+        tone: 'default' as const,
+      }
+      : localUISettings.performanceProfile === 'efficient'
+        ? {
+          key: 'efficient-profile',
+          text: t('appHeader.status.efficientProfile'),
+          tone: 'default' as const,
+        }
+        : null,
+    localUISettings.aiAccelerationPreference === 'prefer-npu'
+      ? {
+        key: 'npu-preferred',
+        text: t('appHeader.status.npuPreferred'),
+        tone: 'default' as const,
+      }
+      : null,
   ].filter((item): item is StatusItem => item !== null);
 
   return (

@@ -14,6 +14,18 @@ type CompilationResult = {
 	stderr: string;
 };
 
+export type CompileModOptions = {
+	parallelTargets?: boolean;
+	usePrecompiledHeaders?: boolean;
+};
+
+export type CompileExecutionSummary = {
+	durationMs: number;
+	targetsCompiled: number;
+	compiledInParallel: boolean;
+	usedPrecompiledHeaders: boolean;
+};
+
 export class CompilerError extends Error {
 	public exitCode: number | null;
 	public stdout: string;
@@ -153,7 +165,7 @@ export default class CompilerUtils {
 			throw new Error('The current architecture is not supported');
 		}
 
-		return targets;
+		return Array.from(new Set(targets));
 	}
 
 	private doesCompiledModExist(fileName: string, target: CompilationTarget) {
@@ -422,7 +434,8 @@ export default class CompilerUtils {
 		modSourceCode: string,
 		architectures: string[],
 		compilerOptions: string | undefined,
-		precompiledHeadersFolder?: string
+		precompiledHeadersFolder?: string,
+		options: CompileModOptions = {}
 	) {
 		let targetDllName: string;
 		for (; ;) {
@@ -437,12 +450,24 @@ export default class CompilerUtils {
 			compilerOptionsArray = splitargs(compilerOptions);
 		}
 
-		for (const target of this.compilationTargetsFromArchitecture(architectures, modTargets)) {
+		const compilationTargets = this.compilationTargetsFromArchitecture(
+			architectures,
+			modTargets
+		);
+		const compileInParallel =
+			options.parallelTargets !== false && compilationTargets.length > 1;
+		const allowPrecompiledHeaders =
+			options.usePrecompiledHeaders !== false && !!precompiledHeadersFolder;
+		const compilationStart = Date.now();
+		let usedPrecompiledHeaders = false;
+
+		const compileTarget = async (target: CompilationTarget) => {
 			let pchPath: string | undefined = undefined;
-			if (precompiledHeadersFolder) {
+			if (allowPrecompiledHeaders && precompiledHeadersFolder) {
 				const pchHeaderPath = path.join(precompiledHeadersFolder, 'windhawk_pch.h');
 				if (fs.existsSync(pchHeaderPath)) {
 					pchPath = path.join(precompiledHeadersFolder, `windhawk_t_${target}.pch`);
+					usedPrecompiledHeaders = true;
 					if (!fs.existsSync(pchPath) ||
 						fs.statSync(pchPath).mtimeMs < fs.statSync(pchHeaderPath).mtimeMs) {
 						const { exitCode, stdout, stderr } = await this.makePrecompiledHeaders(
@@ -472,7 +497,7 @@ export default class CompilerUtils {
 				}
 			}
 
-			const { exitCode, stdout, stderr } = await this.compileModInternal(
+			const result = await this.compileModInternal(
 				modSourceCode,
 				targetDllName,
 				target,
@@ -481,15 +506,43 @@ export default class CompilerUtils {
 				compilerOptionsArray,
 				pchPath
 			);
-			if (exitCode !== 0) {
+
+			if (result.exitCode !== 0) {
 				throw new CompilerError(
 					target,
-					exitCode,
-					stdout,
-					stderr
+					result.exitCode,
+					result.stdout,
+					result.stderr
 				);
 			}
 
+			return {
+				target,
+				...result
+			};
+		};
+
+		let compilationResults: Array<CompilationResult & { target: CompilationTarget }> = [];
+		if (compileInParallel) {
+			const settledResults = await Promise.allSettled(
+				compilationTargets.map(target => compileTarget(target))
+			);
+			const rejected = settledResults.find(
+				(result): result is PromiseRejectedResult => result.status === 'rejected'
+			);
+			if (rejected) {
+				throw rejected.reason;
+			}
+			compilationResults = settledResults.map(
+				(result) => (result as PromiseFulfilledResult<CompilationResult & { target: CompilationTarget }>).value
+			);
+		} else {
+			for (const target of compilationTargets) {
+				compilationResults.push(await compileTarget(target));
+			}
+		}
+
+		for (const { target, stdout, stderr } of compilationResults) {
 			if (stdout) {
 				console.log(`Compiler stdout for target ${target}:\n${stdout}`);
 			}
@@ -500,6 +553,12 @@ export default class CompilerUtils {
 
 		return {
 			targetDllName,
+			executionSummary: {
+				durationMs: Date.now() - compilationStart,
+				targetsCompiled: compilationTargets.length,
+				compiledInParallel: compileInParallel,
+				usedPrecompiledHeaders,
+			} satisfies CompileExecutionSummary,
 		};
 	}
 

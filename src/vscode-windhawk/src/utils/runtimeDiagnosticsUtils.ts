@@ -1,6 +1,6 @@
-import { execFileSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
+import * as reg from 'native-reg';
 import * as ini from '../ini';
 import { StoragePaths } from '../storagePaths';
 import { AppRuntimeDiagnostics } from '../webviewIPCMessages';
@@ -22,6 +22,9 @@ type WindowsEnvironmentSnapshot = Pick<
 	| 'windowsProductName'
 	| 'windowsDisplayVersion'
 	| 'windowsBuild'
+	| 'totalMemoryGb'
+	| 'npuDetected'
+	| 'npuName'
 	| 'windowsInstallationType'
 	| 'hostName'
 	| 'userName'
@@ -53,7 +56,7 @@ function normalizePathForCompare(value: string | null | undefined) {
 		return null;
 	}
 
-	const normalized = path.normalize(value).replace(/[\\\/]+$/, '');
+	const normalized = path.normalize(value).replace(/[\\/]+$/, '');
 	return normalized.toLowerCase();
 }
 
@@ -62,7 +65,7 @@ function normalizeRegistryKeyForCompare(value: string | null | undefined) {
 		return null;
 	}
 
-	return value.replace(/[\\\/]+$/, '').toLowerCase();
+	return value.replace(/[\\/]+$/, '').toLowerCase();
 }
 
 function samePath(left: string | null | undefined, right: string | null | undefined) {
@@ -74,7 +77,7 @@ function sameRegistryKey(left: string | null | undefined, right: string | null |
 }
 
 function appendWindowsChild(base: string, child: string) {
-	return base.replace(/[\\\/]+$/, '') + '\\' + child;
+	return base.replace(/[\\/]+$/, '') + '\\' + child;
 }
 
 function readWindowsEnvironmentSnapshot(): WindowsEnvironmentSnapshot {
@@ -91,6 +94,9 @@ function readWindowsEnvironmentSnapshot(): WindowsEnvironmentSnapshot {
 		windowsProductName: 'Windows',
 		windowsDisplayVersion: null,
 		windowsBuild: os.release(),
+		totalMemoryGb: Math.max(1, Math.round(os.totalmem() / 1024 / 1024 / 1024)),
+		npuDetected: false,
+		npuName: null,
 		windowsInstallationType: null,
 		hostName: os.hostname(),
 		userName: fallbackUserName,
@@ -104,70 +110,77 @@ function readWindowsEnvironmentSnapshot(): WindowsEnvironmentSnapshot {
 	}
 
 	try {
-		const command = [
-			"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
-			"$currentVersion = Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'",
-			"$isElevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
-			"[pscustomobject]@{",
-			"  ProductName = $currentVersion.ProductName",
-			"  DisplayVersion = $currentVersion.DisplayVersion",
-			"  ReleaseId = $currentVersion.ReleaseId",
-			"  CurrentBuild = $currentVersion.CurrentBuild",
-			"  UBR = $currentVersion.UBR",
-			"  InstallationType = $currentVersion.InstallationType",
-			"  IsElevated = $isElevated",
-			"} | ConvertTo-Json -Compress",
-		].join('; ');
-
-		const output = execFileSync(
-			'powershell.exe',
-			[
-				'-NoProfile',
-				'-NonInteractive',
-				'-ExecutionPolicy',
-				'Bypass',
-				'-Command',
-				command,
-			],
-			{
-				encoding: 'utf8',
-				timeout: 4000,
-				windowsHide: true,
-			}
-		).trim();
-
-		if (!output) {
+		const currentVersionKey = reg.openKey(
+			reg.HKLM,
+			'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion',
+			reg.Access.QUERY_VALUE | reg.Access.WOW64_64KEY
+		);
+		if (!currentVersionKey) {
 			return fallback;
 		}
 
-		const parsed = JSON.parse(output) as Partial<{
-			ProductName: string;
-			DisplayVersion: string;
-			ReleaseId: string;
-			CurrentBuild: string;
-			UBR: number | string;
-			InstallationType: string;
-			IsElevated: boolean;
-		}>;
+		let productName: string | null = null;
+		let displayVersion: string | null = null;
+		let releaseId: string | null = null;
+		let currentBuild: string | null = null;
+		let ubr: number | null = null;
+		let installationType: string | null = null;
 
-		const baseBuild = parsed.CurrentBuild || fallback.windowsBuild;
-		const ubr =
-			parsed.UBR !== undefined && parsed.UBR !== null && parsed.UBR !== ''
-				? `.${parsed.UBR}`
-				: '';
+		try {
+			productName = reg.getValue(
+				currentVersionKey,
+				null,
+				'ProductName',
+				reg.GetValueFlags.RT_REG_SZ
+			) as string | null;
+			displayVersion = reg.getValue(
+				currentVersionKey,
+				null,
+				'DisplayVersion',
+				reg.GetValueFlags.RT_REG_SZ
+			) as string | null;
+			releaseId = reg.getValue(
+				currentVersionKey,
+				null,
+				'ReleaseId',
+				reg.GetValueFlags.RT_REG_SZ
+			) as string | null;
+			currentBuild = reg.getValue(
+				currentVersionKey,
+				null,
+				'CurrentBuild',
+				reg.GetValueFlags.RT_REG_SZ
+			) as string | null;
+			ubr = reg.getValue(
+				currentVersionKey,
+				null,
+				'UBR',
+				reg.GetValueFlags.RT_REG_DWORD
+			) as number | null;
+			installationType = reg.getValue(
+				currentVersionKey,
+				null,
+				'InstallationType',
+				reg.GetValueFlags.RT_REG_SZ
+			) as string | null;
+		} finally {
+			reg.closeKey(currentVersionKey);
+		}
+
+		const baseBuild = currentBuild || fallback.windowsBuild;
+		const buildSuffix = ubr !== null && ubr !== undefined ? `.${ubr}` : '';
 
 		return {
 			...fallback,
-			windowsProductName: parsed.ProductName || fallback.windowsProductName,
+			windowsProductName: productName || fallback.windowsProductName,
 			windowsDisplayVersion:
-				parsed.DisplayVersion || parsed.ReleaseId || fallback.windowsDisplayVersion,
-			windowsBuild: `${baseBuild}${ubr}`,
+				displayVersion || releaseId || fallback.windowsDisplayVersion,
+			windowsBuild: `${baseBuild}${buildSuffix}`,
+			npuDetected: false,
+			npuName: fallback.npuName,
 			windowsInstallationType:
-				parsed.InstallationType || fallback.windowsInstallationType,
-			isElevated:
-				typeof parsed.IsElevated === 'boolean'
-					? parsed.IsElevated
-					: fallback.isElevated,
+				installationType || fallback.windowsInstallationType,
+			isElevated: fallback.isElevated,
 		};
 	} catch (e) {
 		console.error('Failed to read Windows environment snapshot:', e);

@@ -1,6 +1,11 @@
 import * as fs from 'fs';
-import * as fsExt from 'fs-ext';
 import * as ini from 'ini-win';
+
+type FsExtLike = {
+	flockSync(fd: number, flags: 'sh' | 'ex' | 'un'): void;
+};
+
+const fsExt = loadFsExt();
 
 export type iniValue = {
 	[key: string]: {
@@ -55,4 +60,18 @@ export function toFile(filePath: string, value: iniValue) {
 	fs.writeFileSync(fd, '\uFEFF' + ini.stringify(value), 'utf16le');
 	fsExt.flockSync(fd, 'un');
 	fs.closeSync(fd);
+}
+
+function loadFsExt(): FsExtLike {
+	try {
+		// Keep file locking when the native module is available, but allow
+		// packaging flows to continue on machines that can't rebuild it.
+		const runtimeRequire = eval('require') as NodeRequire;
+		return runtimeRequire('fs-ext') as FsExtLike;
+	} catch (e) {
+		console.warn('fs-ext is unavailable, falling back to unlocked INI access:', e);
+		return {
+			flockSync: () => undefined,
+		};
+	}
 }

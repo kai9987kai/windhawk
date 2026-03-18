@@ -13,6 +13,7 @@ import EditorWorkspaceUtils from './utils/editorWorkspaceUtils';
 import { ModConfigUtils, ModConfigUtilsNonPortable, ModConfigUtilsPortable } from './utils/modConfigUtils';
 import ModFilesUtils from './utils/modFilesUtils';
 import ModSourceUtils from './utils/modSourceUtils';
+import PythonAuthoringUtils from './utils/pythonAuthoringUtils';
 import RuntimeDiagnosticsUtils from './utils/runtimeDiagnosticsUtils';
 import TrayProgramUtils from './utils/trayProgramUtils';
 import { UpdateUtils } from './utils/updateUtils';
@@ -21,10 +22,13 @@ import * as webviewIPC from './webviewIPC';
 import {
 	AppUISettings,
 	CompileEditedModData,
+	CompileEditedModReplyData,
 	CompileModData,
 	CompileModReplyData,
 	CreateNewModData,
+	CreateNewModTemplateKey,
 	DeleteModData,
+	EditorLaunchContext,
 	EditModData,
 	EnableEditedModData,
 	EnableEditedModLoggingData,
@@ -45,6 +49,7 @@ import {
 	InstallModReplyData,
 	ModConfig,
 	ModMetadata,
+	ModSourceExtension,
 	OpenExternalData,
 	OpenPathData,
 	RepairRuntimeConfigReplyData,
@@ -61,6 +66,7 @@ type AppUtils = {
 	modConfig: ModConfigUtils,
 	modFiles: ModFilesUtils,
 	compiler: CompilerUtils,
+	pythonAuthoring: PythonAuthoringUtils,
 	editorWorkspace: EditorWorkspaceUtils,
 	trayProgram: TrayProgramUtils,
 	userProfile: UserProfileUtils,
@@ -103,7 +109,8 @@ export function activate(context: vscode.ExtensionContext) {
 				: new ModConfigUtilsNonPortable(paths.regKey, paths.regSubKey, appDataPath),
 			modFiles: new ModFilesUtils(appDataPath, arm64Enabled, currentWindhawkVersion),
 			compiler: new CompilerUtils(compilerPath, enginePath, appDataPath, arm64Enabled),
-			editorWorkspace: new EditorWorkspaceUtils(),
+			pythonAuthoring: new PythonAuthoringUtils(context.extensionPath),
+			editorWorkspace: new EditorWorkspaceUtils(context.extensionPath),
 			trayProgram: new TrayProgramUtils(appRootPath),
 			userProfile: new UserProfileUtils(appDataPath),
 			appSettings: paths.portable
@@ -127,8 +134,16 @@ export function activate(context: vscode.ExtensionContext) {
 			})
 		);
 
-		const onEnterEditorMode = (modId: string, modWasModified = false) => {
-			sidebarWebviewViewProvider.setEditedMod(modId, modWasModified);
+		const onEnterEditorMode = (
+			modId: string,
+			modWasModified = false,
+			launchContext?: EditorLaunchContext
+		) => {
+			sidebarWebviewViewProvider.setEditedMod(
+				modId,
+				modWasModified,
+				launchContext
+			);
 		};
 
 		const onAppSettingsUpdated = () => {
@@ -176,7 +191,11 @@ export function activate(context: vscode.ExtensionContext) {
 type RepositoryModsType = Record<string, any>;
 
 type WindhawkPanelCallbacks = {
-	onEnterEditorMode: (modId: string, modWasModified: boolean) => void,
+	onEnterEditorMode: (
+		modId: string,
+		modWasModified: boolean,
+		launchContext?: EditorLaunchContext
+	) => void,
 	onAppSettingsUpdated: () => void
 };
 
@@ -597,11 +616,12 @@ class WindhawkPanel {
 		getRepositoryModSourceData: async message => {
 			const data: GetRepositoryModSourceDataData = message.data;
 
-			// Construct URL: if version is provided, use versioned path,
-			// otherwise use latest.
-			const url = data.version
-				? `${config.urls.modsFolder}${data.modId}/${data.version}.wh.cpp`
-				: `${config.urls.modsFolder}${data.modId}.wh.cpp`;
+			const curatedMod = curatedRepositoryMods[data.modId];
+			const url = curatedMod
+				? curatedMod.sourceUrl
+				: data.version
+					? `${config.urls.modsFolder}${data.modId}/${data.version}.wh.cpp`
+					: `${config.urls.modsFolder}${data.modId}.wh.cpp`;
 
 			let source: string | null = null;
 			try {
@@ -655,6 +675,21 @@ class WindhawkPanel {
 		getModVersions: async message => {
 			const data: GetModVersionsData = message.data;
 			const { modId } = data;
+			const curatedMod = curatedRepositoryMods[modId];
+			if (curatedMod) {
+				webviewIPC.getModVersionsReply(this._panel.webview, message.messageId, {
+					modId,
+					versions: [
+						{
+							version: curatedMod.metadata.version,
+							timestamp: curatedMod.details.updated,
+							isPreRelease: curatedMod.metadata.version.includes('-'),
+						},
+					],
+				});
+				return;
+			}
+
 			const url = `${config.urls.modsFolder}${modId}/versions.json`;
 
 			let versions: GetModVersionsReplyData['versions'] = [];
@@ -785,14 +820,20 @@ class WindhawkPanel {
 				}
 
 				let targetDllName: string;
-				if (this._alwaysCompileModsLocally) {
+				if (this._alwaysCompileModsLocally || !!curatedRepositoryMods[modId]) {
+					const compileAppSettings = this._utils.appSettings.getAppSettings();
 					const result = await this._utils.compiler.compileMod(
 						modId,
 						metadata.version || '',
 						metadata.include || [],
 						modSource,
 						metadata.architecture || [],
-						metadata.compilerOptions
+						metadata.compilerOptions,
+						undefined,
+						{
+							parallelTargets: compileAppSettings.parallelCompileTargets,
+							usePrecompiledHeaders: compileAppSettings.preferPrecompiledHeaders,
+						}
 					);
 					targetDllName = result.targetDllName;
 				} else {
@@ -859,10 +900,19 @@ class WindhawkPanel {
 				windhawkCompilerOutput?.hide();
 
 				const modId = data.modId;
-				const modSource = this._utils.modSource.getSource(modId);
+				const authoringSourceInfo = this._utils.modSource.getAuthoringSource(modId);
 				const disabled = !!data.disabled;
 
-				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
+				const compileAppSettings = this._utils.appSettings.getAppSettings();
+				const preparedSource = prepareCompilationSource(
+					this._utils,
+					this._language,
+					compileAppSettings,
+					authoringSourceInfo.source,
+					authoringSourceInfo.extension,
+					this._utils.modSource.getAuthoringSourcePath(modId)
+				);
+				const metadata = preparedSource.metadata;
 				if (!metadata.id) {
 					throw new Error('Mod id must be specified in the source code');
 				} else if (metadata.id !== modId.replace(/^local@/, '')) {
@@ -873,9 +923,14 @@ class WindhawkPanel {
 					modId,
 					metadata.version || '',
 					metadata.include || [],
-					modSource,
+					preparedSource.generatedSource,
 					metadata.architecture || [],
-					metadata.compilerOptions
+					metadata.compilerOptions,
+					undefined,
+					{
+						parallelTargets: compileAppSettings.parallelCompileTargets,
+						usePrecompiledHeaders: compileAppSettings.preferPrecompiledHeaders,
+					}
 				);
 
 				this._utils.modConfig.setModConfig(modId, {
@@ -892,6 +947,12 @@ class WindhawkPanel {
 					architecture: metadata.architecture || [],
 					version: metadata.version || ''
 				});
+				this._utils.modSource.setCompiledSource(
+					modId,
+					preparedSource.authoringSource,
+					preparedSource.authoringExtension,
+					preparedSource.generatedSource
+				);
 
 				this._utils.modFiles.deleteOldModFiles(modId, metadata.architecture || [], targetDllName);
 
@@ -943,14 +1004,40 @@ class WindhawkPanel {
 		createNewMod: async message => {
 			try {
 				const data: CreateNewModData = message.data;
-				const templateKey = data.templateKey === 'ai-ready' ? 'ai-ready' : 'default';
-				const modSourceFileName = templateKey === 'ai-ready'
-					? 'mod_template_ai_ready.wh.cpp'
-					: 'mod_template.wh.cpp';
+				const cppTemplateMap: Record<Exclude<CreateNewModTemplateKey, 'python-automation'>, string> = {
+					default: 'mod_template.wh.cpp',
+					'structured-core': 'mod_template_structured_core.wh.cpp',
+					'ai-ready': 'mod_template_ai_ready.wh.cpp',
+					'explorer-shell': 'mod_template_explorer_shell.wh.cpp',
+					'chromium-browser': 'mod_template_chromium_browser.wh.cpp',
+					'window-behavior': 'mod_template_window_behavior.wh.cpp',
+					'settings-lab': 'mod_template_settings_lab.wh.cpp'
+				};
+				const requestedExtension = data.sourceExtension === '.wh.py' ? '.wh.py' : '.wh.cpp';
+				const authoringLanguage = data.authoringLanguage === 'python' ? 'python' : 'cpp';
+				const sourceExtension: ModSourceExtension =
+					requestedExtension === '.wh.py' || data.templateKey === 'python-automation' || authoringLanguage === 'python'
+						? '.wh.py'
+						: '.wh.cpp';
+				const templateKey = data.templateKey || (sourceExtension === '.wh.py' ? 'python-automation' : 'default');
+				const modSourceFileName = sourceExtension === '.wh.py'
+					? 'mod_template_python.wh.py'
+					: cppTemplateMap[
+						templateKey in cppTemplateMap
+							? templateKey as Exclude<CreateNewModTemplateKey, 'python-automation'>
+							: 'default'
+					];
 				const modSourcePath = path.join(this._extensionPath, 'files', modSourceFileName);
 				let modSource = fs.readFileSync(modSourcePath, 'utf8');
-
-				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
+				const preparedTemplate = prepareCompilationSource(
+					this._utils,
+					this._language,
+					this._utils.appSettings.getAppSettings(),
+					modSource,
+					sourceExtension,
+					modSourcePath
+				);
+				const metadata = preparedTemplate.metadata;
 				if (!metadata.id) {
 					throw new Error('Mod id must be specified in the source code');
 				}
@@ -974,14 +1061,24 @@ class WindhawkPanel {
 					}
 
 					const modNameSuffix = ` (${counter})`;
-					modSource = this._utils.modSource.appendToIdAndName(modSource, modIdSuffix, modNameSuffix);
+					modSource = applySourceIdAndNameSuffix(
+						this._utils,
+						modSource,
+						sourceExtension,
+						modIdSuffix,
+						modNameSuffix
+					);
 				}
 
-				this._utils.editorWorkspace.initializeFromModSource(modSource);
+				this._utils.editorWorkspace.initializeFromModSource(modSource, sourceExtension);
 
-				this._callbacks.onEnterEditorMode(newModId, false);
+				this._callbacks.onEnterEditorMode(
+					newModId,
+					false,
+					data.launchContext
+				);
 
-				await this._utils.editorWorkspace.enterEditorMode(newModId);
+				await this._utils.editorWorkspace.enterEditorMode(newModId, false, sourceExtension);
 			} catch (e) {
 				reportException(e);
 			}
@@ -990,9 +1087,15 @@ class WindhawkPanel {
 			const data: EditModData = message.data;
 
 			try {
-				const modSource = this._utils.modSource.getSource(data.modId);
-
-				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
+				const authoringSourceInfo = this._utils.modSource.getAuthoringSource(data.modId);
+				const generatedSource = renderAuthoringSource(
+					this._utils,
+					this._utils.appSettings.getAppSettings(),
+					authoringSourceInfo.source,
+					authoringSourceInfo.extension,
+					this._utils.modSource.getAuthoringSourcePath(data.modId)
+				);
+				const metadata = this._utils.modSource.extractMetadata(generatedSource, this._language);
 				if (!metadata.id) {
 					throw new Error('Mod id must be specified in the source code');
 				}
@@ -1002,11 +1105,19 @@ class WindhawkPanel {
 					this._utils.editorWorkspace.deleteModFromDrafts(metadata.id);
 				}
 
-				this._utils.editorWorkspace.initializeFromModSource(modSource, modSourceFromDrafts);
+				this._utils.editorWorkspace.initializeFromModSource(
+					authoringSourceInfo.source,
+					authoringSourceInfo.extension,
+					modSourceFromDrafts
+				);
 
 				this._callbacks.onEnterEditorMode(metadata.id, !!modSourceFromDrafts);
 
-				await this._utils.editorWorkspace.enterEditorMode(metadata.id, !!modSourceFromDrafts);
+				await this._utils.editorWorkspace.enterEditorMode(
+					metadata.id,
+					!!modSourceFromDrafts,
+					modSourceFromDrafts?.extension || authoringSourceInfo.extension
+				);
 			} catch (e) {
 				reportException(e);
 			}
@@ -1015,9 +1126,17 @@ class WindhawkPanel {
 			const data: ForkModData = message.data;
 
 			try {
-				let modSource = data.modSource || this._utils.modSource.getSource(data.modId);
+				const sourceExtension: ModSourceExtension = data.modSource ? '.wh.cpp' : this._utils.modSource.getAuthoringSource(data.modId).extension;
+				let modSource = data.modSource || this._utils.modSource.getAuthoringSource(data.modId).source;
+				const generatedSource = renderAuthoringSource(
+					this._utils,
+					this._utils.appSettings.getAppSettings(),
+					modSource,
+					sourceExtension,
+					data.modSource ? `${data.modId}.wh.cpp` : this._utils.modSource.getAuthoringSourcePath(data.modId)
+				);
 
-				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
+				const metadata = this._utils.modSource.extractMetadata(generatedSource, this._language);
 				if (!metadata.id) {
 					throw new Error('Mod id must be specified in the source code');
 				} else if (metadata.id !== data.modId.replace(/^local@/, '')) {
@@ -1046,13 +1165,19 @@ class WindhawkPanel {
 					modNameSuffix = ` - Fork (${counter})`;
 				}
 
-				modSource = this._utils.modSource.appendToIdAndName(modSource, modIdSuffix, modNameSuffix);
+				modSource = applySourceIdAndNameSuffix(
+					this._utils,
+					modSource,
+					sourceExtension,
+					modIdSuffix,
+					modNameSuffix
+				);
 
-				this._utils.editorWorkspace.initializeFromModSource(modSource);
+				this._utils.editorWorkspace.initializeFromModSource(modSource, sourceExtension);
 
 				this._callbacks.onEnterEditorMode(forkModId, false);
 
-				await this._utils.editorWorkspace.enterEditorMode(forkModId);
+				await this._utils.editorWorkspace.enterEditorMode(forkModId, false, sourceExtension);
 			} catch (e) {
 				reportException(e);
 			}
@@ -1306,8 +1431,24 @@ class WindhawkPanel {
 		}
 
 		const data = await response.json();
-		this._updateUserProfileJson(data);
-		return data.mods as RepositoryModsType;
+		const mergedMods = {
+			...(data.mods as RepositoryModsType),
+			...Object.fromEntries(
+				Object.entries(curatedRepositoryMods).map(([modId, mod]) => [
+					modId,
+					{
+						metadata: mod.metadata,
+						details: mod.details,
+						featured: !!mod.featured,
+					},
+				])
+			),
+		};
+		this._updateUserProfileJson({
+			...data,
+			mods: mergedMods,
+		});
+		return mergedMods;
 	}
 
 	private _updateUserProfileJson(data: any) {
@@ -1350,6 +1491,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 	private _editedModModifiedCounter = 0;
 	private _editedModBeingCompiled = false;
 	private _editedModCompilationFailed = false;
+	private _editedModLaunchContext?: EditorLaunchContext;
 
 	constructor(
 		extensionUri: vscode.Uri,
@@ -1480,7 +1622,14 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		try {
-			return this._utils.modSource.extractMetadata(modSource, this._language);
+			const renderedSource = renderAuthoringSource(
+				this._utils,
+				this._utils.appSettings.getAppSettings(),
+				modSource,
+				this._utils.editorWorkspace.getEditedModSourceExtension(),
+				this._utils.editorWorkspace.getModSourcePath()
+			);
+			return this._utils.modSource.extractMetadata(renderedSource, this._language);
 		} catch (e) {
 			console.error('Failed to extract edited mod metadata:', e);
 			return null;
@@ -1495,15 +1644,21 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				modId: this._editedModId,
 				modDetails: modConfig,
 				metadata: this._getEditedModMetadata(),
-				modWasModified: this._editedModWasModified
+				modWasModified: this._editedModWasModified,
+				launchContext: this._editedModLaunchContext
 			});
 		}
 	}
 
-	public setEditedMod(modId: string, modWasModified: boolean) {
+	public setEditedMod(
+		modId: string,
+		modWasModified: boolean,
+		launchContext?: EditorLaunchContext
+	) {
 		this._editedModId = modId;
 		this._editedModWasModified = modWasModified;
 		this._editedModCompilationFailed = false;
+		this._editedModLaunchContext = launchContext;
 		this._postEditedModDetails();
 	}
 
@@ -1595,6 +1750,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 
 			let succeeded = false;
 			let clearModified = false;
+			let summary: CompileEditedModReplyData['summary'];
 
 			try {
 				windhawkCompilerOutput?.clear();
@@ -1606,7 +1762,8 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				const oldModId = this._editedModId;
 				const localOldModId = 'local@' + this._editedModId;
 
-				const modSourcePath = this._utils.editorWorkspace.getModSourcePath();
+				const sourceExtension = this._utils.editorWorkspace.getEditedModSourceExtension();
+				const modSourcePath = this._utils.editorWorkspace.getModSourcePath(sourceExtension);
 				const modSourceUri = vscode.Uri.file(modSourcePath);
 
 				// Get text from open editor if available, otherwise read from disk.
@@ -1621,7 +1778,16 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 					modSource = fs.readFileSync(modSourcePath, 'utf8');
 				}
 
-				const metadata = this._utils.modSource.extractMetadata(modSource, this._language);
+				const compileAppSettings = this._utils.appSettings.getAppSettings();
+				const preparedSource = prepareCompilationSource(
+					this._utils,
+					this._language,
+					compileAppSettings,
+					modSource,
+					sourceExtension,
+					modSourcePath
+				);
+				const metadata = preparedSource.metadata;
 				if (!metadata.id) {
 					throw new Error('Mod id must be specified in the source code');
 				}
@@ -1634,8 +1800,6 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 						throw new Error('Mod id specified in the source code already exists');
 					}
 				}
-
-				const initialSettings = this._utils.modSource.extractInitialSettingsForEngine(modSource);
 
 				let previousInitialSettings: Record<string, string | number> | undefined;
 				try {
@@ -1651,15 +1815,20 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 					}
 				}
 
-				const { targetDllName } = await this._utils.compiler.compileMod(
+				const { targetDllName, executionSummary } = await this._utils.compiler.compileMod(
 					localModId,
 					metadata.version || '',
 					metadata.include || [],
-					modSource,
+					preparedSource.generatedSource,
 					metadata.architecture || [],
 					metadata.compilerOptions,
-					this._utils.editorWorkspace.getWorkspaceFolder()
+					this._utils.editorWorkspace.getWorkspaceFolder(),
+					{
+						parallelTargets: compileAppSettings.parallelCompileTargets,
+						usePrecompiledHeaders: compileAppSettings.preferPrecompiledHeaders,
+					}
 				);
+				summary = executionSummary;
 
 				if (modId !== oldModId) {
 					this._utils.modConfig.changeModId(localOldModId, localModId);
@@ -1679,16 +1848,22 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 					architecture: metadata.architecture || [],
 					version: metadata.version || ''
 				}, {
-					initialSettings: initialSettings || {},
+					initialSettings: preparedSource.initialSettings || {},
 					previousInitialSettings
 				});
 
-				this._utils.modSource.setSource(localModId, modSource);
+				this._utils.modSource.setCompiledSource(
+					localModId,
+					preparedSource.authoringSource,
+					preparedSource.authoringExtension,
+					preparedSource.generatedSource
+				);
 
 				if (modId !== oldModId) {
 					this._utils.modSource.deleteSource(localOldModId);
 
 					this._utils.editorWorkspace.setEditorModeModId(modId);
+					this._utils.editorWorkspace.setEditorModeSourceExtension(sourceExtension);
 
 					this._editedModId = modId;
 					webviewIPC.setEditedModId(this._view?.webview, {
@@ -1725,7 +1900,8 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 
 			webviewIPC.compileEditedModReply(this._view?.webview, message.messageId, {
 				succeeded,
-				clearModified
+				clearModified,
+				summary
 			});
 
 			this._editedModBeingCompiled = false;
@@ -1786,6 +1962,7 @@ class WindhawkViewProvider implements vscode.WebviewViewProvider {
 				this._editedModId = undefined;
 				this._editedModWasModified = false;
 				this._editedModCompilationFailed = false;
+				this._editedModLaunchContext = undefined;
 				await this._utils.editorWorkspace.exitEditorMode();
 
 				succeeded = true;
@@ -1809,6 +1986,101 @@ function reportException(e: any) {
 	console.error(e);
 	vscode.window.showErrorMessage(e.message);
 }
+
+function applySourceIdAndNameSuffix(
+	utils: AppUtils,
+	modSource: string,
+	sourceExtension: ModSourceExtension,
+	appendToId?: string,
+	appendToName?: string
+) {
+	return sourceExtension === '.wh.py'
+		? utils.pythonAuthoring.appendToIdAndName(modSource, appendToId, appendToName)
+		: utils.modSource.appendToIdAndName(modSource, appendToId, appendToName);
+}
+
+function renderAuthoringSource(
+	utils: AppUtils,
+	appSettings: Partial<AppSettings>,
+	modSource: string,
+	sourceExtension: ModSourceExtension,
+	virtualSourcePath: string
+) {
+	if (sourceExtension === '.wh.py') {
+		return utils.pythonAuthoring.renderSource(modSource, virtualSourcePath, appSettings).source;
+	}
+
+	return modSource;
+}
+
+function prepareCompilationSource(
+	utils: AppUtils,
+	language: string,
+	appSettings: Partial<AppSettings>,
+	modSource: string,
+	sourceExtension: ModSourceExtension,
+	virtualSourcePath: string
+) {
+	const generatedSource = renderAuthoringSource(
+		utils,
+		appSettings,
+		modSource,
+		sourceExtension,
+		virtualSourcePath
+	);
+	const metadata = utils.modSource.extractMetadata(generatedSource, language);
+	const initialSettings = utils.modSource.extractInitialSettingsForEngine(generatedSource);
+
+	return {
+		authoringSource: modSource,
+		authoringExtension: sourceExtension,
+		generatedSource,
+		metadata,
+		initialSettings,
+	};
+}
+
+type CuratedRepositoryMod = {
+	sourceUrl: string;
+	metadata: ModMetadata & { version: string; name: string; description: string; author: string };
+	details: {
+		users: number;
+		rating: number;
+		ratingBreakdown: number[];
+		defaultSorting: number;
+		published: number;
+		updated: number;
+	};
+	featured?: boolean;
+};
+
+const curatedRepositoryMods: Record<string, CuratedRepositoryMod> = {
+	'force-process-accelerators': {
+		sourceUrl:
+			'https://raw.githubusercontent.com/kai9987kai/windhawk-process-accelerators/main/force-process-accelerators.wh.cpp',
+		metadata: {
+			name: 'Force Process CPU/GPU Preferences',
+			description:
+				'Apply per-process CPU, GPU, scheduling, and ONNX Runtime NPU preferences from a single Windhawk ruleset.',
+			version: '0.1.0',
+			author: 'Kai Piper',
+			github: 'https://github.com/kai9987kai/windhawk-process-accelerators',
+			homepage: 'https://github.com/kai9987kai/windhawk-process-accelerators',
+			include: [],
+			exclude: [],
+			architecture: ['x86', 'x86-64'],
+		},
+		details: {
+			users: 0,
+			rating: 0,
+			ratingBreakdown: [0, 0, 0, 0, 0],
+			defaultSorting: 97,
+			published: Date.parse('2026-03-17T00:00:00Z'),
+			updated: Date.parse('2026-03-17T00:00:00Z'),
+		},
+		featured: true,
+	},
+};
 
 function reportCompilerException(e: any, treatCompilationErrorAsException = false) {
 	if (e instanceof CompilerKilled) {

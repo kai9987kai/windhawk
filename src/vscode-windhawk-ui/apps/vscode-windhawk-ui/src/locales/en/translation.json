@@ -25,7 +25,10 @@
       "debugLogging": "Debug logging enabled",
       "safeMode": "Safe mode enabled",
       "compactDensity": "Compact layout",
-      "wideLayout": "Wide workspace"
+      "wideLayout": "Wide workspace",
+      "responsiveProfile": "Responsive profile",
+      "efficientProfile": "Efficient profile",
+      "npuPreferred": "NPU preferred"
     }
   },
   "mod": {
@@ -260,6 +263,14 @@
           "title": "Audio",
           "description": "Volume, speaker, and media control tweaks."
         },
+        "contextMenu": {
+          "title": "Context menu",
+          "description": "Right-click, shell menu, and command-surface cleanup."
+        },
+        "desktop": {
+          "title": "Desktop",
+          "description": "Desktop icons, wallpaper, and empty-surface customizations."
+        },
         "notifications": {
           "title": "Notifications",
           "description": "Toast, quick settings, and notification center behavior tweaks."
@@ -268,9 +279,21 @@
           "title": "Window management",
           "description": "Snap, Alt+Tab, title bar, and DWM behavior changes."
         },
+        "altTab": {
+          "title": "Alt+Tab",
+          "description": "Task switching and app-switcher behavior changes."
+        },
+        "virtualDesktops": {
+          "title": "Virtual desktops",
+          "description": "Task View, workspace, and virtual desktop switching tweaks."
+        },
         "input": {
           "title": "Input",
           "description": "Keyboard, mouse, hotkey, and scrolling improvements."
+        },
+        "widgets": {
+          "title": "Widgets",
+          "description": "Widgets board, feed, and dashboard behavior tweaks."
         },
         "appearance": {
           "title": "Appearance",
@@ -315,7 +338,18 @@
       "devMode": "Developer mode visible",
       "compactLayout": "Compact layout active",
       "wideLayout": "Wide workspace active",
-      "reduceMotion": "Reduced motion active"
+      "reduceMotion": "Reduced motion active",
+      "responsiveProfile": "Responsive profile active",
+      "efficientProfile": "Efficient profile active",
+      "npuPreferred": "Prefer NPU acceleration",
+      "startupExplore": "Starts in Explore",
+      "startupSettings": "Starts in Settings",
+      "startupAbout": "Starts in About",
+      "exploreFresh": "Explore sorts by fresh updates",
+      "explorePopular": "Explore sorts by community favorites",
+      "editorStreamlined": "Streamlined editor",
+      "editorGuided": "Guided editor",
+      "windowsFocused": "Focused Windows actions"
     },
     "core": {
       "title": "Core preferences",
@@ -341,6 +375,122 @@
       "resetButton": "Reset interface preferences",
       "resetDescription": "Restore the local layout, width, and motion preferences to their defaults."
     },
+    "performance": {
+      "title": "Performance and AI",
+      "description": "Tune the workspace for responsiveness, efficiency, and future on-device AI workflows.",
+      "recommendationTitle": "Recommended profile: {{profile}}",
+      "recommendationFallback": "Runtime diagnostics are not available yet, so the balanced profile remains the safest default.",
+      "recommendationIssue": "Windhawk detected a runtime configuration issue, so the efficient profile is recommended until the environment is stable again.",
+      "recommendationNpu": "An NPU was detected ({{npu}}), so the responsive profile and NPU-preferred AI acceleration are the strongest starting point.",
+      "recommendationEfficient": "{{memory}} GB of system memory suggests prioritizing the efficient profile to keep the UI lighter and calmer.",
+      "recommendationResponsive": "{{memory}} GB of system memory leaves room for a wider, faster-moving workspace, so the responsive profile is recommended.",
+      "recommendationBalanced": "This system looks stable without obvious constraints, so the balanced profile remains a sensible default.",
+      "hardwareSummary": "Detected hardware: {{memory}} GB memory | NPU: {{npu}}",
+      "applyRecommendation": "Apply recommended profile",
+      "currentSummary": "Current workspace: {{performance}} | AI acceleration: {{acceleration}}",
+      "values": {
+        "detected": "Detected",
+        "none": "None detected",
+        "unknown": "Unknown"
+      },
+      "profile": {
+        "title": "Workspace performance profile",
+        "description": "Choose whether this webview should favor balance, extra breathing room, or lower-overhead rendering.",
+        "options": {
+          "balanced": "Balanced",
+          "responsive": "Responsive",
+          "efficient": "Efficient"
+        }
+      },
+      "aiAcceleration": {
+        "title": "On-device AI acceleration",
+        "description": "Choose how strongly Windhawk should prefer NPU-backed local AI workflows when companion tools are available.",
+        "options": {
+          "auto": "Auto",
+          "preferNpu": "Prefer NPU",
+          "off": "Off"
+        }
+      }
+    },
+    "workflow": {
+      "title": "Workflow and discovery",
+      "description": "Choose where Windhawk starts, how Explore behaves before search, and how much guidance the editor and Windows bridges should expose by default.",
+      "currentSummary": "Startup: {{startup}} | Explore: {{explore}} | Editor: {{editor}} | Windows actions: {{windows}}",
+      "startupPage": {
+        "title": "Startup page",
+        "description": "Pick the first panel Windhawk opens when the webview starts without a deep link.",
+        "options": {
+          "home": "Home",
+          "explore": "Explore",
+          "settings": "Settings",
+          "about": "About"
+        }
+      },
+      "exploreDefaultSort": {
+        "title": "Explore default sort",
+        "description": "Choose the starting sort order for Explore when no search query is active.",
+        "options": {
+          "smartRelevance": "Smart relevance",
+          "lastUpdated": "Fresh updates first",
+          "popularTopRated": "Community favorites first"
+        }
+      },
+      "editorAssistance": {
+        "title": "Editor assistance level",
+        "description": "Control how much guidance the editor cockpit should surface while you are authoring a mod.",
+        "options": {
+          "streamlined": "Streamlined",
+          "guided": "Guided",
+          "full": "Full cockpit"
+        }
+      },
+      "windowsQuickActions": {
+        "title": "Windows quick action density",
+        "description": "Choose whether About and the editor show only the most important Windows targets or the full action set.",
+        "options": {
+          "focused": "Focused",
+          "expanded": "Expanded"
+        }
+      }
+    },
+    "authoring": {
+      "title": "Authoring and CLI",
+      "description": "Set the default mod authoring format, visual studio preference, and command-line bridges used for Python rendering or Copilot-style helper flows.",
+      "currentSummary": "Authoring: {{language}} | Extension: {{extension}} | Studio: {{studio}}",
+      "language": {
+        "title": "Preferred authoring language",
+        "description": "Choose whether New Mod Studio should default to classic C++ or Python-authored mods.",
+        "options": {
+          "cpp": "C++ (.wh.cpp)",
+          "python": "Python (.wh.py)"
+        }
+      },
+      "studioMode": {
+        "title": "Default studio mode",
+        "description": "Pick whether New Mod Studio should open in code-first or visual preset mode.",
+        "options": {
+          "code": "Code-first",
+          "visual": "Visual presets"
+        }
+      },
+      "pythonCommand": {
+        "title": "Python renderer command",
+        "description": "Executable used when Windhawk renders a .wh.py mod into generated .wh.cpp output."
+      },
+      "pythonArgs": {
+        "title": "Python renderer arguments",
+        "description": "Optional arguments passed before the renderer script, for example `-3` or `-X utf8`."
+      },
+      "copilotCommand": {
+        "title": "Copilot bridge command",
+        "description": "Base executable used for CLI playbooks and Windhawk helper workflows."
+      },
+      "copilotArgs": {
+        "title": "Copilot bridge arguments",
+        "description": "Default arguments appended after the Copilot bridge command."
+      },
+      "openSetupAssistant": "Open setup assistant"
+    },
     "language": {
       "title": "Language",
       "description": "Select your preferred display language for Windhawk.",
@@ -365,6 +515,14 @@
     "alwaysCompileModsLocally": {
       "title": "Always compile mods locally",
       "description": "By default, Windhawk downloads pre-compiled mod binaries from the Windhawk server when available. Enable this option to always compile mods locally instead."
+    },
+    "parallelCompileTargets": {
+      "title": "Compile targets in parallel",
+      "description": "Compile x86, x64, and ARM64 outputs concurrently when a mod targets more than one architecture."
+    },
+    "preferPrecompiledHeaders": {
+      "title": "Prefer precompiled headers",
+      "description": "Reuse cached Windhawk headers when the workspace includes them to shorten repeated local builds."
     },
     "requireElevation": {
       "title": "Require UAC elevation for running Windhawk",
@@ -450,7 +608,13 @@
       "toolkitDialog": "Toolkit dialog",
       "interfaceDensity": "Interface density",
       "layoutWidth": "Layout width",
-      "motion": "Motion"
+      "motion": "Motion",
+      "performanceProfile": "Performance profile",
+      "aiAcceleration": "AI acceleration",
+      "startupPage": "Startup page",
+      "exploreDefaultSort": "Explore default sort",
+      "editorAssistance": "Editor assistance",
+      "windowsQuickActions": "Windows quick actions"
     },
     "values": {
       "enabled": "Enabled",
@@ -537,6 +701,8 @@
         "version": "Windows edition",
         "release": "Release",
         "build": "Build",
+        "memory": "Memory",
+        "npu": "NPU",
         "installationType": "Installation type",
         "session": "Session rights",
         "host": "Computer name",
@@ -544,7 +710,9 @@
       },
       "values": {
         "elevated": "Administrator",
-        "standard": "Standard user"
+        "standard": "Standard user",
+        "detected": "Detected",
+        "none": "None detected"
       },
       "paths": {
         "windowsDirectory": "Windows directory",
@@ -558,6 +726,38 @@
         "taskbar": {
           "title": "Taskbar settings",
           "description": "Open taskbar personalization to compare native Windows behavior with taskbar mods."
+        },
+        "start": {
+          "title": "Start settings",
+          "description": "Inspect Start menu layout and recommendations before testing Start-focused mods."
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "Open the native notification surface to baseline banners, badges, and the notification center."
+        },
+        "multitasking": {
+          "title": "Multitasking",
+          "description": "Check Snap and Alt+Tab defaults when validating window-management changes."
+        },
+        "colors": {
+          "title": "Colors",
+          "description": "Compare theme, transparency, and accent behavior against visual shell mods."
+        },
+        "background": {
+          "title": "Background",
+          "description": "Open wallpaper and desktop background settings before testing visual shell tweaks."
+        },
+        "themes": {
+          "title": "Themes",
+          "description": "Inspect theme packs and visual defaults when comparing appearance-related mods."
+        },
+        "lockScreen": {
+          "title": "Lock screen",
+          "description": "Review lock screen and spotlight settings for login and background customization workflows."
+        },
+        "clipboard": {
+          "title": "Clipboard",
+          "description": "Open clipboard history and sync settings for productivity and input-related mods."
         },
         "startupApps": {
           "title": "Startup apps",
@@ -655,19 +855,78 @@
     "title": "New Mod Studio",
     "recommended": "Recommended",
     "copySuccess": "\"{{title}}\" copied to the clipboard",
-    "copyError": "Unable to copy the AI prompt",
+    "copyError": "Unable to copy the requested content",
+    "mode": {
+      "title": "Choose how you want to start",
+      "description": "Pick a code-first workflow or a visual preset flow, then choose whether the starter should land in classic C++ or Python authoring mode.",
+      "code": "Code-first",
+      "codeDescription": "Choose raw templates and hook-oriented scaffolds first.",
+      "visual": "Visual mode",
+      "visualDescription": "Start from outcomes such as automation, shell work, or settings design."
+    },
+    "recent": {
+      "title": "Recent sessions",
+      "description": "Resume a recent starter, preset, or workflow with the same launch brief, packet, and editor-side context.",
+      "empty": "Launch a starter, preset, or workflow once and it will show up here for one-click relaunch.",
+      "latest": "Latest",
+      "templateLabel": "Starter: {{template}}",
+      "checklistLabel": "{{count}} checklist steps",
+      "toolsLabel": "{{count}} CLI tools",
+      "promptsLabel": "{{count}} prompt packs",
+      "starterKind": "Starter",
+      "workflowKind": "Workflow bundle",
+      "visualPresetKind": "Visual preset",
+      "relaunchButton": "Relaunch session",
+      "copyPacketButton": "Copy saved packet"
+    },
+    "authoring": {
+      "title": "Authoring target",
+      "description": "Choose which source format and authoring workflow New Mod Studio should create by default.",
+      "cpp": "C++ (.wh.cpp)",
+      "cppDescription": "Use the classic Windhawk source path and focused native templates.",
+      "python": "Python (.wh.py)",
+      "pythonDescription": "Author in Python and render back to compatible .wh.cpp output for compile-time use."
+    },
     "starters": {
       "title": "Choose a starting point",
-      "description": "Start with the standard Windhawk template or an AI-ready starter that adds prompt scaffolding and verification notes.",
+      "description": "Start with a structured core template, a classic sample, or choose a focused starter for shell tweaks, Chromium browser work, window behavior, or settings-first mod design.",
+      "pythonNote": "Python mode currently ships with the automation starter. The other starters are still C++ templates.",
       "useStandard": "Use standard starter",
       "useAiReady": "Use AI-ready starter"
     },
+    "visual": {
+      "title": "Visual presets",
+      "description": "Use a higher-level preset to start from outcomes such as automation, Explorer shell work, window behavior, or settings design instead of picking a raw source template.",
+      "usePreset": "Use visual preset"
+    },
+    "workflows": {
+      "title": "Workflow bundles",
+      "description": "Use guided launch bundles when you want a starter, checklist, CLI tools, and AI prompts that fit the kind of mod you are building.",
+      "recommended": "Recommended next path: {{title}}",
+      "starterLabel": "Starter: {{template}}",
+      "toolsLabel": "{{count}} CLI tools",
+      "promptsLabel": "{{count}} prompt packs",
+      "launchButton": "Launch bundle",
+      "copyPacketButton": "Copy kickoff packet"
+    },
     "prompts": {
       "title": "AI prompt packs",
-      "description": "Copy these prompts into your AI assistant to ideate, scaffold, review, or document a mod while keeping the Windhawk workflow intact.",
+      "description": "Copy these prompts into your AI assistant to ideate, structure, scaffold, review, or document a mod while keeping the Windhawk workflow intact.",
       "copyButton": "Copy prompt"
     },
+    "cli": {
+      "title": "CLI playbooks",
+      "description": "Quick-copy commands that line up with the Windhawk Copilot helper workflow for runtime detection, source setup, compile, and restart.",
+      "copyButton": "Copy command"
+    },
     "footerNote": "AI can accelerate scaffolding and review, but you should still validate hook targets, safety, compatibility, and manual test results yourself before shipping a mod."
+  },
+  "setupAssistant": {
+    "title": "Choose your first-launch workspace",
+    "description": "Pick a starter profile now. You can revisit these settings at any time from the Settings page.",
+    "balanced": "Use balanced defaults",
+    "pythonCreator": "Start in Python + visual mode",
+    "classicCpp": "Stay with classic C++ authoring"
   },
   "devModeAction": {
     "message": "Creating and modifying mods requires some knowledge of C/C++ development for Windows. AI can help with scaffolding and review, but you still need to understand and verify the generated code before using it.",
@@ -694,12 +953,14 @@
     "copyModId": "Copy ID",
     "copyModIdSuccess": "Mod id copied",
     "copyError": "Unable to copy the requested text",
+    "openError": "Unable to open the requested Windows surface",
     "enableMod": "Enable mod",
     "enableLogging": "Enable logging",
     "loggingTag": "Logging on",
     "notCompiled": "Mod needs to be compiled",
     "compile": "Compile Mod",
     "runRecommendedCompile": "Run recommended compile",
+    "recommendationLabel": "Recommended next run",
     "compilationFailed": "Compilation failed",
     "stopCompilation": "Stop compilation",
     "preview": "Preview Mod",
@@ -719,9 +980,24 @@
       "state": "State",
       "build": "Build",
       "scope": "Scope",
-      "version": "Version"
+      "version": "Version",
+      "surface": "Surface focus",
+      "nextCompile": "Next compile"
+    },
+    "sectionKickers": {
+      "launch": "Launch brief",
+      "status": "Readout",
+      "evidence": "Signals",
+      "controls": "Modes",
+      "windows": "System bridge",
+      "provocations": "Challenge",
+      "verification": "Checks",
+      "ai": "AI",
+      "workflow": "Next steps"
     },
     "sections": {
+      "launch": "Launch brief",
+      "launchDescription": "Keep the starter, workflow, and tooling context visible after the editor opens so the launcher does not collapse into a blank draft.",
       "status": "Session status",
       "statusDescription": "A quick read on the current draft, build state, and targeting scope.",
       "evidence": "Evidence board",
@@ -729,6 +1005,10 @@
       "controls": "Build controls",
       "controlsDescription": "Current compile profile: {{mode}}.",
       "recommendedCompileDescription": "Recommended next compile: {{mode}}.",
+      "windows": "Windows bridge",
+      "windowsDescription": "Jump straight into the Windows surfaces that match this mod's inferred shell scope.",
+      "provocations": "Challenge board",
+      "provocationsDescription": "Research-backed counterquestions that push the draft beyond agreement and toward better evidence.",
       "verification": "Verification pack",
       "verificationDescription": "Turn the current draft into a practical checklist and a release-ready evidence packet.",
       "ai": "AI helpers",
@@ -736,32 +1016,81 @@
       "workflow": "Iteration plan",
       "workflowDescription": "A short next-step plan that reacts to the current draft, build state, and process scope."
     },
+    "launchBrief": {
+      "kicker": "Studio handoff",
+      "templateLabel": "Starter: {{template}}",
+      "modeLabel": "Mode: {{mode}}",
+      "languageLabel": "Language: {{language}}",
+      "toolsLabel": "Tools: {{count}}",
+      "promptsLabel": "Prompts: {{count}}",
+      "toolsTitle": "CLI playbooks",
+      "promptsTitle": "Prompt packs",
+      "copyPacket": "Copy launch packet",
+      "copyTools": "Copy CLI playbooks",
+      "copyPrompts": "Copy prompt list",
+      "copiedPacket": "Launch packet copied",
+      "copiedTools": "CLI playbooks copied",
+      "copiedPrompts": "Prompt list copied"
+    },
     "descriptions": {
       "enableMod": "Controls whether the compiled mod should load after a successful build.",
       "enableLogging": "Keep logging enabled while iterating so new failures are easier to diagnose."
     },
     "compileMenu": {
-      "current": "Compile with current switches",
+      "current": "Reuse current switches",
       "disabled": "Compile disabled",
       "logging": "Compile with logging",
       "disabledLogging": "Compile disabled + logging"
+    },
+    "compileModes": {
+      "currentDescription": "Keep the next build aligned with the current runtime profile: {{mode}}.",
+      "disabledDescription": "Build the binary, but keep the mod unloaded while you inspect the result.",
+      "loggingDescription": "Make the first live run more observable so regressions are easier to localize.",
+      "disabledLoggingDescription": "Use the safest, highest-evidence first run for broad or unstable drafts.",
+      "active": "Current",
+      "recommended": "Recommended",
+      "runMode": "Run this mode"
     },
     "ai": {
       "contextPack": "Copy context pack",
       "scaffold": "Copy scaffold prompt",
       "review": "Copy review prompt",
       "explainScope": "Copy scope prompt",
+      "explainApi": "Copy API explainer",
+      "explainTerms": "Copy terms explainer",
+      "usageExamples": "Copy usage examples",
       "testPlan": "Copy test plan",
       "docs": "Copy docs prompt",
       "releaseNotes": "Copy release notes",
+      "challengeAssumptions": "Copy challenge prompt",
+      "counterexampleHunt": "Copy counterexample hunt",
+      "bestPractices": "Copy best-practice audit",
+      "compileRecovery": "Copy compile recovery",
+      "challengeBrief": "Copy challenge brief",
       "brief": "Copy mod brief",
+      "understandingTitle": "Promptless understanding",
+      "understandingDescription": "Mirrors recent code-understanding research by turning common explainer requests into one-click, context-rich prompts.",
+      "challengeTitle": "Challenge and critique",
+      "challengeDescription": "Push the assistant to question the current design instead of merely agreeing with it.",
+      "validationTitle": "Validation and recovery",
+      "validationDescription": "Use feedback-loop prompts when you need stronger tests, safer docs, or a smaller recovery path after build problems.",
+      "buildTitle": "Build and package",
+      "buildDescription": "Keep the original scaffolding and context-pack flows for broader rewrites or handoffs.",
       "copiedContextPack": "Context pack copied",
       "copiedScaffold": "Scaffold prompt copied",
       "copiedReview": "Review prompt copied",
       "copiedExplainScope": "Scope prompt copied",
+      "copiedExplainApi": "API explainer copied",
+      "copiedExplainTerms": "Terms explainer copied",
+      "copiedUsageExamples": "Usage examples copied",
       "copiedTestPlan": "Test plan copied",
       "copiedDocs": "Docs prompt copied",
       "copiedReleaseNotes": "Release notes prompt copied",
+      "copiedChallengeAssumptions": "Challenge prompt copied",
+      "copiedCounterexampleHunt": "Counterexample hunt copied",
+      "copiedBestPractices": "Best-practice audit copied",
+      "copiedCompileRecovery": "Compile recovery prompt copied",
+      "copiedChallengeBrief": "Challenge brief copied",
       "copiedBrief": "Mod brief copied"
     },
     "verification": {
@@ -769,6 +1098,9 @@
       "copyReleasePacket": "Copy release packet",
       "copiedChecklist": "Verification checklist copied",
       "copiedReleasePacket": "Release packet copied"
+    },
+    "windows": {
+      "open": "Open Windows surface"
     },
     "workflow": {
       "shortcutTitle": "Use Ctrl+B for fast rebuilds",
@@ -778,6 +1110,7 @@
       "loggingTitle": "Turn on logging for first runs",
       "loggingBody": "Logging is most useful right after a refactor, compile error, or API change because it makes regressions easier to localize."
     },
+    "footerNote": "Scroll through every editor control while the exit action stays pinned here.",
     "exit": "Exit Editing Mode",
     "exitConfirmation": "Changes since the last successful compilation will be lost",
     "exitButtonOk": "Exit",

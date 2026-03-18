@@ -15,16 +15,20 @@ import {
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { AppUISettingsContext } from '../appUISettings';
 import {
+  AppUISettingsContext,
+  getRecommendedLocalUISettings,
+} from '../appUISettings';
+import {
+  InputWithContextMenu,
   InputNumberWithContextMenu,
   SelectModal,
   TextAreaWithContextMenu,
 } from '../components/InputWithContextMenu';
 import { sanitizeUrl } from '../utils';
 import { useGetAppSettings, useUpdateAppSettings } from '../webviewIPC';
-import { AppSettings } from '../webviewIPCMessages';
-import { mockSettings } from './mockData';
+import { AppRuntimeDiagnostics, AppSettings } from '../webviewIPCMessages';
+import { mockRuntimeDiagnostics, mockSettings } from './mockData';
 
 const SettingsWrapper = styled.div`
   padding: 8px 0 28px;
@@ -177,6 +181,11 @@ const SettingInputNumber = styled(InputNumberWithContextMenu)`
   }
 `;
 
+const SettingInput = styled(InputWithContextMenu)`
+  width: 100%;
+  max-width: 280px;
+`;
+
 const appLanguages = [
   ['en', 'English'],
   ...Object.entries({
@@ -234,6 +243,7 @@ function Settings() {
     loggingEnabled,
     safeMode,
     localUISettings,
+    openSetupAssistant,
     resetLocalUISettings,
     setLocalUISettings,
   } = useContext(AppUISettingsContext);
@@ -241,6 +251,8 @@ function Settings() {
   const [appSettings, setAppSettings] = useState<Partial<AppSettings> | null>(
     mockSettings
   );
+  const [runtimeDiagnostics, setRuntimeDiagnostics] =
+    useState<AppRuntimeDiagnostics | null>(mockRuntimeDiagnostics);
 
   const [appLoggingVerbosity, setAppLoggingVerbosity] = useState(0);
   const [engineLoggingVerbosity, setEngineLoggingVerbosity] = useState(0);
@@ -251,6 +263,9 @@ function Settings() {
   const [engineInjectIntoIncompatiblePrograms, setEngineInjectIntoIncompatiblePrograms] =
     useState(false);
   const [engineInjectIntoGames, setEngineInjectIntoGames] = useState(false);
+  const [engineUsePhantomInjection, setEngineUsePhantomInjection] = useState(false);
+  const [engineUseModuleStomping, setEngineUseModuleStomping] = useState(false);
+  const [engineUseIndirectSyscalls, setEngineUseIndirectSyscalls] = useState(true);
 
   const resetMoreAdvancedSettings = useCallback(() => {
     setAppLoggingVerbosity(appSettings?.loggingVerbosity ?? 0);
@@ -264,11 +279,15 @@ function Settings() {
       appSettings?.engine?.injectIntoIncompatiblePrograms ?? false
     );
     setEngineInjectIntoGames(appSettings?.engine?.injectIntoGames ?? false);
+    setEngineUsePhantomInjection(appSettings?.engine?.usePhantomInjection ?? false);
+    setEngineUseModuleStomping(appSettings?.engine?.useModuleStomping ?? false);
+    setEngineUseIndirectSyscalls(appSettings?.engine?.useIndirectSyscalls ?? true);
   }, [appSettings]);
 
   const { getAppSettings } = useGetAppSettings(
     useCallback((data) => {
       setAppSettings(data.appSettings);
+      setRuntimeDiagnostics(data.runtimeDiagnostics || null);
     }, [])
   );
 
@@ -292,6 +311,217 @@ function Settings() {
 
   const [isMoreAdvancedSettingsModalOpen, setIsMoreAdvancedSettingsModalOpen] =
     useState(false);
+
+  const recommendedLocalUISettings = useMemo(
+    () => getRecommendedLocalUISettings(runtimeDiagnostics),
+    [runtimeDiagnostics]
+  );
+
+  const getPerformanceProfileLabel = useCallback(
+    (profile: 'balanced' | 'responsive' | 'efficient') => {
+      switch (profile) {
+        case 'responsive':
+          return t('settings.performance.profile.options.responsive');
+        case 'efficient':
+          return t('settings.performance.profile.options.efficient');
+        case 'balanced':
+        default:
+          return t('settings.performance.profile.options.balanced');
+      }
+    },
+    [t]
+  );
+
+  const getAIAccelerationLabel = useCallback(
+    (preference: 'auto' | 'prefer-npu' | 'off') => {
+      switch (preference) {
+        case 'prefer-npu':
+          return t('settings.performance.aiAcceleration.options.preferNpu');
+        case 'off':
+          return t('settings.performance.aiAcceleration.options.off');
+        case 'auto':
+        default:
+          return t('settings.performance.aiAcceleration.options.auto');
+      }
+    },
+    [t]
+  );
+
+  const getStartupPageLabel = useCallback(
+    (startupPage: 'home' | 'explore' | 'settings' | 'about') => {
+      switch (startupPage) {
+        case 'explore':
+          return t('settings.workflow.startupPage.options.explore');
+        case 'settings':
+          return t('settings.workflow.startupPage.options.settings');
+        case 'about':
+          return t('settings.workflow.startupPage.options.about');
+        case 'home':
+        default:
+          return t('settings.workflow.startupPage.options.home');
+      }
+    },
+    [t]
+  );
+
+  const getExploreDefaultSortLabel = useCallback(
+    (
+      sortPreference:
+        | 'smart-relevance'
+        | 'last-updated'
+        | 'popular-top-rated'
+    ) => {
+      switch (sortPreference) {
+        case 'last-updated':
+          return t('settings.workflow.exploreDefaultSort.options.lastUpdated');
+        case 'popular-top-rated':
+          return t(
+            'settings.workflow.exploreDefaultSort.options.popularTopRated'
+          );
+        case 'smart-relevance':
+        default:
+          return t(
+            'settings.workflow.exploreDefaultSort.options.smartRelevance'
+          );
+      }
+    },
+    [t]
+  );
+
+  const getEditorAssistanceLabel = useCallback(
+    (assistanceLevel: 'streamlined' | 'guided' | 'full') => {
+      switch (assistanceLevel) {
+        case 'streamlined':
+          return t('settings.workflow.editorAssistance.options.streamlined');
+        case 'guided':
+          return t('settings.workflow.editorAssistance.options.guided');
+        case 'full':
+        default:
+          return t('settings.workflow.editorAssistance.options.full');
+      }
+    },
+    [t]
+  );
+
+  const getWindowsQuickActionDensityLabel = useCallback(
+    (density: 'focused' | 'expanded') => {
+      switch (density) {
+        case 'focused':
+          return t('settings.workflow.windowsQuickActions.options.focused');
+        case 'expanded':
+        default:
+          return t('settings.workflow.windowsQuickActions.options.expanded');
+      }
+    },
+    [t]
+  );
+
+  const getAuthoringLanguageLabel = useCallback(
+    (language: 'cpp' | 'python') =>
+      language === 'python'
+        ? t('settings.authoring.language.options.python')
+        : t('settings.authoring.language.options.cpp'),
+    [t]
+  );
+
+  const getStudioModeLabel = useCallback(
+    (mode: 'code' | 'visual') =>
+      mode === 'visual'
+        ? t('settings.authoring.studioMode.options.visual')
+        : t('settings.authoring.studioMode.options.code'),
+    [t]
+  );
+
+  const performanceRecommendationDescription = useMemo(() => {
+    if (!runtimeDiagnostics) {
+      return t('settings.performance.recommendationFallback');
+    }
+
+    if (runtimeDiagnostics.issueCode !== 'none') {
+      return t('settings.performance.recommendationIssue', {
+        profile: getPerformanceProfileLabel(
+          recommendedLocalUISettings.performanceProfile
+        ),
+      });
+    }
+
+    if (runtimeDiagnostics.npuDetected) {
+      return t('settings.performance.recommendationNpu', {
+        npu:
+          runtimeDiagnostics.npuName ||
+          t('settings.performance.values.detected'),
+      });
+    }
+
+    if (runtimeDiagnostics.totalMemoryGb <= 8) {
+      return t('settings.performance.recommendationEfficient', {
+        memory: runtimeDiagnostics.totalMemoryGb,
+      });
+    }
+
+    if (runtimeDiagnostics.totalMemoryGb >= 16) {
+      return t('settings.performance.recommendationResponsive', {
+        memory: runtimeDiagnostics.totalMemoryGb,
+      });
+    }
+
+    return t('settings.performance.recommendationBalanced');
+  }, [
+    getPerformanceProfileLabel,
+    recommendedLocalUISettings.performanceProfile,
+    runtimeDiagnostics,
+    t,
+  ]);
+
+  const recommendedSettingsAlreadyApplied =
+    localUISettings.performanceProfile ===
+      recommendedLocalUISettings.performanceProfile &&
+    localUISettings.aiAccelerationPreference ===
+      recommendedLocalUISettings.aiAccelerationPreference &&
+    localUISettings.reduceMotion === recommendedLocalUISettings.reduceMotion &&
+    localUISettings.useWideLayout === recommendedLocalUISettings.useWideLayout;
+
+  const workflowSummary = useMemo(
+    () =>
+      t('settings.workflow.currentSummary', {
+        startup: getStartupPageLabel(localUISettings.startupPage),
+        explore: getExploreDefaultSortLabel(localUISettings.exploreDefaultSort),
+        editor: getEditorAssistanceLabel(localUISettings.editorAssistanceLevel),
+        windows: getWindowsQuickActionDensityLabel(
+          localUISettings.windowsQuickActionDensity
+        ),
+      }),
+    [
+      getEditorAssistanceLabel,
+      getExploreDefaultSortLabel,
+      getStartupPageLabel,
+      getWindowsQuickActionDensityLabel,
+      localUISettings.editorAssistanceLevel,
+      localUISettings.exploreDefaultSort,
+      localUISettings.startupPage,
+      localUISettings.windowsQuickActionDensity,
+      t,
+    ]
+  );
+
+  const authoringSummary = useMemo(
+    () =>
+      t('settings.authoring.currentSummary', {
+        language: getAuthoringLanguageLabel(
+          localUISettings.preferredAuthoringLanguage
+        ),
+        extension: localUISettings.preferredSourceExtension,
+        studio: getStudioModeLabel(localUISettings.preferredStudioMode),
+      }),
+    [
+      getAuthoringLanguageLabel,
+      getStudioModeLabel,
+      localUISettings.preferredAuthoringLanguage,
+      localUISettings.preferredSourceExtension,
+      localUISettings.preferredStudioMode,
+      t,
+    ]
+  );
 
   const statusItems = useMemo(() => {
     const items = [];
@@ -352,8 +582,93 @@ function Settings() {
       });
     }
 
+    if (localUISettings.performanceProfile === 'responsive') {
+      items.push({
+        key: 'responsive-profile',
+        text: t('settings.overview.responsiveProfile'),
+        tone: 'default' as const,
+      });
+    } else if (localUISettings.performanceProfile === 'efficient') {
+      items.push({
+        key: 'efficient-profile',
+        text: t('settings.overview.efficientProfile'),
+        tone: 'default' as const,
+      });
+    }
+
+    if (localUISettings.aiAccelerationPreference === 'prefer-npu') {
+      items.push({
+        key: 'prefer-npu',
+        text: t('settings.overview.npuPreferred'),
+        tone: 'default' as const,
+      });
+    }
+
+    if (localUISettings.startupPage === 'explore') {
+      items.push({
+        key: 'startup-explore',
+        text: t('settings.overview.startupExplore'),
+        tone: 'default' as const,
+      });
+    } else if (localUISettings.startupPage === 'settings') {
+      items.push({
+        key: 'startup-settings',
+        text: t('settings.overview.startupSettings'),
+        tone: 'default' as const,
+      });
+    } else if (localUISettings.startupPage === 'about') {
+      items.push({
+        key: 'startup-about',
+        text: t('settings.overview.startupAbout'),
+        tone: 'default' as const,
+      });
+    }
+
+    if (localUISettings.exploreDefaultSort === 'last-updated') {
+      items.push({
+        key: 'explore-fresh',
+        text: t('settings.overview.exploreFresh'),
+        tone: 'default' as const,
+      });
+    } else if (localUISettings.exploreDefaultSort === 'popular-top-rated') {
+      items.push({
+        key: 'explore-popular',
+        text: t('settings.overview.explorePopular'),
+        tone: 'default' as const,
+      });
+    }
+
+    if (localUISettings.editorAssistanceLevel === 'streamlined') {
+      items.push({
+        key: 'editor-streamlined',
+        text: t('settings.overview.editorStreamlined'),
+        tone: 'default' as const,
+      });
+    } else if (localUISettings.editorAssistanceLevel === 'guided') {
+      items.push({
+        key: 'editor-guided',
+        text: t('settings.overview.editorGuided'),
+        tone: 'default' as const,
+      });
+    }
+
+    if (localUISettings.windowsQuickActionDensity === 'focused') {
+      items.push({
+        key: 'windows-focused',
+        text: t('settings.overview.windowsFocused'),
+        tone: 'default' as const,
+      });
+    }
+
     return items;
-  }, [appSettings?.devModeOptOut, appSettings?.disableUpdateCheck, localUISettings, loggingEnabled, safeMode, t]);
+  }, [
+    appSettings?.devModeOptOut,
+    appSettings?.disableUpdateCheck,
+    localUISettings,
+    loggingEnabled,
+    safeMode,
+    t,
+  ]);
 
   if (!appSettings) {
     return null;
@@ -562,6 +877,392 @@ function Settings() {
           </SettingsList>
         </SettingsSectionCard>
 
+        <SettingsSectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('settings.performance.title')}</SectionTitle>
+            <SectionDescription>
+              {t('settings.performance.description')}
+            </SectionDescription>
+          </SectionHeading>
+          <Alert
+            showIcon
+            type={recommendedSettingsAlreadyApplied ? 'success' : 'info'}
+            message={t('settings.performance.recommendationTitle', {
+              profile: getPerformanceProfileLabel(
+                recommendedLocalUISettings.performanceProfile
+              ),
+            })}
+            description={
+              <Space direction="vertical" size={10}>
+                <div>{performanceRecommendationDescription}</div>
+                <div>
+                  {t('settings.performance.hardwareSummary', {
+                    memory:
+                      runtimeDiagnostics?.totalMemoryGb ??
+                      t('settings.performance.values.unknown'),
+                    npu:
+                      runtimeDiagnostics?.npuName ||
+                      (runtimeDiagnostics?.npuDetected
+                        ? t('settings.performance.values.detected')
+                        : t('settings.performance.values.none')),
+                  })}
+                </div>
+                <SettingsActionRow>
+                  <Button
+                    type={recommendedSettingsAlreadyApplied ? 'default' : 'primary'}
+                    disabled={recommendedSettingsAlreadyApplied}
+                    onClick={() =>
+                      setLocalUISettings({
+                        performanceProfile:
+                          recommendedLocalUISettings.performanceProfile,
+                        aiAccelerationPreference:
+                          recommendedLocalUISettings.aiAccelerationPreference,
+                        reduceMotion: recommendedLocalUISettings.reduceMotion,
+                        useWideLayout: recommendedLocalUISettings.useWideLayout,
+                      })
+                    }
+                  >
+                    {t('settings.performance.applyRecommendation')}
+                  </Button>
+                </SettingsActionRow>
+              </Space>
+            }
+          />
+          <SettingsList itemLayout="vertical" split={false}>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.performance.profile.title')}
+                description={t('settings.performance.profile.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.performanceProfile}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    performanceProfile:
+                      value === 'responsive'
+                        ? 'responsive'
+                        : value === 'efficient'
+                          ? 'efficient'
+                          : 'balanced',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="balanced" value="balanced">
+                  {t('settings.performance.profile.options.balanced')}
+                </Select.Option>
+                <Select.Option key="responsive" value="responsive">
+                  {t('settings.performance.profile.options.responsive')}
+                </Select.Option>
+                <Select.Option key="efficient" value="efficient">
+                  {t('settings.performance.profile.options.efficient')}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.performance.aiAcceleration.title')}
+                description={t('settings.performance.aiAcceleration.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.aiAccelerationPreference}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    aiAccelerationPreference:
+                      value === 'prefer-npu'
+                        ? 'prefer-npu'
+                        : value === 'off'
+                          ? 'off'
+                          : 'auto',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="auto" value="auto">
+                  {t('settings.performance.aiAcceleration.options.auto')}
+                </Select.Option>
+                <Select.Option key="prefer-npu" value="prefer-npu">
+                  {t('settings.performance.aiAcceleration.options.preferNpu')}
+                </Select.Option>
+                <Select.Option key="off" value="off">
+                  {t('settings.performance.aiAcceleration.options.off')}
+                </Select.Option>
+              </SettingsSelect>
+              <SettingsNotice>
+                {t('settings.performance.currentSummary', {
+                  performance: getPerformanceProfileLabel(
+                    localUISettings.performanceProfile
+                  ),
+                  acceleration: getAIAccelerationLabel(
+                    localUISettings.aiAccelerationPreference
+                  ),
+                })}
+              </SettingsNotice>
+            </List.Item>
+          </SettingsList>
+        </SettingsSectionCard>
+
+        <SettingsSectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('settings.workflow.title')}</SectionTitle>
+            <SectionDescription>{t('settings.workflow.description')}</SectionDescription>
+          </SectionHeading>
+          <SettingsList itemLayout="vertical" split={false}>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.workflow.startupPage.title')}
+                description={t('settings.workflow.startupPage.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.startupPage}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    startupPage:
+                      value === 'explore'
+                        ? 'explore'
+                        : value === 'settings'
+                          ? 'settings'
+                          : value === 'about'
+                            ? 'about'
+                            : 'home',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="home" value="home">
+                  {t('settings.workflow.startupPage.options.home')}
+                </Select.Option>
+                <Select.Option key="explore" value="explore">
+                  {t('settings.workflow.startupPage.options.explore')}
+                </Select.Option>
+                <Select.Option key="settings" value="settings">
+                  {t('settings.workflow.startupPage.options.settings')}
+                </Select.Option>
+                <Select.Option key="about" value="about">
+                  {t('settings.workflow.startupPage.options.about')}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.workflow.exploreDefaultSort.title')}
+                description={t('settings.workflow.exploreDefaultSort.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.exploreDefaultSort}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    exploreDefaultSort:
+                      value === 'last-updated'
+                        ? 'last-updated'
+                        : value === 'popular-top-rated'
+                          ? 'popular-top-rated'
+                          : 'smart-relevance',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="smart-relevance" value="smart-relevance">
+                  {t('settings.workflow.exploreDefaultSort.options.smartRelevance')}
+                </Select.Option>
+                <Select.Option key="last-updated" value="last-updated">
+                  {t('settings.workflow.exploreDefaultSort.options.lastUpdated')}
+                </Select.Option>
+                <Select.Option
+                  key="popular-top-rated"
+                  value="popular-top-rated"
+                >
+                  {t(
+                    'settings.workflow.exploreDefaultSort.options.popularTopRated'
+                  )}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.workflow.editorAssistance.title')}
+                description={t('settings.workflow.editorAssistance.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.editorAssistanceLevel}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    editorAssistanceLevel:
+                      value === 'streamlined'
+                        ? 'streamlined'
+                        : value === 'guided'
+                          ? 'guided'
+                          : 'full',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="streamlined" value="streamlined">
+                  {t('settings.workflow.editorAssistance.options.streamlined')}
+                </Select.Option>
+                <Select.Option key="guided" value="guided">
+                  {t('settings.workflow.editorAssistance.options.guided')}
+                </Select.Option>
+                <Select.Option key="full" value="full">
+                  {t('settings.workflow.editorAssistance.options.full')}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.workflow.windowsQuickActions.title')}
+                description={t('settings.workflow.windowsQuickActions.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.windowsQuickActionDensity}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    windowsQuickActionDensity:
+                      value === 'focused' ? 'focused' : 'expanded',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="focused" value="focused">
+                  {t('settings.workflow.windowsQuickActions.options.focused')}
+                </Select.Option>
+                <Select.Option key="expanded" value="expanded">
+                  {t('settings.workflow.windowsQuickActions.options.expanded')}
+                </Select.Option>
+              </SettingsSelect>
+              <SettingsNotice>{workflowSummary}</SettingsNotice>
+            </List.Item>
+          </SettingsList>
+        </SettingsSectionCard>
+
+        <SettingsSectionCard bordered={false}>
+          <SectionHeading>
+            <SectionTitle>{t('settings.authoring.title')}</SectionTitle>
+            <SectionDescription>
+              {t('settings.authoring.description')}
+            </SectionDescription>
+          </SectionHeading>
+          <SettingsList itemLayout="vertical" split={false}>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.language.title')}
+                description={t('settings.authoring.language.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.preferredAuthoringLanguage}
+                onChange={(value) => {
+                  const nextLanguage = value === 'python' ? 'python' : 'cpp';
+                  setLocalUISettings({
+                    preferredAuthoringLanguage: nextLanguage,
+                    preferredSourceExtension:
+                      nextLanguage === 'python' ? '.wh.py' : '.wh.cpp',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="cpp" value="cpp">
+                  {t('settings.authoring.language.options.cpp')}
+                </Select.Option>
+                <Select.Option key="python" value="python">
+                  {t('settings.authoring.language.options.python')}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.studioMode.title')}
+                description={t('settings.authoring.studioMode.description')}
+              />
+              <SettingsSelect
+                value={localUISettings.preferredStudioMode}
+                onChange={(value) => {
+                  setLocalUISettings({
+                    preferredStudioMode: value === 'visual' ? 'visual' : 'code',
+                  });
+                }}
+                dropdownMatchSelectWidth={false}
+              >
+                <Select.Option key="code" value="code">
+                  {t('settings.authoring.studioMode.options.code')}
+                </Select.Option>
+                <Select.Option key="visual" value="visual">
+                  {t('settings.authoring.studioMode.options.visual')}
+                </Select.Option>
+              </SettingsSelect>
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.pythonCommand.title')}
+                description={t('settings.authoring.pythonCommand.description')}
+              />
+              <SettingInput
+                value={appSettings.pythonAuthoringCommand}
+                onChange={(e) => {
+                  updateAppSettings({
+                    appSettings: {
+                      pythonAuthoringCommand: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.pythonArgs.title')}
+                description={t('settings.authoring.pythonArgs.description')}
+              />
+              <SettingInput
+                value={appSettings.pythonAuthoringArgs}
+                onChange={(e) => {
+                  updateAppSettings({
+                    appSettings: {
+                      pythonAuthoringArgs: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.copilotCommand.title')}
+                description={t('settings.authoring.copilotCommand.description')}
+              />
+              <SettingInput
+                value={appSettings.copilotCliCommand}
+                onChange={(e) => {
+                  updateAppSettings({
+                    appSettings: {
+                      copilotCliCommand: e.target.value,
+                    },
+                  });
+                }}
+              />
+            </List.Item>
+            <List.Item>
+              <SettingsListItemMeta
+                title={t('settings.authoring.copilotArgs.title')}
+                description={t('settings.authoring.copilotArgs.description')}
+              />
+              <SettingInput
+                value={appSettings.copilotCliArgs}
+                onChange={(e) => {
+                  updateAppSettings({
+                    appSettings: {
+                      copilotCliArgs: e.target.value,
+                    },
+                  });
+                }}
+              />
+              <SettingsActionRow>
+                <Button onClick={() => openSetupAssistant()}>
+                  {t('settings.authoring.openSetupAssistant')}
+                </Button>
+              </SettingsActionRow>
+              <SettingsNotice>{authoringSummary}</SettingsNotice>
+            </List.Item>
+          </SettingsList>
+        </SettingsSectionCard>
+
         <AdvancedSettingsCard bordered={false}>
           <SectionHeading>
             <SectionTitle>{t('settings.advancedSettings')}</SectionTitle>
@@ -612,6 +1313,40 @@ function Settings() {
                       updateAppSettings({
                         appSettings: {
                           alwaysCompileModsLocally: checked,
+                        },
+                      });
+                    }}
+                  />
+                </List.Item>
+                <List.Item>
+                  <SettingsListItemMeta
+                    title={t('settings.parallelCompileTargets.title')}
+                    description={t('settings.parallelCompileTargets.description')}
+                  />
+                  <Switch
+                    checked={appSettings.parallelCompileTargets}
+                    onChange={(checked) => {
+                      updateAppSettings({
+                        appSettings: {
+                          parallelCompileTargets: checked,
+                        },
+                      });
+                    }}
+                  />
+                </List.Item>
+                <List.Item>
+                  <SettingsListItemMeta
+                    title={t('settings.preferPrecompiledHeaders.title')}
+                    description={t(
+                      'settings.preferPrecompiledHeaders.description'
+                    )}
+                  />
+                  <Switch
+                    checked={appSettings.preferPrecompiledHeaders}
+                    onChange={(checked) => {
+                      updateAppSettings({
+                        appSettings: {
+                          preferPrecompiledHeaders: checked,
                         },
                       });
                     }}
@@ -709,6 +1444,9 @@ function Settings() {
                 injectIntoIncompatiblePrograms:
                   engineInjectIntoIncompatiblePrograms,
                 injectIntoGames: engineInjectIntoGames,
+                usePhantomInjection: engineUsePhantomInjection,
+                useModuleStomping: engineUseModuleStomping,
+                useIndirectSyscalls: engineUseIndirectSyscalls,
               },
             },
           });
@@ -844,6 +1582,32 @@ function Settings() {
                 }}
               >
                 {t('settings.processList.excludeGames')}
+              </Checkbox>
+            </Space>
+          </List.Item>
+          <List.Item>
+            <SettingsListItemMeta
+              title="Advanced Stealth & Evasion (Research)"
+              description="Configure experimental target process injection mechanisms for stealth. Alters how the backend engine hooks into processes."
+            />
+            <Space direction="vertical">
+              <Checkbox
+                checked={engineUsePhantomInjection}
+                onChange={(e) => setEngineUsePhantomInjection(e.target.checked)}
+              >
+                Use Phantom Thread Pool Injection
+              </Checkbox>
+              <Checkbox
+                checked={engineUseModuleStomping}
+                onChange={(e) => setEngineUseModuleStomping(e.target.checked)}
+              >
+                Use Module Stomping
+              </Checkbox>
+              <Checkbox
+                checked={engineUseIndirectSyscalls}
+                onChange={(e) => setEngineUseIndirectSyscalls(e.target.checked)}
+              >
+                Use Indirect Syscalls
               </Checkbox>
             </Space>
           </List.Item>

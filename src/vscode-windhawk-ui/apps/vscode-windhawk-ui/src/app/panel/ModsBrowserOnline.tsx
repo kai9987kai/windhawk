@@ -1,6 +1,6 @@
 import { faFilter, faSearch, faSort } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, Empty, Modal, Result, Spin, Typography, message } from 'antd';
+import { Badge, Button, Empty, Modal, Result, Spin, Typography } from 'antd';
 import { produce } from 'immer';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { AppUISettingsContext } from '../appUISettings';
 import { DropdownModal, dropdownModalDismissed, InputWithContextMenu } from '../components/InputWithContextMenu';
-import { copyTextToClipboard } from '../utils';
 import {
   editMod,
   forkMod,
@@ -30,7 +29,6 @@ import { mockModsBrowserOnlineRepositoryMods, useMockData } from './mockData';
 import ModCard from './ModCard';
 import ModDetails from './ModDetails';
 import {
-  buildDiscoveryMissionBrief,
   buildDiscoveryMissionCandidates,
   DiscoveryMission,
   getDiscoveryMissions,
@@ -52,15 +50,78 @@ const CenteredContainer = styled.div`
 
 const CenteredContent = styled.div`
   margin: auto;
-
-  // Without this the centered content looks too low.
   padding-bottom: 10vh;
+`;
+
+const BrowseHero = styled.div`
+  margin: -8px -8px 32px -8px;
+  padding: 48px 24px;
+  background: 
+    radial-gradient(circle at 80% 20%, rgba(23, 125, 220, 0.15), transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.05), transparent 40%),
+    rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.015;
+    pointer-events: none;
+  }
+`;
+
+const HeroBadge = styled.span`
+  background: rgba(23, 125, 220, 0.15);
+  color: #69c0ff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  width: fit-content;
+  border: 1px solid rgba(23, 125, 220, 0.3);
+`;
+
+const HeroTitle = styled.h1`
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const HeroDescription = styled.p`
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  max-width: 600px;
 `;
 
 const SearchFilterContainer = styled.div`
   display: flex;
-  gap: 10px;
-  margin: 20px 0;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 0 -20px 24px -20px;
+  background: rgba(20, 20, 20, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-radius: 0 0 12px 12px;
 `;
 
 const SearchMetaRow = styled.div`
@@ -94,11 +155,14 @@ const DiscoveryPresetsSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 18px;
-  padding: 16px;
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.2);
 `;
 
 const DiscoveryPresetsTitle = styled.div`
@@ -118,22 +182,24 @@ const DiscoveryPresetsGrid = styled.div`
 
 const DiscoveryPresetCard = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => (
-    $active ? 'rgba(24, 144, 255, 0.55)' : 'rgba(255, 255, 255, 0.08)'
+    $active ? 'rgba(23, 125, 220, 0.45)' : 'rgba(255, 255, 255, 0.08)'
   )};
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 16px;
   text-align: left;
   color: inherit;
   background: ${({ $active }) => (
-    $active ? 'rgba(24, 144, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)'
+    $active ? 'rgba(23, 125, 220, 0.12)' : 'rgba(255, 255, 255, 0.04)'
   )};
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
   &:hover {
-    border-color: rgba(24, 144, 255, 0.45);
-    background: rgba(24, 144, 255, 0.08);
-    transform: translateY(-1px);
+    border-color: rgba(23, 125, 220, 0.4);
+    background: rgba(23, 125, 220, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
   }
 `;
 
@@ -171,13 +237,23 @@ const DiscoveryMissionCard = styled.div<{ $active: boolean }>`
   flex-direction: column;
   gap: 12px;
   border: 1px solid ${({ $active }) => (
-    $active ? 'rgba(24, 144, 255, 0.55)' : 'rgba(255, 255, 255, 0.08)'
+    $active ? 'rgba(23, 125, 220, 0.45)' : 'rgba(255, 255, 255, 0.08)'
   )};
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   background: ${({ $active }) => (
-    $active ? 'rgba(24, 144, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)'
+    $active ? 'rgba(23, 125, 220, 0.12)' : 'rgba(255, 255, 255, 0.04)'
   )};
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+  &:hover {
+    transform: scale(1.01) translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    border-color: rgba(23, 125, 220, 0.35);
+  }
 `;
 
 const DiscoveryMissionTitle = styled.div`
@@ -194,13 +270,6 @@ const DiscoveryMissionDescription = styled.div`
 const DiscoveryMissionCue = styled.div`
   color: rgba(255, 255, 255, 0.62);
   line-height: 1.45;
-`;
-
-const DiscoveryMissionLabel = styled.div`
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 `;
 
 const DiscoveryMissionTokenRow = styled.div`
@@ -803,16 +872,6 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
       ])
     ) as Record<string, number>;
   }, [discoveryPresets, repositoryMods]);
-  const discoveryMissionRankings = useMemo(() => {
-    const mods = Object.entries(repositoryMods || {});
-
-    return Object.fromEntries(
-      discoveryMissions.map((mission) => [
-        mission.key,
-        rankMods(mods, mission.query, mission.sortingOrder),
-      ])
-    ) as Record<string, RankedMod[]>;
-  }, [discoveryMissions, repositoryMods]);
   const activeDiscoveryMission = useMemo(
     () => getDiscoveryMissionByQuery(filterText, sortingOrder),
     [filterText, sortingOrder]
@@ -966,35 +1025,6 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
     navigate('/mods-browser/' + modId);
   }, [navigate]);
 
-  const applyDiscoveryPreset = (preset: DiscoveryPreset) => {
-    handleClearFilters();
-    setFilterDropdownOpen(false);
-    resetInfiniteScrollLoadedItems();
-    setSortingOrder(preset.sortingOrder);
-    setFilterText(preset.query);
-  };
-  const applyDiscoveryMission = (mission: DiscoveryMission) => {
-    handleClearFilters();
-    setFilterDropdownOpen(false);
-    resetInfiniteScrollLoadedItems();
-    setSortingOrder(mission.sortingOrder);
-    setFilterText(mission.query);
-  };
-  const copyDiscoveryMission = async (mission: DiscoveryMission) => {
-    try {
-      await copyTextToClipboard(
-        buildDiscoveryMissionBrief(
-          mission,
-          discoveryMissionRankings[mission.key] || []
-        )
-      );
-      message.success(t('explore.missions.copiedBrief'));
-    } catch (error) {
-      console.error('Failed to copy discovery mission brief:', error);
-      message.error(t('explore.missions.copyFailed'));
-    }
-  };
-
   const [detailsButtonClicked, setDetailsButtonClicked] = useState(false);
 
   // Block all navigation when modal is open
@@ -1069,6 +1099,11 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
         $hidden={!!displayedModId}
       >
         <ModsContainer $extraBottomPadding={!devModeOptOut}>
+          <BrowseHero>
+            <HeroBadge>{t('appHeader.explore')}</HeroBadge>
+            <HeroTitle>{t('explore.pageTitle') || "Discover Windhawk Mods"}</HeroTitle>
+            <HeroDescription>{t('explore.pageDescription') || "Enhance your Windows experience with community-driven customizations."}</HeroDescription>
+          </BrowseHero>
           <SearchFilterContainer>
             <SearchFilterInput
               prefix={<FontAwesomeIcon icon={faSearch} />}
@@ -1153,7 +1188,6 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                   } else {
                     handleFilterChange(e.key);
                     resetInfiniteScrollLoadedItems();
-                    // Keep dropdown open for filter changes
                   }
                 },
               }}
@@ -1206,141 +1240,93 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
           {!filterText.trim() && filterOptions.size === 0 && (
             <>
               <DiscoveryPresetsSection>
-                <div>
-                  <DiscoveryPresetsTitle>
-                    {t('explore.presets.title')}
-                  </DiscoveryPresetsTitle>
-                  <DiscoveryPresetsDescription>
-                    {t('explore.presets.description')}
-                  </DiscoveryPresetsDescription>
-                </div>
+                <DiscoveryPresetsTitle>
+                  {t('explore.presets.title')}
+                </DiscoveryPresetsTitle>
+                <DiscoveryPresetsDescription>
+                  {t('explore.presets.description')}
+                </DiscoveryPresetsDescription>
                 <DiscoveryPresetsGrid>
-                  {discoveryPresets.map((preset) => {
-                    const isActive = (
-                      filterText.trim().toLowerCase() === preset.query.toLowerCase() &&
-                      sortingOrder === preset.sortingOrder &&
-                      filterOptions.size === 0
-                    );
-
-                    return (
-                      <DiscoveryPresetCard
-                        key={preset.key}
-                        type="button"
-                        $active={isActive}
-                        onClick={() => applyDiscoveryPreset(preset)}
-                      >
-                        <DiscoveryPresetLabel>
-                          {preset.label}
-                        </DiscoveryPresetLabel>
-                        <DiscoveryPresetDescription>
-                          {preset.description}
-                        </DiscoveryPresetDescription>
-                        <DiscoveryPresetMeta>
-                          {t('explore.presets.modsCount', {
-                            count: discoveryPresetCounts[preset.key] ?? 0,
-                          })}
-                        </DiscoveryPresetMeta>
-                      </DiscoveryPresetCard>
-                    );
-                  })}
+                  {discoveryPresets.map((preset) => (
+                    <DiscoveryPresetCard
+                      key={preset.key}
+                      $active={
+                        filterText === preset.query &&
+                        sortingOrder === preset.sortingOrder
+                      }
+                      onClick={() => {
+                        setFilterText(preset.query);
+                        setSortingOrder(preset.sortingOrder);
+                        handleClearFilters();
+                      }}
+                    >
+                      <DiscoveryPresetLabel>{preset.label}</DiscoveryPresetLabel>
+                      <DiscoveryPresetDescription>
+                        {preset.description}
+                      </DiscoveryPresetDescription>
+                      <DiscoveryPresetMeta>
+                        {discoveryPresetCounts[preset.key] || 0}{' '}
+                        {t('explore.presets.countSuffix') || "Results"}
+                      </DiscoveryPresetMeta>
+                    </DiscoveryPresetCard>
+                  ))}
                 </DiscoveryPresetsGrid>
               </DiscoveryPresetsSection>
               <DiscoveryMissionsSection>
-                <div>
-                  <DiscoveryPresetsTitle>
-                    {t('explore.missions.title')}
-                  </DiscoveryPresetsTitle>
-                  <DiscoveryPresetsDescription>
-                    {t('explore.missions.description')}
-                  </DiscoveryPresetsDescription>
-                </div>
+                <DiscoveryPresetsTitle>
+                  {t('explore.missions.title')}
+                </DiscoveryPresetsTitle>
+                <DiscoveryPresetsDescription>
+                  {t('explore.missions.description')}
+                </DiscoveryPresetsDescription>
                 <DiscoveryMissionsGrid>
-                  {discoveryMissions.map((mission) => {
-                    const isActive = (
-                      filterText.trim().toLowerCase() === mission.query.toLowerCase() &&
-                      sortingOrder === mission.sortingOrder &&
-                      filterOptions.size === 0
-                    );
-                    const missionResults = discoveryMissionRankings[mission.key] || [];
-
-                    return (
-                      <DiscoveryMissionCard key={mission.key} $active={isActive}>
-                        <div>
-                          <DiscoveryMissionTitle>
-                            {mission.title}
-                          </DiscoveryMissionTitle>
-                          <DiscoveryMissionDescription>
-                            {mission.description}
-                          </DiscoveryMissionDescription>
-                        </div>
-                        <DiscoveryMissionCue>
-                          {mission.researchCue}
-                        </DiscoveryMissionCue>
-                        <div>
-                          <DiscoveryMissionLabel>
-                            {t('explore.missions.followUp')}
-                          </DiscoveryMissionLabel>
-                          <DiscoveryMissionTokenRow>
-                            {mission.followUpQueries.map((query) => (
-                              <DiscoveryMissionToken key={query}>
-                                {query}
-                              </DiscoveryMissionToken>
-                            ))}
-                          </DiscoveryMissionTokenRow>
-                        </div>
-                        <div>
-                          <DiscoveryMissionLabel>
-                            {t('explore.missions.verify')}
-                          </DiscoveryMissionLabel>
-                          <DiscoveryMissionChecklist>
-                            {mission.verificationChecks.slice(0, 2).map((check) => (
-                              <DiscoveryMissionChecklistItem key={check}>
-                                <span>{check}</span>
-                              </DiscoveryMissionChecklistItem>
-                            ))}
-                          </DiscoveryMissionChecklist>
-                        </div>
-                        <DiscoveryPresetMeta>
-                          {t('explore.missions.modsCount', {
-                            count: missionResults.length,
-                          })}
-                        </DiscoveryPresetMeta>
-                        <DiscoveryMissionActions>
-                          <Button
-                            size="small"
-                            type={isActive ? 'primary' : 'default'}
-                            onClick={() => applyDiscoveryMission(mission)}
-                          >
-                            {t('explore.missions.start')}
-                          </Button>
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              void copyDiscoveryMission(mission);
-                            }}
-                          >
-                            {t('explore.missions.copyBrief')}
-                          </Button>
-                        </DiscoveryMissionActions>
-                      </DiscoveryMissionCard>
-                    );
-                  })}
+                  {discoveryMissions.map((mission) => (
+                    <DiscoveryMissionCard
+                      key={mission.key}
+                      $active={activeDiscoveryMission?.key === mission.key}
+                    >
+                      <DiscoveryMissionTitle>{mission.title}</DiscoveryMissionTitle>
+                      <DiscoveryMissionDescription>
+                        {mission.description}
+                      </DiscoveryMissionDescription>
+                      <DiscoveryMissionCue>
+                        <strong>{t('explore.missions.cueLabel') || "Research Cue"}:</strong> {mission.researchCue}
+                      </DiscoveryMissionCue>
+                      <DiscoveryMissionTokenRow>
+                        {mission.followUpQueries.map((query) => (
+                          <DiscoveryMissionToken key={query}>
+                            {query}
+                          </DiscoveryMissionToken>
+                        ))}
+                      </DiscoveryMissionTokenRow>
+                      <DiscoveryMissionActions>
+                        <Button
+                          type='primary'
+                          size='small'
+                          ghost
+                          onClick={() => {
+                            setFilterText(mission.query);
+                            setSortingOrder(mission.sortingOrder);
+                            handleClearFilters();
+                          }}
+                        >
+                          {t('explore.missions.startAction') || "Start Mission"}
+                        </Button>
+                      </DiscoveryMissionActions>
+                    </DiscoveryMissionCard>
+                  ))}
                 </DiscoveryMissionsGrid>
               </DiscoveryMissionsSection>
             </>
           )}
           {activeDiscoveryMission && filterOptions.size === 0 && (
             <MissionWorkbenchSection>
-              <div>
-                <DiscoveryPresetsTitle>
-                  {t('explore.missions.workbenchTitle', {
-                    mission: activeDiscoveryMission.title,
-                  })}
-                </DiscoveryPresetsTitle>
-                <DiscoveryPresetsDescription>
-                  {t('explore.missions.workbenchDescription')}
-                </DiscoveryPresetsDescription>
-              </div>
+              <DiscoveryPresetsTitle>
+                {t('explore.missions.workbenchTitle') || "Mission Workbench"}
+              </DiscoveryPresetsTitle>
+              <DiscoveryPresetsDescription>
+                {t('explore.missions.workbenchDescription') || "Active mission targets and verification steps."}
+              </DiscoveryPresetsDescription>
               <MissionWorkbenchGrid>
                 <MissionWorkbenchColumn>
                   <MissionWorkbenchCard>
@@ -1351,56 +1337,18 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                       {activeDiscoveryMission.description}
                     </MissionWorkbenchDescription>
                     <MissionWorkbenchMeta>
-                      {activeDiscoveryMission.researchCue}
+                      {t('explore.missions.checksLabel') || "Verification Checks"}
                     </MissionWorkbenchMeta>
-                    <DiscoveryMissionActions>
-                      <Button
-                        size="small"
-                        onClick={() => {
-                          void copyDiscoveryMission(activeDiscoveryMission);
-                        }}
-                      >
-                        {t('explore.missions.copyBrief')}
-                      </Button>
-                      {activeDiscoveryMissionCandidates[0] && (
-                        <Button
-                          size="small"
-                          type="primary"
-                          onClick={() =>
-                            openModDetails(activeDiscoveryMissionCandidates[0].modId)
-                          }
-                        >
-                          {t('explore.missions.openTopCandidate')}
-                        </Button>
-                      )}
-                    </DiscoveryMissionActions>
-                  </MissionWorkbenchCard>
-                  <MissionWorkbenchCard>
-                    <DiscoveryMissionLabel>
-                      {t('explore.missions.followUp')}
-                    </DiscoveryMissionLabel>
-                    <DiscoveryMissionTokenRow>
-                      {activeDiscoveryMission.followUpQueries.map((query) => (
-                        <Button
-                          key={query}
-                          size="small"
-                          onClick={() => {
-                            resetInfiniteScrollLoadedItems();
-                            setFilterText((prevValue) =>
-                              appendSearchRefinement(prevValue, query)
-                            );
-                          }}
-                        >
-                          {query}
-                        </Button>
+                    <DiscoveryMissionChecklist>
+                      {activeDiscoveryMission.verificationChecks.map((check) => (
+                        <DiscoveryMissionChecklistItem key={check}>
+                          {check}
+                        </DiscoveryMissionChecklistItem>
                       ))}
-                    </DiscoveryMissionTokenRow>
+                    </DiscoveryMissionChecklist>
                   </MissionWorkbenchCard>
                 </MissionWorkbenchColumn>
                 <MissionWorkbenchColumn>
-                  <DiscoveryMissionLabel>
-                    {t('explore.missions.compareTopCandidates')}
-                  </DiscoveryMissionLabel>
                   <MissionWorkbenchCandidates>
                     {activeDiscoveryMissionCandidates.map((candidate) => (
                       <MissionWorkbenchCandidate key={candidate.modId}>
@@ -1409,9 +1357,6 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
                         </MissionWorkbenchCandidateTitle>
                         <MissionWorkbenchCandidateMeta>
                           {candidate.author}
-                        </MissionWorkbenchCandidateMeta>
-                        <MissionWorkbenchCandidateMeta>
-                          {candidate.communitySummary}
                         </MissionWorkbenchCandidateMeta>
                         <MissionWorkbenchCandidateInsights>
                           {candidate.insightSummary}
@@ -1548,8 +1493,8 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
             >
               <ModsGrid>
                 {rankedMods
-                  .slice(0, infiniteScrollLoadedItems)
-                  .map(renderModCard)}
+                   .slice(0, infiniteScrollLoadedItems)
+                   .map(renderModCard)}
               </ModsGrid>
             </InfiniteScroll>
           )}
@@ -1562,9 +1507,6 @@ function ModsBrowserOnline({ ContentWrapper }: Props) {
             installedModDetails={repositoryMods[displayedModId].installed}
             repositoryModDetails={repositoryMods[displayedModId].repository}
             goBack={() => {
-              // If we ever clicked on Details, go back.
-              // Otherwise, we probably arrived from a different location,
-              // go straight to the mods page.
               if (detailsButtonClicked) {
                 navigate(-1);
               } else {
