@@ -234,3 +234,38 @@
 [NX v20.8.3 Daemon Server] - 2026-03-19T23:10:27.916Z - Done responding to the client handleRunPostTasksExecution
 [NX v20.8.3 Daemon Server] - 2026-03-19T23:10:27.916Z - Handled POST_TASKS_EXECUTION. Handling time: 1. Response time: 0.
 [NX v20.8.3 Daemon Server] - 2026-03-19T23:10:27.924Z - Closed a connection. Number of open connections: 0
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.836Z - Established a connection. Number of open connections: 1
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.843Z - Closed a connection. Number of open connections: 0
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.844Z - Established a connection. Number of open connections: 1
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.848Z - [REQUEST]: Client Request for Project Graph Received
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.850Z - [REQUEST]: Responding to the client. project-graph
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.852Z - Time taken for 'total for creating and serializing project graph' 1.4226999999955297ms
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.853Z - Done responding to the client project-graph
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.853Z - Handled REQUEST_PROJECT_GRAPH. Handling time: 2. Response time: 3.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.860Z - [REQUEST]: Responding to the client. handleRunPreTasksExecution
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.860Z - Time taken for 'preTasksExecution' 0.36610000021755695ms
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.860Z - Done responding to the client handleRunPreTasksExecution
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.860Z - Handled PRE_TASKS_EXECUTION. Handling time: 1. Response time: 0.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.924Z - [REQUEST]: Responding to the client. handleHashTasks
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.925Z - Done responding to the client handleHashTasks
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.925Z - Handled HASH_TASKS. Handling time: 15. Response time: 1.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.942Z - [REQUEST]: Responding to the client. handleGetEstimatedTaskTimings
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.942Z - Done responding to the client handleGetEstimatedTaskTimings
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.942Z - Handled GET_ESTIMATED_TASK_TIMINGS. Handling time: 1. Response time: 0.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.959Z - [REQUEST]: Responding to the client. outputsHashesMatch
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.960Z - Done responding to the client outputsHashesMatch
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.960Z - Handled OUTPUTS_HASHES_MATCH. Handling time: 12. Response time: 1.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.969Z - [REQUEST]: Responding to the client. recordOutputsHash
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.971Z - Done responding to the client recordOutputsHash
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.972Z - Handled RECORD_OUTPUTS_HASH. Handling time: 7. Response time: 3.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.977Z - [REQUEST]: Responding to the client. handleRecordTaskRuns
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.977Z - Done responding to the client handleRecordTaskRuns
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.978Z - Handled RECORD_TASK_RUNS. Handling time: 1. Response time: 1.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.979Z - [REQUEST]: Responding to the client. handleGetFlakyTasks
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.979Z - Done responding to the client handleGetFlakyTasks
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.979Z - Handled GET_FLAKY_TASKS. Handling time: 0. Response time: 0.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.983Z - [REQUEST]: Responding to the client. handleRunPostTasksExecution
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.984Z - Time taken for 'postTasksExecution' 0.20919999992474914ms
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.984Z - Done responding to the client handleRunPostTasksExecution
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.984Z - Handled POST_TASKS_EXECUTION. Handling time: 0. Response time: 1.
+[NX v20.8.3 Daemon Server] - 2026-03-19T23:27:59.989Z - Closed a connection. Number of open connections: 0
