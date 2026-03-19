@@ -536,6 +536,8 @@ function ModsBrowserLocal({ ContentWrapper }: Props) {
       ? t('about.runtime.issue.engineConfigMissing')
       : runtimeDiagnostics.issueCode === 'engine-storage-mismatch'
         ? t('about.runtime.issue.engineStorageMismatch')
+        : runtimeDiagnostics.issueCode === 'compiler-missing'
+          ? t('about.runtime.issue.compilerMissing')
         : null
     : null;
   const localModsOverview = getLocalModsOverview(installedMods);

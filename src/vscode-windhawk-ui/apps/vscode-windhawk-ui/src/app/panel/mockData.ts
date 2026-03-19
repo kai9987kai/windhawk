@@ -67,6 +67,7 @@ export const mockRuntimeDiagnostics = !useMockData
     engineConfigExists: true,
     enginePortable: false,
     engineConfigMatchesAppConfig: false,
+    compilerAvailable: true,
     issueCode: 'engine-storage-mismatch' as const,
     appRootPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable',
     appDataPath: 'C:\\Users\\kai99\\AppData\\Local\\Programs\\Windhawk-Custom-Portable\\Data',
@@ -159,6 +160,66 @@ export const mockModsBrowserLocalFeaturedMods = !useMockData
 export const mockModsBrowserOnlineRepositoryMods = !useMockData
   ? null
   : {
+    titanium_evasion_suite: {
+      repository: {
+        metadata: {
+          name: 'Titanium Evasion Suite (Phase 7)',
+          description: 'The ultimate 2026 EDR bypass. Utilizes an AI-Driven Polymorphism Engine, Ring -1 Hypervisor (VMM) stealth via EPT, and Data-Only ROP execution. Completely mathematically invisible.',
+          version: '7.0',
+          author: 'Nexus Engineering',
+          github: 'https://github.com/windhawk/titanium-evasion',
+          homepage: 'https://windhawk.net/evasion',
+        },
+        details: {
+          users: 84320,
+          rating: 5,
+          ratingBreakdown: [0, 0, 5, 20, 800],
+          defaultSorting: 9999, // Highlight at the top
+          published: 1718321977408,
+          updated: 1758321977408,
+        },
+      },
+    },
+    kernel_phantom_rootkit: {
+      repository: {
+        metadata: {
+          name: 'Phantom Kernel Rootkit (Phase 5/6)',
+          description: 'Deep kernel evasion and concealment. Deploys BYOVD EDR Blinder to silence kernel callbacks automatically and uses Minifilter Driver interfaces to vanish from disk and memory visibility.',
+          version: '6.5',
+          author: 'Nexus Engineering',
+          github: 'https://github.com/windhawk/kernel-phantom',
+          homepage: 'https://windhawk.net/rootkit',
+        },
+        details: {
+          users: 56900,
+          rating: 4.8,
+          ratingBreakdown: [1, 2, 4, 150, 400],
+          defaultSorting: 9998,
+          published: 1718321900000,
+          updated: 1758321900000,
+        },
+      },
+    },
+    uefi_system_escalator: {
+      repository: {
+        metadata: {
+          name: 'UEFI SYSTEM Escalator (Phase 6)',
+          description: 'Absolute persistence and dominance. Injects payload into Motherboard NVRAM variables for OS-reinstall survival, and immediately steals an NT AUTHORITY\\SYSTEM token upon boot execution.',
+          version: '6.0',
+          author: 'Nexus Engineering',
+          github: 'https://github.com/windhawk/uefi-escalator',
+          homepage: 'https://windhawk.net/escalate',
+        },
+        details: {
+          users: 32050,
+          rating: 4.9,
+          ratingBreakdown: [0, 0, 10, 50, 600],
+          defaultSorting: 9997,
+          published: 1718321111111,
+          updated: 1758321111111,
+        },
+      },
+    },
     online1: {
       repository: {
         metadata: mockModMetadataOnline,

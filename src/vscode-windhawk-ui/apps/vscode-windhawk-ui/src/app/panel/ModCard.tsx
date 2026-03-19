@@ -29,18 +29,19 @@ const ModCardWrapperInner = styled(Card)`
   height: 100%;
 
   /* Premium Glassmorphism */
-  background: rgba(26, 26, 26, 0.4) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.3) !important;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out !important;
+  background: rgba(18, 18, 18, 0.55) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(105, 192, 255, 0.3) inset !important;
+    border-color: rgba(105, 192, 255, 0.4) !important;
+    background: rgba(22, 22, 22, 0.7) !important;
   }
 
   > .ant-card-body {

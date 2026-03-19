@@ -29,12 +29,38 @@ const Header = styled.header`
   margin: 0 auto;
   width: 100%;
   max-width: calc(var(--app-max-width) + (var(--app-horizontal-padding) * 2));
-  border: 1px solid var(--app-surface-border);
-  border-radius: var(--app-surface-radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   background:
-    linear-gradient(140deg, rgba(23, 125, 220, 0.16), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
-  box-shadow: var(--app-surface-shadow);
+    radial-gradient(circle at top left, rgba(23, 125, 220, 0.2), transparent 40%),
+    linear-gradient(135deg, rgba(20, 20, 20, 0.6) 0%, rgba(10, 10, 10, 0.8) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(23, 125, 220, 0.1) 25%, transparent 50%);
+    animation: rotateSlow 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    z-index: 1;
+  }
+
+  @keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 `;
 
 const HeaderTop = styled.div`
@@ -73,8 +99,11 @@ const LogoTitle = styled.div`
   font-size: 38px;
   line-height: 0.95;
   font-family: Oxanium;
+  background: linear-gradient(to right, #ffffff, #69c0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(105, 192, 255, 0.3));
 `;
-
 const LogoSubtitle = styled.div`
   color: rgba(255, 255, 255, 0.58);
   font-size: 12px;

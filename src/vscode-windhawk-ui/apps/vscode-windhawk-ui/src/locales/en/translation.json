@@ -594,6 +594,8 @@
       "loggingOff": "Debug logging off",
       "devModeOn": "Developer mode visible",
       "devModeOff": "Developer options hidden",
+      "toolchainReady": "Compiler ready",
+      "toolchainMissing": "Compiler missing",
       "storageAligned": "Runtime storage aligned",
       "storageMismatch": "Runtime storage mismatch"
     },
@@ -660,6 +662,7 @@
         "none": "The engine and UI agree on the current storage layout.",
         "engineConfigMissing": "The engine configuration file is missing, so installed mods can be listed in the UI but fail to load at runtime.",
         "engineStorageMismatch": "The engine is targeting a different storage location than the Windhawk UI, which can prevent installed mods from loading.",
+        "compilerMissing": "The compiler toolchain is missing from the active Windhawk runtime, so mod creation and compilation fail until the Compiler directory is restored.",
         "fixHint": "Use the repair action to rewrite the engine configuration so it matches the active Windhawk install."
       },
       "modes": {

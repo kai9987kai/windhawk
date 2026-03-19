@@ -43,6 +43,17 @@ export default class EditorWorkspaceUtils {
 	}
 
 	public getEditedModSourceExtension() {
+		const pythonSourceExists = fs.existsSync(this.getFilePath('mod.wh.py'));
+		const cppSourceExists = fs.existsSync(this.getFilePath('mod.wh.cpp'));
+
+		if (pythonSourceExists && !cppSourceExists) {
+			return '.wh.py';
+		}
+
+		if (cppSourceExists && !pythonSourceExists) {
+			return '.wh.cpp';
+		}
+
 		const vscodeConfig = vscode.workspace.getConfiguration();
 		const sourceExtension = vscodeConfig.get('windhawk.editedModSourceExtension');
 		return sourceExtension === '.wh.py' ? '.wh.py' : '.wh.cpp';
@@ -221,7 +232,6 @@ export default class EditorWorkspaceUtils {
 		await Promise.all([
 			vscodeConfig.update('windhawk.editedModId', modId),
 			vscodeConfig.update('windhawk.editedModWasModified', modWasModified),
-			vscodeConfig.update('windhawk.editedModSourceExtension', sourceExtension),
 			vscodeConfig.update('git.enabled', true),
 		]);
 
@@ -244,7 +254,6 @@ export default class EditorWorkspaceUtils {
 		await Promise.all([
 			vscodeConfig.update('windhawk.editedModId', undefined),
 			vscodeConfig.update('windhawk.editedModWasModified', undefined),
-			vscodeConfig.update('windhawk.editedModSourceExtension', undefined),
 			vscodeConfig.update('git.enabled', undefined),
 		]);
 
@@ -286,8 +295,13 @@ export default class EditorWorkspaceUtils {
 	}
 
 	public async setEditorModeSourceExtension(sourceExtension: ModSourceExtension) {
-		const vscodeConfig = vscode.workspace.getConfiguration();
-		await vscodeConfig.update('windhawk.editedModSourceExtension', sourceExtension);
+		if (sourceExtension === '.wh.py') {
+			this.ensurePythonAuthoringRuntime();
+		} else {
+			this.clearPythonAuthoringRuntime();
+		}
+
+		this.clearInactiveWorkspaceSource(sourceExtension);
 	}
 
 	public async markEditorModeModAsModified(modified: boolean) {

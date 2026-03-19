@@ -683,6 +683,8 @@ function About() {
         return t('about.runtime.issue.engineConfigMissing');
       case 'engine-storage-mismatch':
         return t('about.runtime.issue.engineStorageMismatch');
+      case 'compiler-missing':
+        return t('about.runtime.issue.compilerMissing');
       default:
         return t('about.runtime.issue.none');
     }
@@ -721,6 +723,14 @@ function About() {
     ];
 
     if (runtimeDiagnostics) {
+      items.push({
+        key: 'compiler',
+        text: runtimeDiagnostics.compilerAvailable
+          ? t('about.status.toolchainReady')
+          : t('about.status.toolchainMissing'),
+        tone: runtimeDiagnostics.compilerAvailable ? 'success' : 'error',
+      });
+
       items.push({
         key: 'runtime-storage',
         text: runtimeDiagnostics.engineConfigMatchesAppConfig

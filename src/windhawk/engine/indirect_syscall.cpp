@@ -100,6 +100,9 @@ bool Initialize() {
 }
 
 bool IsAvailable() {
+    if (!g_bInitialized) {
+        Initialize();
+    }
     return g_bInitialized;
 }
 
@@ -107,138 +110,67 @@ void Shutdown() {
     g_bInitialized = false;
 }
 
-// Shellcode for indirect syscall execution
-// We use a small byte array buffer that gets dynamically allocated/executed,
-// or we can use inline assembly (MSVC x64 doesn't support inline inline ASM directly,
-// so we use a crafted shellcode runner or intrinsic tricks if available.
-// For robustness, we'll manually execute the syscall stub.)
-
-// ASM syntax equivalent for reference:
-// mov r10, rcx
-// mov eax, [SSN]
-// jmp [Address]
-
-static NTSTATUS InvokeIndirect(const SyscallEntry& entry, PVOID pContext[]) {
-    // MSVC on x64 does not support inline assembly. 
-    // To implement the indirect syscall clean stub without an external .asm file,
-    // we use a dynamically generated stub in RWX memory (or a pre-compiled gadget).
-    // For simplicity and stability in this C++ file, we'll map a small RX page
-    // for our dispatcher on first use.
-    
-    static PVOID pDispatcher = nullptr;
-    if (!pDispatcher) {
-        // Allocate a page for our custom dispatcher
-        pDispatcher = VirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        if (pDispatcher) {
-            // mov r10, rcx
-            // mov eax, edx
-            // jmp r8
-            BYTE stub[] = {
-                0x4C, 0x8B, 0xD1,       // mov r10, rcx
-                0x8B, 0xC2,             // mov eax, edx
-                0x41, 0xFF, 0xE0        // jmp r8
-            };
-            memcpy(pDispatcher, stub, sizeof(stub));
-            DWORD oldProtect;
-            VirtualProtect(pDispatcher, 0x1000, PAGE_EXECUTE_READ, &oldProtect);
-        }
-    }
-
-    if (!pDispatcher || !entry.pAddress) return -1; // STATUS_UNSUCCESSFUL
-
-    typedef NTSTATUS(NTAPI * PFN_DISPATCH)(...);
-    PFN_DISPATCH pfnDispatch = (PFN_DISPATCH)pDispatcher;
-    
-    // The arguments must be set up properly based on the specific API signature.
-    // For now, this is a generic stub that relies on caller register state which won't perfectly map to C++ varargs.
-    // Let's implement function-specific wrappers.
-    return 0; 
-}
-
-// Since standard C++ makes it hard to pass correctly formatted x64 registers to dynamically generated stubs 
-// without an external .asm file or compiler intrinsics, we will construct specific dispatcher stubs 
-// for each of our required APIs.
+// Shellcode for indirect syscall execution.
+// MSVC x64 does not support inline assembly, so we dynamically generate
+// a dispatcher stub that shuffles the C calling convention arguments
+// into the Windows syscall convention, loads SSN into EAX, sets R10=RCX,
+// and jumps to the 'syscall' instruction inside legitimate ntdll code.
 
 static PVOID GetDispatcherStub() {
     static PVOID pDispatcher = nullptr;
     if (!pDispatcher) {
         pDispatcher = VirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (pDispatcher) {
+            // Dispatcher calling convention:
+            //   NTSTATUS Dispatch(SSN, Addr, Arg1, Arg2, Arg3, Arg4, Arg5...)
+            //   RCX = SSN (system service number)
+            //   RDX = Addr (address of 'syscall' gadget in ntdll)
+            //   R8  = Arg1 -> goes to RCX for the actual syscall
+            //   R9  = Arg2 -> goes to RDX for the actual syscall
+            //   [RSP+0x28] = Arg3  -> goes to R8
+            //   [RSP+0x30] = Arg4  -> goes to R9
+            //   [RSP+0x38] = Arg5  -> goes to [RSP+0x28]
+            //   [RSP+0x40] = Arg6  -> goes to [RSP+0x30]
+            //   ... and so on
             BYTE stub[] = {
-                // To safely pass 6+ arguments on x64:
-                // RCX, RDX, R8, R9 are registers. Stack args are at [rsp+0x28], [rsp+0x30] etc.
-                // Our generic dispatcher signature: 
-                // NTSTATUS Dispatch(SSN, Addr, Arg1, Arg2, Arg3, Arg4, Arg5...)
-                // RCX = SSN
-                // RDX = Addr (the 'syscall' instruction in ntdll)
-                // R8  = Arg1 (goes to rcx)
-                // R9  = Arg2 (goes to rdx)
-                // [RSP+0x28] = Arg3 (goes to r8)
-                // [RSP+0x30] = Arg4 (goes to r9)
-                // [RSP+0x38] = Arg5 (stays at stack [rsp+0x28])
-                // [RSP+0x40] = Arg6 (stays at stack [rsp+0x30]), etc.
-                
-                0x48, 0x89, 0x5C, 0x24, 0x08,  // mov [rsp+8], rbx   (save rbx)
-                0x48, 0x8B, 0xDA,              // mov rbx, rdx       (rbx = Syscall Addr)
-                0x8B, 0xC1,                    // mov eax, ecx       (eax = SSN)
-                
-                // Shuffle registers
-                0x4D, 0x8B, 0xC8,              // mov r9, r8         (r9 = Arg1)
-                0x4D, 0x8B, 0xC1,              // mov r8, r9         (r8 = Arg2)
-                0x4C, 0x8B, 0x4C, 0x24, 0x28,  // mov r9, [rsp+0x28] (r9 = Arg4) 
-                0x4C, 0x8B, 0x44, 0x24, 0x20,  // mov r8, [rsp+0x20] (r8 = Arg3)
-                0x48, 0x8B, 0xD1,              // mov rdx, r9        (rdx=r9, old r9 value) 
-                0x48, 0x8B, 0xCA,              // mov rcx, r8        (rcx=Arg1) -> Wait, we need r10 = rcx
-                0x49, 0x8B, 0xD1,              // mov r10, r9        (Actually, real ntdll does: mov r10, rcx)
-                
-                // The correct x64 shuffle for Dispatch(SSN, Addr, a1, a2, a3, a4, a5...):
-                // rcx=SSN, rdx=Addr, r8=a1, r9=a2, [rsp+28]=a3, [rsp+30]=a4, [rsp+38]=a5
-                
-                // Better approach without full ASM: we will just use a generic ASM block compiled via a .asm file.
-                // However, since we cannot easily add a .asm file to the build system here, 
-                // we will build a simpler stub that fixes up the stack and calls the target.
-            };
-            
-            // Re-implementing correctly:
-            BYTE correct_stub[] = {
-                0x48, 0x89, 0x4C, 0x24, 0x08,       // mov [rsp+8], rcx  (save SSN)
-                0x48, 0x89, 0x54, 0x24, 0x10,       // mov [rsp+10h], rdx (save Addr)
-                // We need to shift all stack parameters down by 2 slots (16 bytes) 
-                // and move r8->rcx, r9->rdx, [rsp+28]->r8, [rsp+30]->r9
-                
-                0x48, 0x8B, 0xC8,                   // mov rcx, r8
-                0x48, 0x8B, 0xD1,                   // mov rdx, r9
-                0x4C, 0x8B, 0x44, 0x24, 0x28,       // mov r8, [rsp+28h]
-                0x4C, 0x8B, 0x4C, 0x24, 0x30,       // mov r9, [rsp+30h]
-                
-                // We must move stack arguments [rsp+38] onwards to [rsp+28] onwards.
-                // We'll copy up to 8 extra args.
+                // Save SSN and target address from the first two register args
+                0x48, 0x89, 0x4C, 0x24, 0x08,       // mov [rsp+08h], rcx   ; save SSN
+                0x48, 0x89, 0x54, 0x24, 0x10,       // mov [rsp+10h], rdx   ; save Addr
+
+                // Shuffle API arguments: r8->rcx, r9->rdx, stack down by 2 slots
+                0x49, 0x8B, 0xC8,                   // mov rcx, r8          ; Arg1 -> rcx
+                0x49, 0x8B, 0xD1,                   // mov rdx, r9          ; Arg2 -> rdx
+                0x4C, 0x8B, 0x44, 0x24, 0x28,       // mov r8,  [rsp+28h]   ; Arg3 -> r8
+                0x4C, 0x8B, 0x4C, 0x24, 0x30,       // mov r9,  [rsp+30h]   ; Arg4 -> r9
+
+                // Shift remaining stack arguments down by 2 slots (16 bytes)
                 0x48, 0x8B, 0x44, 0x24, 0x38,       // mov rax, [rsp+38h]
-                0x48, 0x89, 0x44, 0x24, 0x28,       // mov [rsp+28h], rax
+                0x48, 0x89, 0x44, 0x24, 0x28,       // mov [rsp+28h], rax   ; Arg5
                 0x48, 0x8B, 0x44, 0x24, 0x40,       // mov rax, [rsp+40h]
-                0x48, 0x89, 0x44, 0x24, 0x30,       // mov [rsp+30h], rax
+                0x48, 0x89, 0x44, 0x24, 0x30,       // mov [rsp+30h], rax   ; Arg6
                 0x48, 0x8B, 0x44, 0x24, 0x48,       // mov rax, [rsp+48h]
-                0x48, 0x89, 0x44, 0x24, 0x38,       // mov [rsp+38h], rax
+                0x48, 0x89, 0x44, 0x24, 0x38,       // mov [rsp+38h], rax   ; Arg7
                 0x48, 0x8B, 0x44, 0x24, 0x50,       // mov rax, [rsp+50h]
-                0x48, 0x89, 0x44, 0x24, 0x40,       // mov [rsp+40h], rax
+                0x48, 0x89, 0x44, 0x24, 0x40,       // mov [rsp+40h], rax   ; Arg8
                 0x48, 0x8B, 0x44, 0x24, 0x58,       // mov rax, [rsp+58h]
-                0x48, 0x89, 0x44, 0x24, 0x48,       // mov [rsp+48h], rax
-                0x48, 0x8B, 0x44, 0x24, 0x60,       // mov rax, [rsp+60h]
-                0x48, 0x89, 0x44, 0x24, 0x50,       // mov [rsp+50h], rax
-                0x48, 0x8B, 0x44, 0x24, 0x68,       // mov rax, [rsp+68h]
-                0x48, 0x89, 0x44, 0x24, 0x58,       // mov [rsp+58h], rax
-                
+                0x48, 0x89, 0x44, 0x24, 0x48,       // mov [rsp+48h], rax   ; Arg9
+                0x48, 0x8B, 0x44, 0x24, 0x60,       // mov rax, [rsp+50h]
+                0x48, 0x89, 0x44, 0x24, 0x50,       // mov [rsp+50h], rax   ; Arg10
+                0x48, 0x8B, 0x44, 0x24, 0x68,       // mov rax, [rsp+58h]
+                0x48, 0x89, 0x44, 0x24, 0x58,       // mov [rsp+58h], rax   ; Arg11
+
+                // Set up syscall: mov r10, rcx (Windows syscall convention)
                 0x4C, 0x8B, 0xD1,                   // mov r10, rcx
-                0x8B, 0x44, 0x24, 0x08,             // mov eax, dword ptr [rsp+8] (the SSN)
-                0x48, 0x8B, 0x44, 0x24, 0x10,       // mov rax, [rsp+10h] (the target 'syscall' instruction)  -- wait, we need eax!
-                // Fix:
-                // load SSN to eax, target to r11
-                0x8B, 0x44, 0x24, 0x08,             // mov eax, [rsp+8] (SSN)
-                0x4C, 0x8B, 0x5C, 0x24, 0x10,       // mov r11, [rsp+10h] (Addr)
-                0x41, 0xFF, 0xE3                    // jmp r11
+
+                // Load SSN into eax
+                0x8B, 0x44, 0x24, 0x08,             // mov eax, dword ptr [rsp+08h] ; SSN
+
+                // Load target 'syscall' gadget address into r11 and jump
+                0x4C, 0x8B, 0x5C, 0x24, 0x10,       // mov r11, [rsp+10h]  ; Addr
+                0x41, 0xFF, 0xE3                    // jmp r11             ; -> syscall; ret
             };
 
-            memcpy(pDispatcher, correct_stub, sizeof(correct_stub));
+            memcpy(pDispatcher, stub, sizeof(stub));
             DWORD oldProtect;
             VirtualProtect(pDispatcher, 0x1000, PAGE_EXECUTE_READ, &oldProtect);
         }

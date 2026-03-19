@@ -2,13 +2,36 @@
 #include "module_stomp.h"
 #include "logger.h"
 #include "functions.h"
+#include <psapi.h>
 
 namespace ModuleStomp {
 
+// Find a module by name in the remote process using EnumProcessModulesEx.
+// This correctly handles 64-bit addresses, unlike GetExitCodeThread which truncates.
+static void* FindRemoteModuleBase(HANDLE hProcess, const std::wstring& dllName) {
+    HMODULE hMods[1024];
+    DWORD cbNeeded = 0;
+
+    if (!EnumProcessModulesEx(hProcess, hMods, sizeof(hMods), &cbNeeded, LIST_MODULES_ALL)) {
+        LOG(L"ModuleStomp: EnumProcessModulesEx failed: %u", GetLastError());
+        return nullptr;
+    }
+
+    DWORD moduleCount = cbNeeded / sizeof(HMODULE);
+    for (DWORD i = 0; i < moduleCount; i++) {
+        WCHAR szModName[MAX_PATH] = { 0 };
+        if (GetModuleBaseNameW(hProcess, hMods[i], szModName, _countof(szModName))) {
+            if (_wcsicmp(szModName, dllName.c_str()) == 0) {
+                return (void*)hMods[i];
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 void* LoadStompTarget(HANDLE hProcess, const std::wstring& dllName) {
-    // We'll use MyCreateRemoteThread to call LoadLibraryW in the target process.
-    // This is the simplest way to get a legitimate module loaded.
-    
+    // Load the target DLL into the remote process via CreateRemoteThread + LoadLibraryW.
     HMODULE hKernel32 = GetModuleHandle(L"kernel32.dll");
     void* pLoadLibraryW = GetProcAddress(hKernel32, "LoadLibraryW");
     
@@ -30,20 +53,20 @@ void* LoadStompTarget(HANDLE hProcess, const std::wstring& dllName) {
     }
 
     WaitForSingleObject(hThread, INFINITE);
-    
-    DWORD dwExitCode = 0;
-    GetExitCodeThread(hThread, &dwExitCode);
     CloseHandle(hThread);
     VirtualFreeEx(hProcess, pRemotePath, 0, MEM_RELEASE);
 
-    if (dwExitCode == 0) {
-        LOG(L"ModuleStomp: Failed to load %s in target process", dllName.c_str());
+    // Use EnumProcessModulesEx to find the correct 64-bit base address
+    // instead of GetExitCodeThread which truncates to DWORD on x64.
+    void* pBaseAddress = FindRemoteModuleBase(hProcess, dllName);
+    if (!pBaseAddress) {
+        LOG(L"ModuleStomp: Failed to find %s in target process after loading", dllName.c_str());
         return nullptr;
     }
 
-    void* pBaseAddress = (void*)(ULONG_PTR)dwExitCode;
     VERBOSE(L"ModuleStomp: Loaded %s at %p", dllName.c_str(), pBaseAddress);
     return pBaseAddress;
 }
 
 } // namespace ModuleStomp
+

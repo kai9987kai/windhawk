@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as reg from 'native-reg';
@@ -248,6 +249,7 @@ export default class RuntimeDiagnosticsUtils {
 	public getDiagnostics(): AppRuntimeDiagnostics {
 		const { appRootPath, appDataPath, enginePath, compilerPath, uiPath } =
 			this.paths.fsPaths;
+		const compilerExecutablePath = path.join(compilerPath, 'bin', 'clang++.exe');
 		const engineIniPath = path.join(enginePath, 'engine.ini');
 		const engineStorage = readStorageSection(engineIniPath);
 		const {
@@ -277,12 +279,15 @@ export default class RuntimeDiagnosticsUtils {
 			(this.paths.portable
 				? true
 				: sameRegistryKey(engineRegistryKey, expectedEngineRegistryKey));
+		const compilerAvailable = fs.existsSync(compilerExecutablePath);
 
 		let issueCode: AppRuntimeDiagnostics['issueCode'] = 'none';
 		if (!engineConfigExists) {
 			issueCode = 'engine-config-missing';
 		} else if (!engineConfigMatchesAppConfig) {
 			issueCode = 'engine-storage-mismatch';
+		} else if (!compilerAvailable) {
+			issueCode = 'compiler-missing';
 		}
 
 		return {
@@ -293,6 +298,7 @@ export default class RuntimeDiagnosticsUtils {
 			engineConfigExists,
 			enginePortable,
 			engineConfigMatchesAppConfig,
+			compilerAvailable,
 			issueCode,
 			appRootPath,
 			appDataPath,
@@ -303,7 +309,9 @@ export default class RuntimeDiagnosticsUtils {
 			engineAppDataPath,
 			expectedEngineRegistryKey,
 			engineRegistryKey,
-			repairAvailable: issueCode !== 'none',
+			repairAvailable:
+				issueCode === 'engine-config-missing' ||
+				issueCode === 'engine-storage-mismatch',
 		};
 	}
 

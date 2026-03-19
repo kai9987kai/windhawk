@@ -55,17 +55,18 @@ const CenteredContent = styled.div`
 
 const BrowseHero = styled.div`
   margin: -8px -8px 32px -8px;
-  padding: 48px 24px;
+  padding: 64px 32px;
   background: 
-    radial-gradient(circle at 80% 20%, rgba(23, 125, 220, 0.15), transparent 40%),
-    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.05), transparent 40%),
-    rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at 100% 0%, rgba(105, 192, 255, 0.25), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(23, 125, 220, 0.15), transparent 40%),
+    linear-gradient(135deg, rgba(15, 15, 15, 0.8) 0%, rgba(25, 25, 25, 0.6) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.4);
 
   &::after {
     content: '';
@@ -111,17 +112,19 @@ const HeroDescription = styled.p`
 
 const SearchFilterContainer = styled.div`
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  margin: 0 -20px 24px -20px;
-  background: rgba(20, 20, 20, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 16px;
+  padding: 20px 24px;
+  margin: 0 -24px 32px -24px;
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
   z-index: 10;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
 `;
 
 const SearchMetaRow = styled.div`
@@ -182,24 +185,26 @@ const DiscoveryPresetsGrid = styled.div`
 
 const DiscoveryPresetCard = styled.button<{ $active: boolean }>`
   border: 1px solid ${({ $active }) => (
-    $active ? 'rgba(23, 125, 220, 0.45)' : 'rgba(255, 255, 255, 0.08)'
+    $active ? 'rgba(105, 192, 255, 0.6)' : 'rgba(255, 255, 255, 0.08)'
   )};
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 18px;
   text-align: left;
   color: inherit;
   background: ${({ $active }) => (
-    $active ? 'rgba(23, 125, 220, 0.12)' : 'rgba(255, 255, 255, 0.04)'
+    $active ? 'rgba(23, 125, 220, 0.18)' : 'rgba(25, 25, 25, 0.4)'
   )};
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   &:hover {
-    border-color: rgba(23, 125, 220, 0.4);
-    background: rgba(23, 125, 220, 0.08);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+    border-color: rgba(105, 192, 255, 0.5);
+    background: rgba(30, 30, 30, 0.6);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 `;
 
@@ -237,22 +242,23 @@ const DiscoveryMissionCard = styled.div<{ $active: boolean }>`
   flex-direction: column;
   gap: 12px;
   border: 1px solid ${({ $active }) => (
-    $active ? 'rgba(23, 125, 220, 0.45)' : 'rgba(255, 255, 255, 0.08)'
+    $active ? 'rgba(105, 192, 255, 0.6)' : 'rgba(255, 255, 255, 0.08)'
   )};
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 24px;
   background: ${({ $active }) => (
-    $active ? 'rgba(23, 125, 220, 0.12)' : 'rgba(255, 255, 255, 0.04)'
+    $active ? 'rgba(23, 125, 220, 0.18)' : 'rgba(25, 25, 25, 0.4)'
   )};
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   &:hover {
-    transform: scale(1.01) translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-    border-color: rgba(23, 125, 220, 0.35);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(105, 192, 255, 0.5);
+    background: rgba(30, 30, 30, 0.6);
   }
 `;
 
@@ -332,10 +338,13 @@ const MissionWorkbenchColumn = styled.div`
 `;
 
 const MissionWorkbenchCard = styled.div`
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(25, 25, 25, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.3);
 `;
 
 const MissionWorkbenchTitle = styled.div`

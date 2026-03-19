@@ -8,7 +8,7 @@ import config from './config';
 import { WindhawkLogOutput } from './logOutputChannel';
 import * as storagePaths from './storagePaths';
 import { AppSettings, AppSettingsUtils, AppSettingsUtilsNonPortable, AppSettingsUtilsPortable } from './utils/appSettingsUtils';
-import CompilerUtils, { CompilerError, CompilerKilled } from './utils/compilerUtils';
+import CompilerUtils, { CompilerError, CompilerKilled, CompilerToolchainMissingError } from './utils/compilerUtils';
 import EditorWorkspaceUtils from './utils/editorWorkspaceUtils';
 import { ModConfigUtils, ModConfigUtilsNonPortable, ModConfigUtilsPortable } from './utils/modConfigUtils';
 import ModFilesUtils from './utils/modFilesUtils';
@@ -2086,6 +2086,15 @@ function reportCompilerException(e: any, treatCompilationErrorAsException = fals
 	if (e instanceof CompilerKilled) {
 		windhawkCompilerOutput?.append(e.message + '\n');
 		windhawkCompilerOutput?.show();
+		return;
+	}
+
+	if (e instanceof CompilerToolchainMissingError) {
+		windhawkCompilerOutput?.append(e.message + '\n');
+		windhawkCompilerOutput?.show();
+		if (treatCompilationErrorAsException) {
+			reportException(e);
+		}
 		return;
 	}
 

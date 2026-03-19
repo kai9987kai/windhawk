@@ -17,8 +17,10 @@ const PanelContainer = styled.div`
   overflow: hidden;
   flex-direction: column;
   background:
-    radial-gradient(circle at top, rgba(23, 125, 220, 0.14), transparent 30%),
-    var(--app-background-color);
+    radial-gradient(circle at top left, rgba(23, 125, 220, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at bottom right, rgba(162, 89, 255, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at center, rgba(25, 25, 25, 0.95), var(--app-background-color) 120%);
+  background-attachment: fixed;
 `;
 
 const ContentContainerScroll = styled.div<{ $hidden?: boolean }>`

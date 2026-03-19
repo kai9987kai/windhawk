@@ -61,8 +61,21 @@ export class CompilerKilled extends Error {
 	}
 }
 
+export class CompilerToolchainMissingError extends Error {
+	public compilerExecutablePath: string;
+
+	constructor(compilerExecutablePath: string) {
+		super(
+			`Compiler toolchain is missing: expected ${compilerExecutablePath}. ` +
+			'Restore the Windhawk Compiler directory or reinstall Windhawk.'
+		);
+		this.compilerExecutablePath = compilerExecutablePath;
+	}
+}
+
 export default class CompilerUtils {
 	private compilerPath: string;
+	private compilerExecutablePath: string;
 	private enginePath: string;
 	private engineModsPath: string;
 	private arm64Enabled: boolean;
@@ -72,6 +85,7 @@ export default class CompilerUtils {
 
 	public constructor(compilerPath: string, enginePath: string, appDataPath: string, arm64Enabled: boolean) {
 		this.compilerPath = compilerPath;
+		this.compilerExecutablePath = path.join(this.compilerPath, 'bin', 'clang++.exe');
 		this.enginePath = enginePath;
 		this.engineModsPath = path.join(appDataPath, 'Engine', 'Mods');
 		this.arm64Enabled = arm64Enabled;
@@ -83,6 +97,13 @@ export default class CompilerUtils {
 
 		if (arm64Enabled) {
 			this.supportedCompilationTargets.push('aarch64-w64-mingw32');
+		}
+
+		if (!fs.existsSync(this.compilerExecutablePath)) {
+			vscode.window.showErrorMessage(
+				new CompilerToolchainMissingError(this.compilerExecutablePath).message
+			);
+			return;
 		}
 
 		for (const target of this.supportedCompilationTargets) {
@@ -173,6 +194,12 @@ export default class CompilerUtils {
 		return fs.existsSync(compiledModPath);
 	}
 
+	private ensureCompilerAvailable() {
+		if (!fs.existsSync(this.compilerExecutablePath)) {
+			throw new CompilerToolchainMissingError(this.compilerExecutablePath);
+		}
+	}
+
 	private async makePrecompiledHeaders(
 		pchHeaderPath: string,
 		targetPchPath: string,
@@ -181,7 +208,8 @@ export default class CompilerUtils {
 		modVersion: string,
 		extraArgs: string[],
 	): Promise<CompilationResult> {
-		const clangPath = path.join(this.compilerPath, 'bin', 'clang++.exe');
+		this.ensureCompilerAvailable();
+		const clangPath = this.compilerExecutablePath;
 
 		const args = [
 			'-std=c++23',
@@ -253,7 +281,8 @@ export default class CompilerUtils {
 		extraArgs: string[],
 		pchPath?: string
 	): Promise<CompilationResult> {
-		const clangPath = path.join(this.compilerPath, 'bin', 'clang++.exe');
+		this.ensureCompilerAvailable();
+		const clangPath = this.compilerExecutablePath;
 
 		const subfolder = this.subfolderFromCompilationTarget(target);
 		const engineLibPath = path.join(this.enginePath, subfolder, 'windhawk.lib');
@@ -437,6 +466,8 @@ export default class CompilerUtils {
 		precompiledHeadersFolder?: string,
 		options: CompileModOptions = {}
 	) {
+		this.ensureCompilerAvailable();
+
 		let targetDllName: string;
 		for (; ;) {
 			targetDllName = modId + '_' + modVersion + '_' + randomIntFromInterval(100000, 999999) + '.dll';

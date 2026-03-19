@@ -2,11 +2,11 @@
   "name": "vscode-windhawk-ui-nx",
   "version": "1.7.3",
   "scripts": {
-    "start": "nx serve",
-    "watch": "nx build --configuration=development --watch",
-    "build": "nx build",
+    "start": "node --max-old-space-size=4096 ./node_modules/nx/bin/nx.js serve",
+    "watch": "node --max-old-space-size=4096 ./node_modules/nx/bin/nx.js build --configuration=development --watch",
+    "build": "node --max-old-space-size=4096 ./node_modules/nx/bin/nx.js build",
     "build-ext": "npm run build && (robocopy /MIR dist/apps/vscode-windhawk-ui ../vscode-windhawk/webview) ^& IF %ERRORLEVEL% LSS 8 SET ERRORLEVEL = 0",
-    "test": "nx test",
+    "test": "node --max-old-space-size=4096 ./node_modules/nx/bin/nx.js test",
     "build-css": "less-watch-compiler --enable-js --run-once --main-file=app.less apps/vscode-windhawk-ui/src/app/ apps/vscode-windhawk-ui/src/app/",
     "watch-css": "npm run build-css && less-watch-compiler --enable-js --main-file=app.less apps/vscode-windhawk-ui/src/app/ apps/vscode-windhawk-ui/src/app/"
   },

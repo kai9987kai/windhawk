@@ -6,24 +6,32 @@
   "fileMap": {
     "nonProjectFiles": [
       {
-        "file": "libs/.gitkeep",
-        "hash": "3244421341483603138"
+        "file": ".editorconfig",
+        "hash": "11532813898455409296"
       },
       {
-        "file": "build_err.log",
-        "hash": "7483477458919472307"
+        "file": "build_err_utf8.log",
+        "hash": "821123663470091312"
       },
       {
         "file": "tools/tsconfig.tools.json",
         "hash": "11810713488198132402"
       },
       {
-        "file": "tsconfig.base.json",
-        "hash": "3631615085677690706"
+        "file": "apps/.gitkeep",
+        "hash": "3244421341483603138"
       },
       {
-        "file": "build_err_utf8.log",
-        "hash": "821123663470091312"
+        "file": "package-lock.json",
+        "hash": "8304168470551444824"
+      },
+      {
+        "file": ".vscode/extensions.json",
+        "hash": "13391140343975966684"
+      },
+      {
+        "file": "jest.config.ts",
+        "hash": "3069074216761126282"
       },
       {
         "file": "jest.preset.js",
@@ -34,52 +42,44 @@
         "hash": "1324685984948235314"
       },
       {
-        "file": "tools/generators/.gitkeep",
-        "hash": "3244421341483603138"
-      },
-      {
-        "file": ".gitignore",
-        "hash": "5439913239862254453"
-      },
-      {
-        "file": "package-lock.json",
-        "hash": "8304168470551444824"
-      },
-      {
-        "file": ".eslintrc.json",
-        "hash": "9483251403686547478"
-      },
-      {
-        "file": "jest.config.ts",
-        "hash": "3069074216761126282"
+        "file": "tsconfig.base.json",
+        "hash": "3631615085677690706"
       },
       {
         "file": "nx.json",
         "hash": "17520093226414838971"
       },
       {
-        "file": ".prettierrc",
-        "hash": "6820402234827505055"
-      },
-      {
-        "file": "apps/.gitkeep",
+        "file": "libs/.gitkeep",
         "hash": "3244421341483603138"
       },
       {
-        "file": ".vscode/extensions.json",
-        "hash": "13391140343975966684"
+        "file": "package.json",
+        "hash": "9685855934427802339"
       },
       {
         "file": "babel.config.json",
         "hash": "6619451454968768629"
       },
       {
-        "file": "package.json",
-        "hash": "16590811369976751349"
+        "file": "build_err.log",
+        "hash": "7483477458919472307"
       },
       {
-        "file": ".editorconfig",
-        "hash": "11532813898455409296"
+        "file": ".gitignore",
+        "hash": "5439913239862254453"
+      },
+      {
+        "file": "tools/generators/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": ".eslintrc.json",
+        "hash": "9483251403686547478"
+      },
+      {
+        "file": ".prettierrc",
+        "hash": "6820402234827505055"
       }
     ],
     "projectFileMap": {
@@ -184,11 +184,11 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/About.tsx",
-          "hash": "10960678676160357333"
+          "hash": "6372529308891363322"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/AppHeader.tsx",
-          "hash": "11161811838653586876"
+          "hash": "4218075915664052138"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/ChangelogModal.tsx",
@@ -208,7 +208,7 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/ModCard.tsx",
-          "hash": "13665079473612552621"
+          "hash": "4292582087978289987"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/ModDetails.tsx",
@@ -256,11 +256,11 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/ModsBrowserLocal.tsx",
-          "hash": "13568522371725233448"
+          "hash": "9529308232409709049"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/ModsBrowserOnline.tsx",
-          "hash": "12162390377561477185"
+          "hash": "4052420578368516116"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/NewModStudioModal.tsx",
@@ -268,7 +268,7 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/Panel.tsx",
-          "hash": "16097448354489931221"
+          "hash": "11058795744069276408"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/SafeModeIndicator.tsx",
@@ -332,7 +332,7 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/mockData.ts",
-          "hash": "18428111639344323839"
+          "hash": "2702810468197504309"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/panel/modDiscovery.spec.ts",
@@ -384,7 +384,7 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/app/webviewIPCMessages.ts",
-          "hash": "10397505359793625695"
+          "hash": "3368741064499505425"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/environments/environment.prod.ts",
@@ -452,7 +452,7 @@
         },
         {
           "file": "apps/vscode-windhawk-ui/src/locales/en/translation.json",
-          "hash": "14923488859078381140"
+          "hash": "16073690666429524313"
         },
         {
           "file": "apps/vscode-windhawk-ui/src/locales/es/DO_NOT_EDIT.txt",

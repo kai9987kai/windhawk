@@ -141,7 +141,8 @@ export type AppUISettings = {
 export type AppRuntimeDiagnosticsIssueCode =
   | 'none'
   | 'engine-config-missing'
-  | 'engine-storage-mismatch';
+  | 'engine-storage-mismatch'
+  | 'compiler-missing';
 
 export type AppRuntimeDiagnostics = {
   platformArch: string;
@@ -162,6 +163,7 @@ export type AppRuntimeDiagnostics = {
   engineConfigExists: boolean;
   enginePortable: boolean | null;
   engineConfigMatchesAppConfig: boolean;
+  compilerAvailable: boolean;
   issueCode: AppRuntimeDiagnosticsIssueCode;
   appRootPath: string;
   appDataPath: string;
